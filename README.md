@@ -1,87 +1,103 @@
 # Meta_Kim
 
-> 目标不是“做一堆 agent”，而是让 `meta/meta.md` 所描述的 **意图放大** 在 Claude Code、Codex、OpenClaw 三个运行时里都成立。
+> 一个跨 Claude Code、Codex、OpenClaw 的 **意图放大架构包**。
 
-## 这个项目到底是干嘛的
+## 这项目到底是什么
 
-Meta_Kim 不是一个业务产品，也不是一个聊天 UI。
+Meta_Kim 不是聊天产品，不是网页，不是 App。
 
-它是一个跨运行时的 **意图放大架构包**：
+它是一个给 AI 编程助手用的“底层架构包”。
 
-- 用户在任意一个支持的运行时里提出原始需求
-- 系统先按 `meta/meta.md` 的方向理解这个需求
-- 再把需求放大成更完整的目标、约束、风险、节奏、交付物
-- 必要时调用不同的元 agent 做后台分工
-- 最终输出更强、更完整、更可执行的结果
+它想解决的问题只有一个：
 
-所以这个项目的外部目标很简单：
+**让 `meta/meta.md` 所描述的意图放大，在 Claude Code、Codex、OpenClaw 三个软件里都成立。**
 
-**用户用什么软件，就走那个软件的入口；但背后的意图放大逻辑尽量保持一致。**
+也就是说：
+
+- 用户用 Claude Code，就走 Claude Code 的入口
+- 用户用 Codex，就走 Codex 的入口
+- 用户用 OpenClaw，就走 OpenClaw 的入口
+
+但无论走哪个入口，背后的核心目标都一样：
+
+**把用户原始意图放大成更完整、更清楚、更可执行的结果。**
+
+## “意图放大”是什么意思
+
+用户最开始说的话，通常是短的、糊的、不完整的。
+
+比如：
+
+- “帮我做个项目”
+- “帮我改一下这个系统”
+- “帮我设计一个 agent 架构”
+
+这种话通常缺很多东西：
+
+- 真实目标是什么
+- 边界是什么
+- 风险是什么
+- 受众是谁
+- 交付物应该长成什么样
+- 先做什么，后做什么
+
+Meta_Kim 要做的，不是直接糊一份答案。
+
+而是先把这些东西补全，再进入执行。
+
+所以“意图放大”可以简单理解成：
+
+**把一句模糊需求，变成一个结构完整、边界清楚、可以落地的任务。**
 
 ## “元”到底是什么
 
-这里的“元”，不是玄学词，也不是随便给 agent 起的酷名字。
+这个项目里最重要的词，就是“元”。
+
+这里的“元”不是玄学，也不是装饰性命名。
 
 在 Meta_Kim 里：
 
 **元 = 为了完成意图放大而存在的最小可治理单元。**
 
-它至少要满足这些条件：
+你可以把它理解成：
 
-- 有独立职责
-- 有明确边界
-- 能被编排
-- 能被验证
-- 能被替换
+- 它有独立职责
+- 它有明确边界
+- 它可以被单独调用
+- 它可以被验证
+- 它坏了可以被替换
 
-所以“元”不是一个随手加的功能点，也不是“看到什么都做一点”的万能 agent。
+所以“元”不是一个万能 agent。
 
-它更像复杂系统里的最小治理角色。
+“元”更像复杂系统里的最小治理角色。
 
-## `meta/meta.md` 是什么
+## 最后会做成什么样
 
-`meta/meta.md` 是这个项目的 **整体目标参考** 和 **方法论参考**。
+最终成品不是一个单独的大模型 prompt，也不是一堆散乱脚本。
 
-它不是：
+最终成品是：
 
-- 运行时配置文件
-- 自动生成源
-- 要被逐字复制到每个 prompt 里的长稿
+**一套可以直接装进三种运行时里的元架构。**
 
-它真正的作用是：
+它在外部应该呈现成这样：
 
-- 说明这个项目为什么存在
-- 说明“元”这套方法论的背景
-- 说明组织镜像、节奏编排、意图放大这条主线
-- 作为三端实现时的对齐参考
+1. 用户提出一个原始需求
+2. 系统先做意图放大
+3. 必要时把任务拆给不同的元 agent
+4. 再把结果收回来
+5. 输出一个比原始问题更完整、更强的结果
 
-## 三端最终要成立成什么样
+所以用户真正感受到的，不应该是“这里有 8 个 agent”。
 
-你可以把三端理解成三个不同的入口壳。
+用户真正感受到的，应该是：
 
-### Claude Code
+**这个系统比普通助手更会理解问题，更会拆问题，也更会把事情做完整。**
 
-- 入口文件：`CLAUDE.md`
-- 运行时资产：`.claude/agents`、`.claude/skills`、`.mcp.json`
-- 目标效果：在 Claude Code 里直接形成一套围绕“意图放大”工作的元 agent 体系
+## 这 8 个元 agent 是干嘛的
 
-### Codex
+它们是后台分工，不是用户菜单。
 
-- 入口文件：`AGENTS.md`
-- 运行时资产：`.codex/agents`、`.agents/skills`、`codex/config.toml.example`
-- 目标效果：在 Codex 里也能按同一套“元”职责做意图放大，而不是另起一套逻辑
-
-### OpenClaw
-
-- 入口目录：`openclaw/workspaces`
-- 运行时资产：`openclaw/openclaw.template.json`、`openclaw/skills/meta-theory.md`
-- 目标效果：在 OpenClaw 里，用户走本地 workspace agent，同样得到围绕意图放大的行为
-
-## 8 个元 agent 是干嘛的
-
-它们不是让用户逐个研究的“功能菜单”，而是后台分工。
-
-- `meta-warden`：统一入口、统筹、仲裁、最终整合
+- `meta-warden`：总入口、统筹、仲裁、最终整合
 - `meta-genesis`：人格、提示词、`SOUL.md`
 - `meta-artisan`：skill、MCP、工具能力匹配
 - `meta-sentinel`：hook、安全、权限、回滚
@@ -90,24 +106,55 @@ Meta_Kim 不是一个业务产品，也不是一个聊天 UI。
 - `meta-prism`：质量审查、漂移检测、反 AI 套话
 - `meta-scout`：外部工具发现与评估
 
-外部应该看到的是：
+外部默认入口应该优先理解成：
 
-**一个统一的意图放大入口。**
+- `meta-warden`
 
-内部才是这些元 agent 的分工协作。
+其他 7 个元 agent 更像后台专员。
 
-## 哪些文件才是主源
+## `meta/meta.md` 是什么
 
-- `meta/meta.md`：整体目标与方法论参考
-- `.claude/agents/*.md`：agent 定义主源
-- `.claude/skills/meta-theory/SKILL.md`：skill 定义主源
+`meta/meta.md` 不是运行时配置文件。
 
-其他多数文件都是：
+它是这个项目的：
 
-- 运行时适配层
-- 或由主源同步生成出来的派生产物
+- 整体目标参考
+- 方法论参考
+- 三端对齐参考
 
-## 最简使用流程
+也就是说，它定义的是“这个项目到底想成为什么”，不是“每个平台怎么配 JSON”。
+
+## 三端分别怎么表现
+
+### Claude Code
+
+- 入口：`CLAUDE.md`
+- 主体：`.claude/agents/`、`.claude/skills/`、`.mcp.json`
+- 目标：让 Claude Code 能直接运行这套围绕意图放大的元架构
+
+### Codex
+
+- 入口：`AGENTS.md`
+- 主体：`.codex/agents/`、`.agents/skills/`、`codex/config.toml.example`
+- 目标：让 Codex 也走同一套元职责，而不是另起一套逻辑
+
+### OpenClaw
+
+- 入口：`openclaw/workspaces/`
+- 主体：`openclaw/openclaw.template.json`、`openclaw/skills/meta-theory.md`
+- 目标：让 OpenClaw 的本地 workspace agent 同样围绕意图放大工作
+
+## 哪些文件是主源
+
+真正优先修改的是这三个位置：
+
+- `meta/meta.md`
+- `.claude/agents/*.md`
+- `.claude/skills/meta-theory/SKILL.md`
+
+其他很多文件都是运行时适配层，或者同步生成的派生产物。
+
+## 最简上手
 
 在仓库根目录执行：
 
@@ -118,29 +165,15 @@ npm run prepare:openclaw-local
 npm run verify:all
 ```
 
-这四步的意义：
+这四步的意思：
 
 - `npm install`：安装依赖
-- `npm run sync:runtimes`：把三端需要的运行时文件同步出来
-- `npm run prepare:openclaw-local`：把 OpenClaw 本机授权同步给 8 个 meta agent
+- `npm run sync:runtimes`：生成三端运行时文件
+- `npm run prepare:openclaw-local`：同步 OpenClaw 本机授权
 - `npm run verify:all`：做完整检查和三端验收
 
-## 如果你只是想知道“现在能不能用”
+## 你如果只想一句话记住它
 
-- Claude Code：直接打开仓库即可读取 `CLAUDE.md` 和 `.claude/agents/`
-- Codex：直接打开仓库即可读取 `AGENTS.md` 和 `.codex/agents/`
-- OpenClaw：先跑上面的 4 条命令，再让它使用 `openclaw/openclaw.local.json`
+**Meta_Kim 不是“很多 agent 的展示仓库”。**
 
-## 其他说明
-
-- 仓库地图：`meta/repo-map.md`
-- 能力矩阵：`meta/runtime-capability-matrix.md`
-- 覆盖审计：`meta/runtime-coverage-audit.md`
-
-## 一句最重要的话
-
-Meta_Kim 最终不是要证明“我做了很多 agent”。
-
-而是要证明：
-
-**同一个 `meta/meta.md` 所代表的意图放大方向，可以在 Claude Code、Codex、OpenClaw 三端成立。**
+**它是一个试图把 `meta/meta.md` 的意图放大方法，稳定落到 Claude Code、Codex、OpenClaw 三端的元架构项目。**
