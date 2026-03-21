@@ -55,6 +55,22 @@
     ]
   },
   "bindings": [],
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "session-memory": {
+          "enabled": true
+        },
+        "command-logger": {
+          "enabled": true
+        },
+        "boot-md": {
+          "enabled": true
+        }
+      }
+    }
+  },
   "tools": {
     "agentToAgent": {
       "enabled": true,

@@ -62,7 +62,10 @@ async function validateRequiredFiles() {
     "meta/meta.md",
     "meta/runtime-capability-matrix.md",
     "meta/repo-map.md",
+    "meta/runtime-coverage-audit.md",
     ".claude/skills/meta-theory/SKILL.md",
+    ".agents/skills/meta-theory/SKILL.md",
+    ".agents/skills/meta-theory/agents/openai.yaml",
     ".codex/skills/meta-theory.md",
     "shared-skills/meta-theory.md",
     "openclaw/skills/meta-theory.md",
@@ -130,10 +133,24 @@ async function validateOpenClawArtifacts(agentIds) {
     "OpenClaw agentToAgent allow-list is out of sync with .claude/agents."
   );
 
+  const hookEntries = templateConfig.hooks?.internal?.entries;
+  assert(
+    templateConfig.hooks?.internal?.enabled === true,
+    "openclaw/openclaw.template.json must enable internal hooks."
+  );
+  for (const hookName of ["session-memory", "command-logger", "boot-md"]) {
+    assert(
+      hookEntries?.[hookName]?.enabled === true,
+      `openclaw/openclaw.template.json is missing enabled hook ${hookName}.`
+    );
+  }
+
   for (const agentId of agentIds) {
     for (const fileName of [
+      "BOOT.md",
       "BOOTSTRAP.md",
       "IDENTITY.md",
+      "MEMORY.md",
       "USER.md",
       "SOUL.md",
       "AGENTS.md",
@@ -153,6 +170,16 @@ async function validateOpenClawArtifacts(agentIds) {
     assert(
       await exists(workspaceSkill),
       `Missing OpenClaw workspace skill: ${path.relative(repoRoot, workspaceSkill)}`
+    );
+    const memoryReadme = path.join(
+      openclawWorkspacesDir,
+      agentId,
+      "memory",
+      "README.md"
+    );
+    assert(
+      await exists(memoryReadme),
+      `Missing OpenClaw workspace memory note: ${path.relative(repoRoot, memoryReadme)}`
     );
   }
 }
@@ -181,6 +208,10 @@ async function validatePortableSkill() {
     path.join(repoRoot, "shared-skills", "meta-theory.md"),
     "utf8"
   );
+  const codexProjectSkill = await fs.readFile(
+    path.join(repoRoot, ".agents", "skills", "meta-theory", "SKILL.md"),
+    "utf8"
+  );
   const codexSkill = await fs.readFile(
     path.join(repoRoot, ".codex", "skills", "meta-theory.md"),
     "utf8"
@@ -195,6 +226,10 @@ async function validatePortableSkill() {
     "shared-skills/meta-theory.md is out of sync with the canonical Claude skill."
   );
   assert(
+    codexProjectSkill === skillSource,
+    ".agents/skills/meta-theory/SKILL.md is out of sync with the canonical Claude skill."
+  );
+  assert(
     openclawSkill === skillSource,
     "openclaw/skills/meta-theory.md is out of sync with the canonical Claude skill."
   );
@@ -204,12 +239,47 @@ async function validatePortableSkill() {
   );
 }
 
+async function validateCodexArtifacts(agentIds) {
+  const codexAgentDir = path.join(repoRoot, ".codex", "agents");
+
+  for (const agentId of agentIds) {
+    const agentPath = path.join(codexAgentDir, `${agentId}.toml`);
+    assert(await exists(agentPath), `Missing Codex custom agent: .codex/agents/${agentId}.toml`);
+    const raw = await fs.readFile(agentPath, "utf8");
+    assert(raw.includes(`name = "${agentId}"`), `${agentId}.toml is missing the correct name field.`);
+    assert(raw.includes("description = "), `${agentId}.toml is missing description.`);
+    assert(
+      raw.includes("developer_instructions = "),
+      `${agentId}.toml is missing developer_instructions.`
+    );
+  }
+
+  const configExample = await fs.readFile(
+    path.join(repoRoot, "codex", "config.toml.example"),
+    "utf8"
+  );
+  for (const expected of [
+    "approval_policy",
+    "sandbox_mode",
+    "[agents]",
+    "[mcp_servers.meta_kim_runtime]",
+    "[[skills.config]]",
+    ".agents/skills/meta-theory"
+  ]) {
+    assert(
+      configExample.includes(expected),
+      `codex/config.toml.example is missing ${expected}`
+    );
+  }
+}
+
 async function validatePackageJson() {
   const packageJsonPath = path.join(repoRoot, "package.json");
   const pkg = JSON.parse(await fs.readFile(packageJsonPath, "utf8"));
   assert(pkg.scripts?.["sync:runtimes"], "package.json is missing sync:runtimes.");
   assert(pkg.scripts?.validate, "package.json is missing validate.");
   assert(pkg.scripts?.["eval:agents"], "package.json is missing eval:agents.");
+  assert(pkg.scripts?.["verify:all"], "package.json is missing verify:all.");
   assert(
     pkg.scripts?.["prepare:openclaw-local"],
     "package.json is missing prepare:openclaw-local."
@@ -262,6 +332,7 @@ async function main() {
   const agentIds = await validateClaudeAgents();
   await validateOpenClawArtifacts(agentIds);
   await validatePortableSkill();
+  await validateCodexArtifacts(agentIds);
   await validatePackageJson();
   await validateGitignore();
   await validateClaudeSettings();

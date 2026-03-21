@@ -342,12 +342,20 @@ async function runClaudeCases(agentIds) {
 
 async function runCodexSmoke() {
   const prompt =
-    "请只输出一行 JSON，字段有 runtime、entrypoint、skill_path、mcp_supported。" +
-    "根据当前仓库回答 Codex 在这个项目中的接入点。";
+    "请只输出一行 JSON，不要解释。字段有 " +
+    "runtime、entrypoint、project_skill_root、compat_skill_mirror、custom_agents、mcp_supported、sandbox_configurable、approvals_configurable。" +
+    "根据当前仓库回答 Codex 在这个项目中的接入点，只基于仓库内实际存在的文件。";
 
   const { stdout } = await execFileAsync(
     "codex",
-    ["exec", "--json", "-C", repoRoot, prompt],
+    [
+      "exec",
+      "--json",
+      "--dangerously-bypass-approvals-and-sandbox",
+      "-C",
+      repoRoot,
+      prompt,
+    ],
     {
       cwd: repoRoot,
       timeout: 180_000,
@@ -359,15 +367,31 @@ async function runCodexSmoke() {
   const entrypoints = Array.isArray(payload.entrypoint)
     ? payload.entrypoint
     : [payload.entrypoint];
-  const skillPaths = Array.isArray(payload.skill_path)
-    ? payload.skill_path
-    : [payload.skill_path];
+  const skillRoots = Array.isArray(payload.project_skill_root)
+    ? payload.project_skill_root
+    : [payload.project_skill_root];
+  const compatMirrors = Array.isArray(payload.compat_skill_mirror)
+    ? payload.compat_skill_mirror
+    : [payload.compat_skill_mirror];
+  const customAgents = Array.isArray(payload.custom_agents)
+    ? payload.custom_agents
+    : [payload.custom_agents];
+  const hasMetaWardenAgent = customAgents.some((item) => {
+    const value = String(item || "");
+    return value === "meta-warden" || value.endsWith("meta-warden.toml");
+  });
   const ok =
     payload.runtime === "Codex" &&
     entrypoints.includes("AGENTS.md") &&
-    (skillPaths.includes(".codex/skills/meta-theory.md") ||
-      skillPaths.includes(".codex/skills/")) &&
-    payload.mcp_supported === true;
+    (skillRoots.includes(".agents/skills/meta-theory") ||
+      skillRoots.includes(".agents/skills/meta-theory/SKILL.md") ||
+      skillRoots.includes(".agents/skills")) &&
+    (compatMirrors.includes(".codex/skills/meta-theory.md") ||
+      compatMirrors.includes(".codex/skills")) &&
+    hasMetaWardenAgent &&
+    payload.mcp_supported === true &&
+    payload.sandbox_configurable === true &&
+    payload.approvals_configurable === true;
 
   return {
     ok,
@@ -402,6 +426,39 @@ async function runOpenClawSmoke() {
       env,
     }
   );
+
+  let hooksDiscovery = {
+    ok: false,
+    output: "",
+  };
+  try {
+    const hooks = await execFileAsync(
+      command.file,
+      command.toArgs(["hooks", "list", "--verbose"]),
+      {
+        cwd: repoRoot,
+        timeout: 60_000,
+        env,
+      }
+    );
+    const hooksOutput = hooks.stdout.trim();
+    const hooksLower = hooksOutput.toLowerCase();
+    const hooksNormalized = hooksLower.replace(/\s+/g, " ");
+    hooksDiscovery = {
+      ok:
+        hooksNormalized.includes("boot-md") &&
+        hooksNormalized.includes("command-") &&
+        hooksNormalized.includes("logger") &&
+        hooksNormalized.includes("session-") &&
+        hooksNormalized.includes("memory"),
+      output: hooksOutput,
+    };
+  } catch (error) {
+    hooksDiscovery = {
+      ok: false,
+      output: error.message,
+    };
+  }
 
   const smokeAgents = await loadClaudeAgentIds();
   const agentResults = [];
@@ -453,8 +510,11 @@ async function runOpenClawSmoke() {
   return {
     ok:
       validation.stdout.toLowerCase().includes("config valid") &&
-      agentResults.every((result) => result.ok),
+      hooksDiscovery.ok &&
+      agentResults.every((result) => result.ok && result.injectionOk),
     configOk: validation.stdout.toLowerCase().includes("config valid"),
+    hooksOk: hooksDiscovery.ok,
+    hooksDiscovery: hooksDiscovery.output,
     validation: validation.stdout.trim(),
     agentResults,
   };

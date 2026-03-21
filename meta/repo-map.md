@@ -16,10 +16,11 @@
 
 | 路径 | 作用 |
 | --- | --- |
+| `.agents/` | Codex 项目级 skill 主入口目录 |
 | `.claude/` | Claude Code 运行时主目录，也是 Agent/Skill 主源所在目录 |
-| `.codex/` | Codex 仓库级 skill 镜像目录 |
+| `.codex/` | Codex custom agents 与兼容 skill 镜像目录 |
 | `codex/` | Codex 的配置示例目录 |
-| `meta/` | 元理论、能力矩阵、分析文档 |
+| `meta/` | 元理论、能力矩阵、覆盖审计、分析文档 |
 | `node_modules/` | npm 依赖目录，自动生成，不手改 |
 | `openclaw/` | OpenClaw 运行时适配目录，包含 workspace、skill、配置模板 |
 | `scripts/` | 同步、校验、验收、MCP、本地 OpenClaw 准备脚本 |
@@ -84,17 +85,25 @@
 
 ## 三、`.codex/` 与 `codex/`
 
+### `.agents/`
+
+| 路径 | 作用 |
+| --- | --- |
+| `.agents/skills/meta-theory/SKILL.md` | Codex 官方项目级 skill 入口 |
+| `.agents/skills/meta-theory/agents/openai.yaml` | Codex skill 的可选元数据文件 |
+
 ### `.codex/`
 
 | 路径 | 作用 |
 | --- | --- |
-| `.codex/skills/meta-theory.md` | 给 Codex 使用的仓库级 skill 镜像 |
+| `.codex/agents/*.toml` | Codex 项目级 custom agents，和 8 个 meta agent 一一对应 |
+| `.codex/skills/meta-theory.md` | 给 Codex 保留的兼容 skill 镜像 |
 
 ### `codex/`
 
 | 路径 | 作用 |
 | --- | --- |
-| `codex/config.toml.example` | Codex 的 MCP 配置示例，告诉用户如何挂载本地 `meta-runtime-server` |
+| `codex/config.toml.example` | Codex 的 MCP、sandbox、approval、skills 配置示例 |
 
 ## 四、`meta/`
 
@@ -104,6 +113,7 @@
 | --- | --- |
 | `meta/meta.md` | 元理论总源，整个仓库的思想基础 |
 | `meta/runtime-capability-matrix.md` | Claude Code / OpenClaw / Codex 的能力映射矩阵 |
+| `meta/runtime-coverage-audit.md` | 哪些能力面已经覆盖、哪些属于宿主级的审计说明 |
 
 ### `meta/analysis/`
 
@@ -144,13 +154,16 @@
 
 | 文件名 | 作用 |
 | --- | --- |
+| `BOOT.md` | OpenClaw `boot-md` hook 的启动文件，网关启动时使用 |
 | `BOOTSTRAP.md` | 冷启动说明，告诉 OpenClaw agent 刚启动时先读什么 |
 | `IDENTITY.md` | 该 agent 的身份卡：名字、气质、核心职责 |
+| `MEMORY.md` | 长期记忆策略说明，告诉 agent 什么该沉淀、什么不该沉淀 |
 | `USER.md` | 用户长期上下文占位文件 |
 | `SOUL.md` | 该 agent 的长说明书，是 OpenClaw 运行时真正注入的大脑内容 |
 | `AGENTS.md` | 团队目录，说明队友是谁以及各自做什么 |
 | `TOOLS.md` | OpenClaw 运行时约定、协作方式、可用 skill 说明 |
 | `HEARTBEAT.md` | 心跳/定时任务约定 |
+| `memory/README.md` | `session-memory` hook 写入目录的说明文件 |
 | `skills/meta-theory/SKILL.md` | 该 workspace 就地可用的 `meta-theory` skill |
 
 ## 六、`scripts/`
@@ -179,6 +192,9 @@
 
 ### 通常不直接手改的文件
 
+- `.agents/skills/meta-theory/SKILL.md`
+- `.agents/skills/meta-theory/agents/openai.yaml`
+- `.codex/agents/*.toml`
 - `.codex/skills/meta-theory.md`
 - `shared-skills/meta-theory.md`
 - `openclaw/skills/meta-theory.md`

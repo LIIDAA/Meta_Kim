@@ -1,0 +1,8 @@
+interface:
+  display_name: "Meta Theory"
+  short_description: "Meta_Kim 的跨运行时元理论与协作方法"
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  mcp_servers:
+    - meta_kim_runtime

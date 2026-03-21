@@ -16,7 +16,7 @@ Meta_Kim 是一个跨运行时 Agent 架构仓库，围绕 `meta/meta.md` 里的
 | --- | --- |
 | Claude Code | `CLAUDE.md`、`.claude/agents/`、`.claude/skills/`、`.claude/settings.json`、`.mcp.json` |
 | OpenClaw | `openclaw/workspaces/*`、`openclaw/skills/meta-theory.md`、`openclaw/openclaw.template.json` |
-| Codex | `AGENTS.md`、`.codex/skills/`、`codex/config.toml.example`、`shared-skills/meta-theory.md` |
+| Codex | `AGENTS.md`、`.codex/agents/`、`.agents/skills/`、`codex/config.toml.example`、`shared-skills/meta-theory.md` |
 
 ## 三、必须遵守的流程
 
@@ -28,14 +28,16 @@ Meta_Kim 是一个跨运行时 Agent 架构仓库，围绕 `meta/meta.md` 里的
 ## 四、可移植能力模型
 
 - 子代理：Claude Code 原生支持，OpenClaw 用独立 workspace 映射，Codex 用仓库规则承接。
-- Skill：Claude Code 原生支持，OpenClaw 使用可安装 skill 与 workspace skill，Codex 使用 `.codex/skills` 与共享 skill 文档承接。
+- Skill：Claude Code 原生支持，OpenClaw 使用可安装 skill 与 workspace skill，Codex 使用 `.agents/skills` 承接，并保留 `.codex/skills` 兼容镜像。
 - MCP：通过 `scripts/mcp/meta-runtime-server.mjs` 提供统一本地服务，Claude 和 Codex 都有明确接入方式。
-- Hook：Claude 有原生 hooks；其他运行时只用最接近的原生机制，不伪造 1:1 等价层。
+- Hook：Claude 有原生 hooks；OpenClaw 走原生 bundled hooks + `BOOT.md`；Codex 的审批与沙箱走宿主配置层，不伪造 1:1 仓库 hook 文件。
 
 ## 五、命令
 
 - `npm run sync:runtimes`
 - `npm run test:mcp`
+- `npm run prepare:openclaw-local`
+- `npm run eval:agents`
 - `npm run validate`
 - `npm run check`
 

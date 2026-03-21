@@ -14,7 +14,9 @@ const claudeSkillPath = path.join(
   "meta-theory",
   "SKILL.md"
 );
-const codexSkillsDir = path.join(repoRoot, ".codex", "skills");
+const codexLegacySkillsDir = path.join(repoRoot, ".codex", "skills");
+const codexAgentsDir = path.join(repoRoot, ".codex", "agents");
+const codexProjectSkillsDir = path.join(repoRoot, ".agents", "skills");
 const openclawDir = path.join(repoRoot, "openclaw");
 const openclawWorkspacesDir = path.join(openclawDir, "workspaces");
 const openclawSkillsDir = path.join(openclawDir, "skills");
@@ -167,6 +169,49 @@ function buildUser() {
 ## Context
 
 补充这位用户和 Meta_Kim 项目有关的长期偏好，但不要记录无关隐私。
+`;
+}
+
+function buildBoot(agent) {
+  const { displayName } = parseAgentPresentation(agent);
+
+  return `# BOOT.md - ${agent.id}
+
+OpenClaw 网关启动后，如需执行一次性启动检查，优先按下面顺序进行。
+
+1. 确认 workspace 路径正确，且 \`IDENTITY.md\`、\`SOUL.md\`、\`TOOLS.md\`、\`AGENTS.md\` 可读。
+2. 不要主动向用户发消息；只有启动任务明确要求时才执行。
+3. 若发现角色边界冲突，直接记录到 \`MEMORY.md\` 的待确认区，不要私自改写人格。
+4. 如果你是 \`${displayName}\`，只在自己的职责边界内做启动期检查。
+`;
+}
+
+function buildMemory(agent) {
+  return `# MEMORY.md - ${agent.id}
+
+这里记录长期稳定、跨会话仍然成立的信息。
+
+## 应该记录
+
+- 稳定的用户偏好
+- 反复出现的架构决策
+- 已确认的职责边界解释
+- 后续会持续生效的风险约束
+
+## 不应该记录
+
+- 一次性任务状态
+- 临时命令输出
+- 未经确认的推测
+- 与 Meta_Kim 无关的个人隐私
+`;
+}
+
+function buildMemoryDirectoryNote(agent) {
+  return `# memory/README.md - ${agent.id}
+
+OpenClaw 的 \`session-memory\` hook 会把需要保留的会话快照写到这里。
+这个目录属于运行时沉淀层，不是主源；如需修改策略，请先改 \`MEMORY.md\` 与 Claude 主源提示词。
 `;
 }
 
@@ -339,6 +384,25 @@ ${teammates || "- 无"}
 `;
 }
 
+function buildOpenClawHooks() {
+  return {
+    internal: {
+      enabled: true,
+      entries: {
+        "session-memory": {
+          enabled: true,
+        },
+        "command-logger": {
+          enabled: true,
+        },
+        "boot-md": {
+          enabled: true,
+        },
+      },
+    },
+  };
+}
+
 function buildOpenClawConfig(agents, workspaceRoot) {
   return {
     agents: {
@@ -353,6 +417,7 @@ function buildOpenClawConfig(agents, workspaceRoot) {
       })),
     },
     bindings: [],
+    hooks: buildOpenClawHooks(),
     tools: {
       agentToAgent: {
         enabled: true,
@@ -377,6 +442,7 @@ function buildLocalOpenClawConfig(agents, workspaceRoot, model) {
       })),
     },
     bindings: [],
+    hooks: buildOpenClawHooks(),
     tools: {
       agentToAgent: {
         enabled: true,
@@ -388,6 +454,45 @@ function buildLocalOpenClawConfig(agents, workspaceRoot, model) {
 
 async function ensureDir(dirPath) {
   await fs.mkdir(dirPath, { recursive: true });
+}
+
+function escapeTomlBasicMultiline(value) {
+  return value.replace(/\\/g, "\\\\").replace(/"""/g, '\\"\\"\\"');
+}
+
+function buildCodexAgentInstructions(agent) {
+  return [
+    `You are the Codex custom agent mirror of Meta_Kim agent \`${agent.id}\`.`,
+    `Primary responsibility: ${agent.description}`,
+    "Stay inside your own responsibility boundary.",
+    "If the task crosses agent boundaries, hand the decision back to the parent session or recommend the correct sibling meta agent.",
+    "Use the portable meta-theory skill when it helps, but do not claim ownership of another agent's deliverable.",
+    "",
+    agent.body.trim(),
+  ].join("\n");
+}
+
+function buildCodexAgent(agent) {
+  const instructions = escapeTomlBasicMultiline(buildCodexAgentInstructions(agent));
+
+  return `name = "${agent.id}"
+description = "${agent.description.replace(/"/g, '\\"')}"
+developer_instructions = """
+${instructions}
+"""
+`;
+}
+
+function buildCodexSkillMetadata() {
+  return `interface:
+  display_name: "Meta Theory"
+  short_description: "Meta_Kim 的跨运行时元理论与协作方法"
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  mcp_servers:
+    - meta_kim_runtime
+`;
 }
 
 async function writeGeneratedFile(filePath, nextContent) {
@@ -428,6 +533,7 @@ async function main() {
   for (const agent of agents) {
     const workspaceDir = path.join(openclawWorkspacesDir, agent.id);
     const writes = await Promise.all([
+      writeGeneratedFile(path.join(workspaceDir, "BOOT.md"), buildBoot(agent)),
       writeGeneratedFile(
         path.join(workspaceDir, "BOOTSTRAP.md"),
         buildBootstrap(agent)
@@ -435,6 +541,10 @@ async function main() {
       writeGeneratedFile(
         path.join(workspaceDir, "IDENTITY.md"),
         buildIdentity(agent)
+      ),
+      writeGeneratedFile(
+        path.join(workspaceDir, "MEMORY.md"),
+        buildMemory(agent)
       ),
       writeGeneratedFile(path.join(workspaceDir, "USER.md"), buildUser()),
       writeGeneratedFile(path.join(workspaceDir, "SOUL.md"), buildSoul(agent)),
@@ -444,6 +554,10 @@ async function main() {
         buildHeartbeat(agent)
       ),
       writeGeneratedFile(path.join(workspaceDir, "TOOLS.md"), buildTools(agent, agents)),
+      writeGeneratedFile(
+        path.join(workspaceDir, "memory", "README.md"),
+        buildMemoryDirectoryNote(agent)
+      ),
       writeGeneratedFile(
         path.join(workspaceDir, "skills", "meta-theory", "SKILL.md"),
         portableSkill
@@ -489,11 +603,38 @@ async function main() {
   }
   if (
     (await writeGeneratedFile(
-      path.join(codexSkillsDir, "meta-theory.md"),
+      path.join(codexLegacySkillsDir, "meta-theory.md"),
       portableSkill
     )).changed
   ) {
     changedFiles.push(".codex/skills/meta-theory.md");
+  }
+  if (
+    (await writeGeneratedFile(
+      path.join(codexProjectSkillsDir, "meta-theory", "SKILL.md"),
+      portableSkill
+    )).changed
+  ) {
+    changedFiles.push(".agents/skills/meta-theory/SKILL.md");
+  }
+  if (
+    (await writeGeneratedFile(
+      path.join(codexProjectSkillsDir, "meta-theory", "agents", "openai.yaml"),
+      buildCodexSkillMetadata()
+    )).changed
+  ) {
+    changedFiles.push(".agents/skills/meta-theory/agents/openai.yaml");
+  }
+
+  for (const agent of agents) {
+    if (
+      (await writeGeneratedFile(
+        path.join(codexAgentsDir, `${agent.id}.toml`),
+        buildCodexAgent(agent)
+      )).changed
+    ) {
+      changedFiles.push(`.codex/agents/${agent.id}.toml`);
+    }
   }
 
   if (checkOnly && changedFiles.length > 0) {
