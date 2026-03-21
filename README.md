@@ -128,9 +128,9 @@ Meta_Kim 想解决的正是这个问题：
 ```text
 Meta_Kim/
 ├─ .claude/        Claude Code 主源，包括 agents、skills、hooks、settings
-├─ .codex/         Codex 自定义 agent 与技能镜像
+├─ .codex/         Codex 直接读取的仓库内 agents 与 skills
 ├─ .agents/        Codex 项目级 skills 目录
-├─ codex/          Codex 配置示例
+├─ codex/          只是给用户复制到 ~/.codex/config.toml 的配置示例
 ├─ openclaw/       OpenClaw workspace、模板配置、运行时镜像
 ├─ scripts/        同步、校验、MCP、自检、OpenClaw 本地准备脚本
 ├─ shared-skills/  跨运行时共享的技能镜像
@@ -140,9 +140,47 @@ Meta_Kim/
 └─ README.md       项目总说明
 ```
 
+## 最容易看不懂的两个点
+
+### 1. 为什么有 `codex/`，但 Claude 和 OpenClaw 没有对应同名目录
+
+因为三家的配置读取方式不一样。
+
+- Claude Code 直接读仓库里的 `CLAUDE.md`、`.claude/`、`.mcp.json`
+- OpenClaw 直接读仓库里的 `openclaw/`
+- Codex 一部分读仓库内的 `.codex/`、`.agents/`，另一部分还需要用户目录下的全局配置 `~/.codex/config.toml`
+
+所以这里会看到两个和 Codex 相关的目录：
+
+- `.codex/`：这是 Codex 真正会直接读取的仓库内运行时资产
+- `codex/`：这里只放一个配置示例，作用是告诉用户怎么写自己的 `~/.codex/config.toml`
+
+也就是说，`codex/` 不是多出来的一套运行时，也不是和 `.codex/` 重复。
+
+它只是一个“示例说明目录”。
+
+### 2. `npm` 那几条命令到底是干嘛的
+
+如果你第一次看这个仓库，很容易以为每条命令都得跑。其实不是。
+
+它们分别是：
+
+- `npm install`：安装这个仓库用到的 Node 依赖。第一次下载项目后跑一次即可。
+- `npm run sync:runtimes`：把主源同步成 Claude Code、Codex、OpenClaw 三端实际要用的文件。只有你改了 agent、skill、运行时资产之后才需要跑。
+- `npm run prepare:openclaw-local`：给 OpenClaw 做本机准备。因为 OpenClaw 不只读仓库文件，还会用到你电脑用户目录下的本地授权和 agent 状态，所以只有你要在本机跑 OpenClaw 时才需要。
+- `npm run verify:all`：做总验收。它会统一检查三端资产有没有漏、有没有坏、能不能对上。适合在发布、提交、开源前使用。
+
+你可以按场景理解：
+
+- 只想看项目、看文档：什么都可以不跑
+- 第一次下载后想把环境装好：跑 `npm install`
+- 改了 agent / skill / 配置后想同步三端：跑 `npm run sync:runtimes`
+- 想在本机真正跑 OpenClaw：再跑 `npm run prepare:openclaw-local`
+- 想确认整个仓库现在可发布、可验收：跑 `npm run verify:all`
+
 ## 快速开始
 
-在仓库根目录执行：
+如果你是第一次下载项目，并且想把三端都准备好，在仓库根目录执行：
 
 ```bash
 npm install
@@ -151,12 +189,30 @@ npm run prepare:openclaw-local
 npm run verify:all
 ```
 
-这四步分别是：
+更直白地说：
 
-- `npm install`：安装依赖
-- `npm run sync:runtimes`：把主源同步成三端可用资产
-- `npm run prepare:openclaw-local`：同步 OpenClaw 本机授权与本地状态
-- `npm run verify:all`：统一做校验与三端验收
+- `npm install`
+  作用：装依赖
+  什么时候需要：第一次下载项目后
+
+- `npm run sync:runtimes`
+  作用：重新生成三端运行时文件
+  什么时候需要：你改了 agent、skill、运行时配置后
+
+- `npm run prepare:openclaw-local`
+  作用：补 OpenClaw 本机授权和本地 agent 状态
+  什么时候需要：你要在自己电脑上真正跑 OpenClaw
+
+- `npm run verify:all`
+  作用：做完整检查和三端验收
+  什么时候需要：你准备发布、提交，或者怀疑哪里配坏了
+
+如果你只是普通阅读者，通常只需要知道：
+
+- 读文档不需要跑任何命令
+- 改文档通常也不需要跑 `prepare:openclaw-local`
+- 只有动到运行时资产，才需要 `sync:runtimes`
+- 只有准备总验收，才需要 `verify:all`
 
 ## 方法依据与论文
 
