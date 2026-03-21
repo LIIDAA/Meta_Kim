@@ -14,6 +14,7 @@ if [ -n "$PROXY" ]; then
 fi
 
 mkdir -p "$SKILLS_DIR"
+PROJECT_SKILL_OWNER="${META_KIM_SKILL_OWNER:-}"
 
 install_skill() {
   local name="$1"
@@ -58,9 +59,13 @@ echo "  Meta_Kim 元技能依赖安装"
 echo "========================================="
 echo ""
 
-echo "--- 你自己的项目 (KimYx0207) ---"
-install_skill "agent-teams-playbook" "KimYx0207/agent-teams-playbook"
-install_skill "findskill"            "KimYx0207/findskill"
+echo "--- 项目默认依赖 ---"
+if [ -n "$PROJECT_SKILL_OWNER" ]; then
+  install_skill "agent-teams-playbook" "$PROJECT_SKILL_OWNER/agent-teams-playbook"
+  install_skill "findskill"            "$PROJECT_SKILL_OWNER/findskill"
+else
+  echo "  [SKIP] project-owned skills — set META_KIM_SKILL_OWNER to install them"
+fi
 
 echo ""
 echo "--- 社区高星项目 ---"

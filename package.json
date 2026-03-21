@@ -21,7 +21,7 @@
     "agents",
     "prompt-pack"
   ],
-  "author": "KimYx0207",
+  "author": "Meta_Kim contributors",
   "license": "MIT",
   "engines": {
     "node": ">=18"

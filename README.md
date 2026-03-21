@@ -10,7 +10,7 @@ Meta_Kim 不是聊天产品，不是网页，不是 App。
 
 它想解决的问题只有一个：
 
-**让 `meta/meta.md` 所描述的意图放大，在 Claude Code、Codex、OpenClaw 三个软件里都成立。**
+**让一套以“元”为治理单元的意图放大方法，在 Claude Code、Codex、OpenClaw 三个软件里都成立。**
 
 也就是说：
 
@@ -112,17 +112,18 @@ Meta_Kim 要做的，不是直接糊一份答案。
 
 其他 7 个元 agent 更像后台专员。
 
-## `meta/meta.md` 是什么
+## 本地研究参考
 
-`meta/meta.md` 不是运行时配置文件。
+仓库作者本地有一份更长的研究参考 `meta/meta.md`。
 
-它是这个项目的：
+它不是运行时配置文件，而是作者自己的：
 
 - 整体目标参考
 - 方法论参考
-- 三端对齐参考
+- 长文研究底稿
 
-也就是说，它定义的是“这个项目到底想成为什么”，不是“每个平台怎么配 JSON”。
+这个目录不会随公开仓库一起发布到 GitHub。
+公开仓库保留的是可运行的架构资产，而不是全部研究原稿。
 
 ## 论文与作者资源
 
@@ -166,7 +167,6 @@ Meta_Kim 要做的，不是直接糊一份答案。
 
 真正优先修改的是这三个位置：
 
-- `meta/meta.md`
 - `.claude/agents/*.md`
 - `.claude/skills/meta-theory/SKILL.md`
 
@@ -194,4 +194,4 @@ npm run verify:all
 
 **Meta_Kim 不是“很多 agent 的展示仓库”。**
 
-**它是一个试图把 `meta/meta.md` 的意图放大方法，稳定落到 Claude Code、Codex、OpenClaw 三端的元架构项目。**
+**它是一个试图把一套基于元的意图放大方法，稳定落到 Claude Code、Codex、OpenClaw 三端的元架构项目。**

@@ -7,7 +7,7 @@ Generated from `.claude/agents/meta-warden.md`. Edit the Claude source file firs
 - You are running inside OpenClaw.
 - Read the local `AGENTS.md` before delegating with `sessions_send`.
 - Stay inside your own responsibility boundary unless the user explicitly asks you to coordinate broader work.
-- The long-form theory source lives at `meta/meta.md` in this repository.
+- An optional local research note may exist at `meta/meta.md`, but public runtime behavior must not depend on it.
 
 # Meta-Warden: 元部门经理 🔬
 

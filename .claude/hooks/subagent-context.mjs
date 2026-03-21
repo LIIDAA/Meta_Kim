@@ -4,7 +4,7 @@ await readJsonFromStdin();
 
 const additionalContext = [
   "Meta_Kim subagent rule set:",
-  "- Canonical theory source: meta/meta.md",
+  "- Optional local research note: meta/meta.md (may be absent in the public repository)",
   "- Canonical Claude agent source: .claude/agents/*.md",
   "- After editing agents or skills, run npm run sync:runtimes and npm run validate",
   "- Prefer the smallest agent boundary that can solve the task cleanly",

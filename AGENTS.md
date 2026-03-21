@@ -2,7 +2,7 @@
 
 这不是一个“随便造几个 agent”的仓库。
 
-这个仓库的目标，是让 `meta/meta.md` 所代表的意图放大方向，在 Codex、Claude Code、OpenClaw 三个运行时里都能落地。
+这个仓库的目标，是让一套以“元”为治理单元的意图放大方向，在 Codex、Claude Code、OpenClaw 三个运行时里都能落地。
 
 ## 先理解“元”
 
@@ -24,7 +24,6 @@
 
 如果你在 Codex 里打开这个仓库，应该把它理解成：
 
-- `meta/meta.md` 负责提供整体目标参考
 - `AGENTS.md` 负责告诉 Codex 这个项目到底想做什么
 - `.codex/agents/` 负责把 8 个元角色映射成 Codex custom agents
 - `.agents/skills/` 负责提供项目级 skill
@@ -65,8 +64,6 @@
 
 优先修改：
 
-- `meta/meta.md`
-  这里不是运行时配置，而是整体目标参考
 - `.claude/agents/*.md`
 - `.claude/skills/meta-theory/SKILL.md`
 

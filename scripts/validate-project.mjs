@@ -59,10 +59,6 @@ async function validateRequiredFiles() {
     ".gitignore",
     ".mcp.json",
     ".claude/settings.json",
-    "meta/meta.md",
-    "meta/runtime-capability-matrix.md",
-    "meta/repo-map.md",
-    "meta/runtime-coverage-audit.md",
     ".claude/skills/meta-theory/SKILL.md",
     ".agents/skills/meta-theory/SKILL.md",
     ".agents/skills/meta-theory/agents/openai.yaml",
@@ -294,6 +290,7 @@ async function validateGitignore() {
   const gitignore = await fs.readFile(gitignorePath, "utf8");
   for (const expected of [
     "node_modules/",
+    "meta/",
     "openclaw/openclaw.local.json",
     "openclaw/workspaces/*/.openclaw/"
   ]) {
