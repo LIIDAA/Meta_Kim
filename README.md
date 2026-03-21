@@ -1,103 +1,110 @@
 # Meta_Kim
 
-> 一个跨 Claude Code、Codex、OpenClaw 的 **意图放大架构包**。
+![Runtime](https://img.shields.io/badge/runtime-Claude%20Code%20%7C%20Codex%20%7C%20OpenClaw-111827)
+![Method](https://img.shields.io/badge/method-%E6%84%8F%E5%9B%BE%E6%94%BE%E5%A4%A7-0f766e)
+![License](https://img.shields.io/badge/license-CC%20BY%204.0-f59e0b)
 
-## 这项目到底是什么
+AI 元架构 · 意图放大 · 三端同构
 
-Meta_Kim 不是聊天产品，不是网页，不是 App。
+> 同一套“基于元的意图放大”方法，同时落到 Claude Code、Codex、OpenClaw。
 
-它是一个给 AI 编程助手用的“底层架构包”。
+> 用户用哪个软件，就走哪个软件的入口；但背后的放大逻辑、治理逻辑、协作逻辑保持一致。
 
-它想解决的问题只有一个：
+* * *
 
-**让一套以“元”为治理单元的意图放大方法，在 Claude Code、Codex、OpenClaw 三个软件里都成立。**
+## 项目简介
 
-也就是说：
+Meta_Kim 不是聊天产品，不是网页，不是 SaaS，也不是单个 prompt。
 
-- 用户用 Claude Code，就走 Claude Code 的入口
-- 用户用 Codex，就走 Codex 的入口
-- 用户用 OpenClaw，就走 OpenClaw 的入口
+它是一个给 AI 助手运行时使用的元架构仓库，核心目标只有一个：
 
-但无论走哪个入口，背后的核心目标都一样：
+**让用户的原始意图先被放大，再被执行。**
 
-**把用户原始意图放大成更完整、更清楚、更可执行的结果。**
-
-## “意图放大”是什么意思
-
-用户最开始说的话，通常是短的、糊的、不完整的。
-
-比如：
-
-- “帮我做个项目”
-- “帮我改一下这个系统”
-- “帮我设计一个 agent 架构”
-
-这种话通常缺很多东西：
+这里的“放大”不是把话说得更长，而是把原始需求里本来缺失的关键部分补出来，例如：
 
 - 真实目标是什么
-- 边界是什么
-- 风险是什么
-- 受众是谁
+- 范围边界是什么
+- 风险与约束是什么
 - 交付物应该长成什么样
 - 先做什么，后做什么
+- 需要哪些能力协同完成
 
-Meta_Kim 要做的，不是直接糊一份答案。
+所以 Meta_Kim 追求的不是“更会聊天”，而是：
 
-而是先把这些东西补全，再进入执行。
+**把一句模糊需求，稳定转成一个更完整、更清楚、更可落地的任务。**
 
-所以“意图放大”可以简单理解成：
+## 为什么要做这个项目
 
-**把一句模糊需求，变成一个结构完整、边界清楚、可以落地的任务。**
+Claude Code、Codex、OpenClaw 都能做事，但它们的入口形态、配置方式、运行时约束并不一样。
 
-## “元”到底是什么
+如果每个软件都各写一套 prompt、各做一套 agent、各养一套 skill，最后一定会出现三种问题：
 
-这个项目里最重要的词，就是“元”。
+- 同一个需求在三端表现不一致
+- 一个地方修了，另外两个地方漏改
+- 结构越来越散，最后只剩“能跑”，没有治理
 
-这里的“元”不是玄学，也不是装饰性命名。
+Meta_Kim 想解决的正是这个问题：
+
+**把方法论放在中间，把运行时适配放在外层。**
+
+这样最终效果是：
+
+- Claude Code 有 Claude Code 的入口
+- Codex 有 Codex 的入口
+- OpenClaw 有 OpenClaw 的入口
+
+但三端都遵循同一套元职责和意图放大标准。
+
+## “元”是什么
+
+这个项目里的“元”，不是装饰词，也不是玄学名词。
 
 在 Meta_Kim 里：
 
 **元 = 为了完成意图放大而存在的最小可治理单元。**
 
-你可以把它理解成：
+“最小可治理单元”有四个关键特征：
 
-- 它有独立职责
-- 它有明确边界
-- 它可以被单独调用
-- 它可以被验证
-- 它坏了可以被替换
+- 有独立职责，不跟别的角色混成一团
+- 有明确边界，知道自己负责什么、不负责什么
+- 可以被单独调用、单独验证、单独替换
+- 可以进入协作关系，但不会失去自身角色定义
 
-所以“元”不是一个万能 agent。
+这意味着 Meta_Kim 不是追求“一个万能 agent 包打天下”，而是追求：
 
-“元”更像复杂系统里的最小治理角色。
+**把复杂能力拆成可治理、可验证、可协作的一组元。**
 
-## 最后会做成什么样
+## 最终会做成什么样
 
-最终成品不是一个单独的大模型 prompt，也不是一堆散乱脚本。
+最终成品不是一个大而全的说明文档，也不是只会展示概念的 agent 清单。
 
-最终成品是：
+最终成品应该呈现成这样：
 
-**一套可以直接装进三种运行时里的元架构。**
+1. 用户提出原始意图
+2. 系统先判断这个意图缺什么
+3. 先做意图放大，再决定要不要分工
+4. 必要时把不同部分交给不同元 agent
+5. 收回结果，统一整理成可执行输出
 
-它在外部应该呈现成这样：
-
-1. 用户提出一个原始需求
-2. 系统先做意图放大
-3. 必要时把任务拆给不同的元 agent
-4. 再把结果收回来
-5. 输出一个比原始问题更完整、更强的结果
-
-所以用户真正感受到的，不应该是“这里有 8 个 agent”。
+所以用户真正感受到的，不应该是“这里有很多 agent”。
 
 用户真正感受到的，应该是：
 
-**这个系统比普通助手更会理解问题，更会拆问题，也更会把事情做完整。**
+**这个系统比普通助手更会理解问题、更会拆问题，也更会把事情做完整。**
 
-## 这 8 个元 agent 是干嘛的
+## 核心能力
 
-它们是后台分工，不是用户菜单。
+- 跨运行时适配：同一套方法论同时落到 Claude Code、Codex、OpenClaw
+- 元职责治理：把能力拆成清楚、稳定、可替换的治理单元
+- 统一入口思路：外部入口不同，内部方法一致
+- 多层能力编排：agent、skill、MCP、hook、memory、workspace 联动
+- 同步与校验：主源改动后可以自动同步并验证三端产物
 
-- `meta-warden`：总入口、统筹、仲裁、最终整合
+## 8 个元 agent 分工
+
+它们是后台分工，不是面向用户的菜单。
+
+- `meta-warden`：统一入口、统筹、仲裁、最终整合
 - `meta-genesis`：人格、提示词、`SOUL.md`
 - `meta-artisan`：skill、MCP、工具能力匹配
 - `meta-sentinel`：hook、安全、权限、回滚
@@ -106,73 +113,34 @@ Meta_Kim 要做的，不是直接糊一份答案。
 - `meta-prism`：质量审查、漂移检测、反 AI 套话
 - `meta-scout`：外部工具发现与评估
 
-外部默认入口应该优先理解成：
+默认对外入口优先理解成 `meta-warden`，其余元 agent 更像后台专员。
 
-- `meta-warden`
+## 三端是怎么落地的
 
-其他 7 个元 agent 更像后台专员。
+| 运行时 | 入口文件 | 主要资产 | 目标 |
+| --- | --- | --- | --- |
+| Claude Code | `CLAUDE.md` | `.claude/agents/`、`.claude/skills/`、`.mcp.json` | 让 Claude Code 直接承载这套意图放大元架构 |
+| Codex | `AGENTS.md` | `.codex/agents/`、`.agents/skills/`、`codex/config.toml.example` | 让 Codex 按同一套元职责和规则运行 |
+| OpenClaw | `openclaw/workspaces/` | `openclaw/openclaw.template.json`、`openclaw/skills/` | 让 OpenClaw 本地 workspace agent 同样围绕意图放大工作 |
 
-## 本地研究参考
+## 仓库结构
 
-仓库作者本地有一份更长的研究参考 `meta/meta.md`。
+```text
+Meta_Kim/
+├─ .claude/        Claude Code 主源，包括 agents、skills、hooks、settings
+├─ .codex/         Codex 自定义 agent 与技能镜像
+├─ .agents/        Codex 项目级 skills 目录
+├─ codex/          Codex 配置示例
+├─ openclaw/       OpenClaw workspace、模板配置、运行时镜像
+├─ scripts/        同步、校验、MCP、自检、OpenClaw 本地准备脚本
+├─ shared-skills/  跨运行时共享的技能镜像
+├─ AGENTS.md       Codex / 通用运行时入口说明
+├─ CLAUDE.md       Claude Code 入口说明
+├─ .mcp.json       Claude Code 项目级 MCP 配置
+└─ README.md       项目总说明
+```
 
-它不是运行时配置文件，而是作者自己的：
-
-- 整体目标参考
-- 方法论参考
-- 长文研究底稿
-
-这个目录不会随公开仓库一起发布到 GitHub。
-公开仓库保留的是可运行的架构资产，而不是全部研究原稿。
-
-## 论文与作者资源
-
-如果你想看这套“基于元的意图放大”背后的详细评测与方法论背景，可以看作者论文：
-
-- 论文页面：<https://zenodo.org/records/18957649>
-- DOI：`10.5281/zenodo.18957649`
-
-如果你想看作者的通用模板、中文教程、联系方式，或者请作者喝杯咖啡，可以看这个仓库：
-
-- 模板与作者入口：<https://github.com/KimYx0207/Claude-Code-x-OpenClaw-Guide-Zh>
-
-这个入口里已经包含：
-
-- Claude Code 与 OpenClaw 的中文教程
-- 作者联系方式
-- 开源知识库入口
-- 打赏支持方式
-
-## 三端分别怎么表现
-
-### Claude Code
-
-- 入口：`CLAUDE.md`
-- 主体：`.claude/agents/`、`.claude/skills/`、`.mcp.json`
-- 目标：让 Claude Code 能直接运行这套围绕意图放大的元架构
-
-### Codex
-
-- 入口：`AGENTS.md`
-- 主体：`.codex/agents/`、`.agents/skills/`、`codex/config.toml.example`
-- 目标：让 Codex 也走同一套元职责，而不是另起一套逻辑
-
-### OpenClaw
-
-- 入口：`openclaw/workspaces/`
-- 主体：`openclaw/openclaw.template.json`、`openclaw/skills/meta-theory.md`
-- 目标：让 OpenClaw 的本地 workspace agent 同样围绕意图放大工作
-
-## 哪些文件是主源
-
-真正优先修改的是这三个位置：
-
-- `.claude/agents/*.md`
-- `.claude/skills/meta-theory/SKILL.md`
-
-其他很多文件都是运行时适配层，或者同步生成的派生产物。
-
-## 最简上手
+## 快速开始
 
 在仓库根目录执行：
 
@@ -183,15 +151,35 @@ npm run prepare:openclaw-local
 npm run verify:all
 ```
 
-这四步的意思：
+这四步分别是：
 
 - `npm install`：安装依赖
-- `npm run sync:runtimes`：生成三端运行时文件
-- `npm run prepare:openclaw-local`：同步 OpenClaw 本机授权
-- `npm run verify:all`：做完整检查和三端验收
+- `npm run sync:runtimes`：把主源同步成三端可用资产
+- `npm run prepare:openclaw-local`：同步 OpenClaw 本机授权与本地状态
+- `npm run verify:all`：统一做校验与三端验收
 
-## 你如果只想一句话记住它
+## 方法依据与论文
 
-**Meta_Kim 不是“很多 agent 的展示仓库”。**
+这个仓库的核心方法依据，是作者关于“基于元的意图放大”的详细评测。
 
-**它是一个试图把一套基于元的意图放大方法，稳定落到 Claude Code、Codex、OpenClaw 三端的元架构项目。**
+- 论文页面：<https://zenodo.org/records/18957649>
+- DOI：`10.5281/zenodo.18957649`
+
+这篇论文提供的是方法论背景、评测依据和理论支撑；仓库提供的是可运行的运行时资产与工程落地。
+
+## 适用场景
+
+- 想把一套 agent 方法同时落到多个 AI 运行时
+- 不满足于“堆 prompt”，而是要做可治理的 agent 架构
+- 需要把 skill、MCP、hook、memory、workspace 一起纳入治理
+- 希望不同软件入口下，得到一致的意图放大效果
+
+## License
+
+本项目采用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可协议。
+
+你可以分享、改编、再发布，但需要保留署名并标注修改。
+
+## 一句话总结
+
+**Meta_Kim 不是一个“展示很多 agent 的仓库”，而是一套让“基于元的意图放大”在 Claude Code、Codex、OpenClaw 三端稳定成立的元架构工程。**

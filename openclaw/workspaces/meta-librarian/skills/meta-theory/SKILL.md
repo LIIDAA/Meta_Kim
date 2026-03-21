@@ -1,7 +1,7 @@
 ---
 name: meta-theory
 version: 1.0.0
-author: Meta_Kim contributors
+author: KimYx0207
 trigger: "元理论|最小可治理单元|组织镜像|节奏编排|意图放大|meta architecture|agent design|agent split|agent governance"
 tools:
   - shell

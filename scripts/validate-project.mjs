@@ -282,7 +282,7 @@ async function validatePackageJson() {
   );
   assert(pkg.dependencies?.["@modelcontextprotocol/sdk"], "package.json is missing @modelcontextprotocol/sdk.");
   assert(pkg.dependencies?.zod, "package.json is missing zod.");
-  assert(pkg.license === "MIT", "package.json license must be MIT.");
+  assert(pkg.license === "CC-BY-4.0", "package.json license must be CC-BY-4.0.");
 }
 
 async function validateGitignore() {
