@@ -39,3 +39,18 @@ These packs are published from the release-layer foundry assets:
 
 They are not the canonical meta-agent source.  
 They are the runtime projections of the foundry release library.
+
+## Specialist Depth
+
+The 1000 specialist runtime projections are not thin mirrors.
+
+They retain the full specialist completion layer:
+
+- Strategic Value
+- Failure Modes to Avoid
+- Escalate Immediately If
+- Output Packet
+- Review Checklist
+- Voice Calibration
+- Signature Questions
+- Default Reasoning Sequence

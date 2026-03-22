@@ -86,6 +86,15 @@ factory/
 - Escalate Immediately If
 - Output Packet
 - Review Checklist
+- Voice Calibration
+- Signature Questions
+- Default Reasoning Sequence
+
+也就是说，这 1000 个 specialist 现在不只是“会做什么”，还被统一写清了：
+
+- 应该怎么说话
+- 先问哪几个关键问题
+- 默认按什么推理顺序推进
 
 ### `flagship-20/` 和 `flagship-20.md`
 
@@ -112,6 +121,19 @@ factory/
 - Claude Code
 - Codex
 - OpenClaw
+
+这些运行时包不再是薄投影。
+
+1000 个 specialist 在三端运行时里也同步保留了：
+
+- Strategic Value
+- Failure Modes to Avoid
+- Escalate Immediately If
+- Output Packet
+- Review Checklist
+- Voice Calibration
+- Signature Questions
+- Default Reasoning Sequence
 
 ### `organization-map.json`
 

@@ -86,6 +86,15 @@ Those 1000 specialist briefs now include a stronger execution layer:
 - Escalate Immediately If
 - Output Packet
 - Review Checklist
+- Voice Calibration
+- Signature Questions
+- Default Reasoning Sequence
+
+That means the 1000 specialists now define not only what they own, but also:
+
+- how they should sound
+- which questions they should ask first
+- what default reasoning sequence they should follow
 
 ### `flagship-20/` and `flagship-20.md`
 
@@ -112,6 +121,19 @@ It contains the full 1100-agent runtime projection for:
 - Claude Code
 - Codex
 - OpenClaw
+
+These are no longer thin mirrors.
+
+The runtime projections for the 1000 specialists also retain:
+
+- Strategic Value
+- Failure Modes to Avoid
+- Escalate Immediately If
+- Output Packet
+- Review Checklist
+- Voice Calibration
+- Signature Questions
+- Default Reasoning Sequence
 
 ### `organization-map.json`
 

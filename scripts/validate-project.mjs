@@ -550,7 +550,10 @@ async function validateFactoryRelease() {
     "## Failure Modes to Avoid",
     "## Escalate Immediately If",
     "## Output Packet",
-    "## Review Checklist"
+    "## Review Checklist",
+    "## Voice Calibration",
+    "## Signature Questions",
+    "## Default Reasoning Sequence"
   ];
   for (const specialistPath of specialistFiles) {
     const raw = await fs.readFile(specialistPath, "utf8");
@@ -559,6 +562,38 @@ async function validateFactoryRelease() {
         raw.includes(section),
         `${path.relative(repoRoot, specialistPath)} is missing section ${section}.`
       );
+    }
+
+    const industry = path.basename(path.dirname(path.dirname(specialistPath)));
+    const department = path.basename(path.dirname(specialistPath));
+    const specialist = path.basename(specialistPath, ".md");
+    const specialistId = `${industry}-${department}-${specialist}`;
+    const runtimeTargets = [
+      path.join(repoRoot, "factory", "runtime-packs", "claude", "agents", `${specialistId}.md`),
+      path.join(repoRoot, "factory", "runtime-packs", "codex", "agents", `${specialistId}.toml`),
+      path.join(
+        repoRoot,
+        "factory",
+        "runtime-packs",
+        "openclaw",
+        "workspaces",
+        specialistId,
+        "SOUL.md"
+      )
+    ];
+
+    for (const runtimePath of runtimeTargets) {
+      assert(
+        await exists(runtimePath),
+        `Missing specialist runtime artifact: ${path.relative(repoRoot, runtimePath)}.`
+      );
+      const runtimeRaw = await fs.readFile(runtimePath, "utf8");
+      for (const section of requiredSpecialistSections) {
+        assert(
+          runtimeRaw.includes(section),
+          `${path.relative(repoRoot, runtimePath)} is missing section ${section}.`
+        );
+      }
     }
   }
 }

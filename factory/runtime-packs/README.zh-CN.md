@@ -39,3 +39,18 @@ factory/runtime-packs/
 
 它们不是元 agent 主源。  
 它们是 foundry 发布库投影到三端后的最终机器包。
+
+## specialist 已经补强到什么程度
+
+这里面的 1000 个 specialist 运行时包，不是薄模板镜像。
+
+它们已经同步保留了完整的 specialist 成品段落：
+
+- Strategic Value
+- Failure Modes to Avoid
+- Escalate Immediately If
+- Output Packet
+- Review Checklist
+- Voice Calibration
+- Signature Questions
+- Default Reasoning Sequence
