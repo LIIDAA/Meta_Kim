@@ -56,6 +56,19 @@ async function countFiles(rootDir, extension) {
   return count;
 }
 
+async function walkFiles(rootDir, extension, bucket = []) {
+  const entries = await fs.readdir(rootDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const entryPath = path.join(rootDir, entry.name);
+    if (entry.isDirectory()) {
+      await walkFiles(entryPath, extension, bucket);
+    } else if (entry.isFile() && entry.name.endsWith(extension)) {
+      bucket.push(entryPath);
+    }
+  }
+  return bucket;
+}
+
 async function listCanonicalSkillReferences() {
   const entries = await fs.readdir(claudeSkillReferencesDir, {
     withFileTypes: true,
@@ -527,6 +540,27 @@ async function validateFactoryRelease() {
   assert(flagshipSummary.counts?.claudeAgents === 20, "flagship-complete/summary.json must report 20 Claude flagship agents.");
   assert(flagshipSummary.counts?.codexAgents === 20, "flagship-complete/summary.json must report 20 Codex flagship agents.");
   assert(flagshipSummary.counts?.openclawWorkspaces === 20, "flagship-complete/summary.json must report 20 OpenClaw flagship workspaces.");
+
+  const specialistFiles = await walkFiles(
+    path.join(repoRoot, "factory", "agent-library", "specialists"),
+    ".md"
+  );
+  const requiredSpecialistSections = [
+    "## Strategic Value",
+    "## Failure Modes to Avoid",
+    "## Escalate Immediately If",
+    "## Output Packet",
+    "## Review Checklist"
+  ];
+  for (const specialistPath of specialistFiles) {
+    const raw = await fs.readFile(specialistPath, "utf8");
+    for (const section of requiredSpecialistSections) {
+      assert(
+        raw.includes(section),
+        `${path.relative(repoRoot, specialistPath)} is missing section ${section}.`
+      );
+    }
+  }
 }
 
 async function main() {

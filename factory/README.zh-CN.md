@@ -79,6 +79,14 @@ factory/
 - 1000 个 specialist brief
 - 对应的机器索引 `agent-index.json`
 
+现在这 1000 个 specialist 不是薄模板，已经统一补齐了：
+
+- Strategic Value
+- Failure Modes to Avoid
+- Escalate Immediately If
+- Output Packet
+- Review Checklist
+
 ### `flagship-20/` 和 `flagship-20.md`
 
 这是从大盘里挑出来的第一批 20 个最关键行业主力。

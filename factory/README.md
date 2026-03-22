@@ -79,6 +79,14 @@ It contains:
 - 1000 specialist agent briefs
 - the machine-readable `agent-index.json`
 
+Those 1000 specialist briefs now include a stronger execution layer:
+
+- Strategic Value
+- Failure Modes to Avoid
+- Escalate Immediately If
+- Output Packet
+- Review Checklist
+
 ### `flagship-20/` and `flagship-20.md`
 
 These identify the first 20 most important industry leaders inside the broader library.
