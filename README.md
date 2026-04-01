@@ -261,36 +261,6 @@ Every valid business run must keep a single organizing thread:
 
 If a plan bundles unrelated goals into the same run, `meta-conductor` should reject it and `meta-warden` should keep it out of public display.
 
-### Critical: You Are the Dispatcher, Not the Executor
-
-**This is the most important behavioral rule across all runtimes (Claude Code, Codex, OpenClaw):**
-
-When you receive a complex task:
-
-- **You do NOT write code directly.** You are the orchestrator.
-- **For Type C tasks** (multi-file, cross-module, or requiring multiple capabilities): use the 8-stage spine.
-- **You MUST spawn sub-agents** for each sub-task in Execution stage via Task() invocations.
-- **Your job ends at Stage 4 dispatch.** After spawning agents, wait for their results, then proceed to Stage 5 Review.
-
-**Anti-pattern to AVOID:**
-```
-User: build a notification system
-→ You immediately start writing code across 10 files
-```
-
-**Correct pattern:**
-```
-User: build a notification system
-→ Critical: clarify scope
-→ Fetch: search existing agents
-→ Thinking: plan sub-tasks, design card deck
-→ Execution: spawn sub-agents via Task()
-→ Review: check each agent's output
-→ Meta-Review + Verification + Evolution
-```
-
-If you find yourself about to write code without having spawned an agent first: **STOP.** Ask "Who should handle this?"
-
 ## How To Use It
 
 ### Auto Mode (just talk normally)
