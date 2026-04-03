@@ -155,6 +155,13 @@ This skeleton is not a second user interface. It exists so runs can be governed 
 
 In particular, Codex-side summaries should respect the project’s public-display discipline. A run should not be treated as display-ready unless verification, summary closure, single-deliverable discipline, and deliverable-chain closure all hold under the workflow contract.
 
+The current hardening layer now expects:
+
+- `taskClassification` before execution (`taskClass + requestClass + governanceFlow + trigger/upgrade/bypass reasons`)
+- finding-level closure (`reviewPacket.findings -> revisionResponses -> verificationResults -> closeFindings`)
+- explicit evolution decision (`writebackDecision = writeback | none`)
+- no final public-ready claim before the public-display gate passes
+
 Main-thread responsibility in Codex:
 
 - scope clarification
@@ -228,6 +235,7 @@ After changing canonical files:
 5. run `npm run eval:agents:live` only when you explicitly need slower prompt-backed runtime acceptance
 6. run `npm run verify:all` before release or after larger changes
 7. run `npm run verify:all:live` only before runtime-sensitive releases that need the live acceptance layer
+8. read `docs/runtime-capability-matrix.md` whenever you touch trigger, hook, review, verification, stop, or writeback behavior across runtimes
 
 Useful supporting commands:
 

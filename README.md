@@ -140,7 +140,7 @@ The maintenance rule follows directly from that design:
 
 The methodological foundation comes from evaluation work on meta-based intent amplification:
 
-- Paper: <https://zenodo.org/records/18957649>
+- Paper: [https://zenodo.org/records/18957649](https://zenodo.org/records/18957649)
 - DOI: `10.5281/zenodo.18957649`
 
 The paper explains the method. This repository turns that method into runtime-ready engineering assets.
@@ -165,11 +165,11 @@ The most important sentence in this repository is:
 
 **Meta_Kim is one method projected into three runtimes, not three separate projects.**
 
-| Runtime | Entry point | Main locations in this repo | Role |
-| --- | --- | --- | --- |
-| Claude Code | [CLAUDE.md](CLAUDE.md) | `.claude/`, `.mcp.json` | Canonical editing runtime and primary source of truth |
-| Codex | [AGENTS.md](AGENTS.md) | `.codex/`, `.agents/`, `codex/` | Codex-native custom agent and skill projection |
-| OpenClaw | `openclaw/workspaces/` | `openclaw/` | OpenClaw local workspace projection |
+| Runtime     | Entry point              | Main locations in this repo           | Role                                                  |
+| ----------- | ------------------------ | ------------------------------------- | ----------------------------------------------------- |
+| Claude Code | [CLAUDE.md](CLAUDE.md)      | `.claude/`, `.mcp.json`           | Canonical editing runtime and primary source of truth |
+| Codex       | [AGENTS.md](AGENTS.md)      | `.codex/`, `.agents/`, `codex/` | Codex-native custom agent and skill projection        |
+| OpenClaw    | `openclaw/workspaces/` | `openclaw/`                         | OpenClaw local workspace projection                   |
 
 The practical takeaway is simple:
 
@@ -200,11 +200,11 @@ Then you can call:
 openclaw agent --local --agent meta-warden --message "I need a system to handle batch data exports with progress tracking." --json --timeout 120
 ```
 
-## The Yuan Concept (元)
+## Meta_Kim(元)
 
 In Meta_Kim:
 
-**yuan (`元`) = the smallest governable unit that exists to support intent amplification**
+**Meta (`元`) = the smallest governable unit that exists to support intent amplification**
 
 A valid yuan unit must be:
 
@@ -265,16 +265,16 @@ graph LR
   S7 --> S8[8 Evolution]
 ```
 
-| Stage | Purpose | Plain-English meaning |
-| --- | --- | --- |
-| `Critical` | Clarify | confirm what the user actually wants before guessing |
-| `Fetch` | Search | look for existing capabilities before assuming they do not exist |
-| `Thinking` | Plan | shape sub-tasks, ownership, deliverables, and sequencing |
-| `Execution` | Execute | hand sub-tasks to the right agents |
-| `Review` | Review | check code, boundaries, and quality |
-| `Meta-Review` | Review the review | make sure the review standard itself is sound |
-| `Verification` | Close the loop | confirm the fix really landed |
-| `Evolution` | Learn | keep patterns, scars, and reusable knowledge |
+| Stage            | Purpose           | Plain-English meaning                                            |
+| ---------------- | ----------------- | ---------------------------------------------------------------- |
+| `Critical`     | Clarify           | confirm what the user actually wants before guessing             |
+| `Fetch`        | Search            | look for existing capabilities before assuming they do not exist |
+| `Thinking`     | Plan              | shape sub-tasks, ownership, deliverables, and sequencing         |
+| `Execution`    | Execute           | hand sub-tasks to the right agents                               |
+| `Review`       | Review            | check code, boundaries, and quality                              |
+| `Meta-Review`  | Review the review | make sure the review standard itself is sound                    |
+| `Verification` | Close the loop    | confirm the fix really landed                                    |
+| `Evolution`    | Learn             | keep patterns, scars, and reusable knowledge                     |
 
 The four iron rules underneath that flow are:
 
@@ -316,10 +316,10 @@ This distinction matters because it is one of the easiest ways to misunderstand 
 
 There are two layers of workflow language in the project:
 
-| Layer | Defined in | Purpose |
-| --- | --- | --- |
-| **8-stage spine** | `meta-theory` / `dev-governance.md` | canonical execution chain for complex development work |
-| **10-phase business workflow** | `contracts/workflow-contract.json` | run-contract language, display language, and deliverable discipline for department runs |
+| Layer                                | Defined in                              | Purpose                                                                                 |
+| ------------------------------------ | --------------------------------------- | --------------------------------------------------------------------------------------- |
+| **8-stage spine**              | `meta-theory` / `dev-governance.md` | canonical execution chain for complex development work                                  |
+| **10-phase business workflow** | `contracts/workflow-contract.json`    | run-contract language, display language, and deliverable discipline for department runs |
 
 The 8-stage spine remains the underlying execution backbone:
 
@@ -430,14 +430,14 @@ Under the readable 8-stage flow, the project design also uses a hidden governanc
 
 Common state layers include:
 
-| State layer | Typical values | Primary owner | Why it exists |
-| --- | --- | --- | --- |
-| `stageState` | `Critical -> ... -> Evolution` | Conductor | track canonical stage progression |
-| `controlState` | `normal / skip / interrupt / intentional-silence / iteration` | Conductor | change dealing rhythm without inventing fake stages |
-| `gateState` | `planning-open / verification-open / synthesis-ready` | Warden + Prism | separate stage completion from actual gate clearance |
-| `surfaceState` | `debug-surface / internal-ready / public-ready` | Warden | decide whether a run is displayable |
-| `capabilityState` | `covered / partial / gap / escalated` | Scout + Artisan | make capability coverage explicit |
-| `agentInvocationState` | `idle / discovered / matched / dispatched / returned / escalated` | meta-theory | enforce search-first delegation instead of lazy self-execution |
+| State layer              | Typical values                                                      | Primary owner   | Why it exists                                                  |
+| ------------------------ | ------------------------------------------------------------------- | --------------- | -------------------------------------------------------------- |
+| `stageState`           | `Critical -> ... -> Evolution`                                    | Conductor       | track canonical stage progression                              |
+| `controlState`         | `normal / skip / interrupt / intentional-silence / iteration`     | Conductor       | change dealing rhythm without inventing fake stages            |
+| `gateState`            | `planning-open / verification-open / synthesis-ready`             | Warden + Prism  | separate stage completion from actual gate clearance           |
+| `surfaceState`         | `debug-surface / internal-ready / public-ready`                   | Warden          | decide whether a run is displayable                            |
+| `capabilityState`      | `covered / partial / gap / escalated`                             | Scout + Artisan | make capability coverage explicit                              |
+| `agentInvocationState` | `idle / discovered / matched / dispatched / returned / escalated` | meta-theory     | enforce search-first delegation instead of lazy self-execution |
 
 This skeleton is intentionally **hidden**:
 
@@ -461,18 +461,24 @@ In practical terms:
 - “there is something to show” is not enough
 - if verification is still open, the deliverable chain is broken, or synthesis is not closed, the run should remain on the debug or internal surface
 
+This is now treated as a hard release gate in the canonical contract:
+
+- no `verifyPassed` -> no final public draft
+- no `summaryClosed` -> no external-ready result
+- no closed deliverable chain -> no completed status
+
 ## Rollback Protocol
 
 The Verification stage does not only decide pass or fail. It also decides whether a rollback is necessary.
 
 Meta_Kim treats rollback as a layered response:
 
-| Rollback level | Trigger | Action |
-| --- | --- | --- |
-| File-level | a regression is isolated to one file | restore that file to the last known good state |
-| Sub-task level | one sub-task broke adjacent paths | rollback only that sub-task’s file set |
-| Partial rollback | some sub-tasks succeeded and some failed | keep the successful work, rollback the failed portion, then re-enter Thinking |
-| Full rollback | cross-module contamination or invalidated assumptions | stash uncommitted changes and return to Stage 1 with a revised scope |
+| Rollback level   | Trigger                                               | Action                                                                        |
+| ---------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------- |
+| File-level       | a regression is isolated to one file                  | restore that file to the last known good state                                |
+| Sub-task level   | one sub-task broke adjacent paths                     | rollback only that sub-task’s file set                                       |
+| Partial rollback | some sub-tasks succeeded and some failed              | keep the successful work, rollback the failed portion, then re-enter Thinking |
+| Full rollback    | cross-module contamination or invalidated assumptions | stash uncommitted changes and return to Stage 1 with a revised scope          |
 
 The simple mental model is:
 
@@ -490,14 +496,14 @@ In Meta_Kim, `Evolution` is not just a conversational summary. Structural learni
 
 Typical outputs and storage locations are:
 
-| Output | Storage location | Meaning |
-| --- | --- | --- |
-| Reusable patterns | `memory/patterns/{pattern-name}.md` | preserve repeatable solutions |
-| Scars | `memory/scars/{scar-id}.yaml` | turn failures into future prevention rules |
-| New skills | `.claude/skills/{skill-name}/SKILL.md` | convert learning into callable capability |
-| Agent boundary adjustments | `.claude/agents/{agent}.md` | usually followed by `npm run sync:runtimes` |
-| Rhythm optimizations | `contracts/workflow-contract.json` or Conductor defaults | improve the next dispatch cycle |
-| Capability gap records | `memory/capability-gaps.md` | keep unresolved gaps visible to Scout |
+| Output                     | Storage location                                           | Meaning                                       |
+| -------------------------- | ---------------------------------------------------------- | --------------------------------------------- |
+| Reusable patterns          | `memory/patterns/{pattern-name}.md`                      | preserve repeatable solutions                 |
+| Scars                      | `memory/scars/{scar-id}.yaml`                            | turn failures into future prevention rules    |
+| New skills                 | `.claude/skills/{skill-name}/SKILL.md`                   | convert learning into callable capability     |
+| Agent boundary adjustments | `.claude/agents/{agent}.md`                              | usually followed by `npm run sync:runtimes` |
+| Rhythm optimizations       | `contracts/workflow-contract.json` or Conductor defaults | improve the next dispatch cycle               |
+| Capability gap records     | `memory/capability-gaps.md`                              | keep unresolved gaps visible to Scout         |
 
 If an Evolution artifact has no explicit storage location, it does not count as captured learning.
 
@@ -507,13 +513,18 @@ The canonical rules now also require one extra owner question after each run:
 - should the owner boundary be adjusted?
 - if a temporary `generalPurpose` owner was used, should it now become a real maintained capability?
 
+Each run must now also emit an explicit `writebackDecision`:
+
+- `writeback` -> list the concrete targets
+- `none` -> explain why no durable writeback is justified for this run
+
 ## When You Need This
 
-| Your situation | Without Meta_Kim | With Meta_Kim |
-| --- | --- | --- |
-| “Refactor the auth module across 6 files” | AI jumps in, changes files, breaks things in other modules | clarifies scope first, assigns the right roles, reviews cross-module impact |
-| “Design a new agent for my project” | you get a generic template that does not fit your domain | the system asks what you need, checks existing agents first, and only creates one when necessary |
-| “My agents keep stepping on each other’s toes” | confusion, duplicated work, nobody knows who owns what | clear ownership boundaries, governance flow, quality gates |
+| Your situation                                    | Without Meta_Kim                                           | With Meta_Kim                                                                                    |
+| ------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| “Refactor the auth module across 6 files”       | AI jumps in, changes files, breaks things in other modules | clarifies scope first, assigns the right roles, reviews cross-module impact                      |
+| “Design a new agent for my project”             | you get a generic template that does not fit your domain   | the system asks what you need, checks existing agents first, and only creates one when necessary |
+| “My agents keep stepping on each other’s toes” | confusion, duplicated work, nobody knows who owns what     | clear ownership boundaries, governance flow, quality gates                                       |
 
 **If you mostly edit one file at a time, you probably do not need this.** Meta_Kim helps when work spans files, modules, or capability boundaries.
 
@@ -522,23 +533,25 @@ The canonical rules now also require one extra owner question after each run:
 1. **Clarifies before executing**: asks follow-up questions when the request is vague instead of guessing
 2. **Searches before assuming**: checks whether an existing agent / skill already covers the job
 3. **Establishes an owner before execution**: except for pure queries, every executable task needs an explicit owner
-4. **Defines the protocol before work starts**: task packets, handoff chain, review packet, and verification packet come first
-5. **Parallelizes when safe**: independent tasks should not be serialized by default
-6. **Reviews every output**: code quality, safety, architecture compliance, protocol compliance, and boundary violations
-7. **Writes learning back into the system**: reusable patterns, scars, and owner / skill / contract adjustments are persisted
+4. **Classifies before it routes**: `taskClass + requestClass + governanceFlow + trigger/upgrade/bypass reasons` are expected before execution starts
+5. **Defines the protocol before work starts**: task classification, task packets, handoff chain, review packet, and verification packet come first
+6. **Closes review findings explicitly**: review findings, revision responses, verification results, and `closeFindings` must line up
+7. **Parallelizes when safe**: independent tasks should not be serialized by default
+8. **Reviews every output**: code quality, safety, architecture compliance, protocol compliance, and boundary violations
+9. **Writes learning back into the system**: reusable patterns, scars, and owner / skill / contract adjustments are persisted
 
 ## The Eight Yuan / Meta Agents
 
-| Agent | Main job | Human shorthand |
-| --- | --- | --- |
-| `meta-warden` | default entry, arbitration, final synthesis | project manager / coordinator |
-| `meta-conductor` | sequencing and rhythm control | dispatcher |
-| `meta-genesis` | `SOUL.md`, persona, cognitive structure | prompt and role architect |
-| `meta-artisan` | skills, MCP, tool fit | capability engineer |
-| `meta-sentinel` | safety, permissions, hooks, rollback | security guardrail |
-| `meta-librarian` | memory and continuity | knowledge keeper |
-| `meta-prism` | quality review, drift detection, anti-slop checks | quality forensic reviewer |
-| `meta-scout` | external capability discovery and evaluation | scout and evaluator |
+| Agent              | Main job                                          | Human shorthand               |
+| ------------------ | ------------------------------------------------- | ----------------------------- |
+| `meta-warden`    | default entry, arbitration, final synthesis       | project manager / coordinator |
+| `meta-conductor` | sequencing and rhythm control                     | dispatcher                    |
+| `meta-genesis`   | `SOUL.md`, persona, cognitive structure         | prompt and role architect     |
+| `meta-artisan`   | skills, MCP, tool fit                             | capability engineer           |
+| `meta-sentinel`  | safety, permissions, hooks, rollback              | security guardrail            |
+| `meta-librarian` | memory and continuity                             | knowledge keeper              |
+| `meta-prism`     | quality review, drift detection, anti-slop checks | quality forensic reviewer     |
+| `meta-scout`     | external capability discovery and evaluation      | scout and evaluator           |
 
 If you are a normal user, remember just one thing:
 
@@ -669,15 +682,15 @@ So:
 
 Meta_Kim ships 7 project-level hooks in `.claude/settings.json`:
 
-| Hook | Type | Purpose |
-| --- | --- | --- |
-| `block-dangerous-bash.mjs` | PreToolUse/Bash | block destructive commands (`rm -rf`, `DROP TABLE`, force-push) |
-| `pre-git-push-confirm.mjs` | PreToolUse/Bash | remind to review before `git push` |
-| `post-format.mjs` | PostToolUse/Edit,Write | auto-format JS/TS files with prettier |
-| `post-typecheck.mjs` | PostToolUse/Edit,Write | run type checks after editing `.ts` / `.tsx` |
-| `post-console-log-warn.mjs` | PostToolUse/Edit,Write | warn about `console.log` in edited files |
-| `subagent-context.mjs` | SubagentStart | inject project context into spawned subagents |
-| `stop-console-log-audit.mjs` | Stop | audit modified files for `console.log` before the session ends |
+| Hook                           | Type                   | Purpose                                                             |
+| ------------------------------ | ---------------------- | ------------------------------------------------------------------- |
+| `block-dangerous-bash.mjs`   | PreToolUse/Bash        | block destructive commands (`rm -rf`, `DROP TABLE`, force-push) |
+| `pre-git-push-confirm.mjs`   | PreToolUse/Bash        | remind to review before `git push`                                |
+| `post-format.mjs`            | PostToolUse/Edit,Write | auto-format JS/TS files with prettier                               |
+| `post-typecheck.mjs`         | PostToolUse/Edit,Write | run type checks after editing `.ts` / `.tsx`                    |
+| `post-console-log-warn.mjs`  | PostToolUse/Edit,Write | warn about `console.log` in edited files                          |
+| `subagent-context.mjs`       | SubagentStart          | inject project context into spawned subagents                       |
+| `stop-console-log-audit.mjs` | Stop                   | audit modified files for `console.log` before the session ends    |
 
 Codex and OpenClaw use their own native mechanisms for equivalent behavior.
 
@@ -699,11 +712,11 @@ cd Meta_Kim
 node setup.mjs
 ```
 
-| Usage | Description |
-| --- | --- |
-| `node setup.mjs` | First-time install |
+| Usage                       | Description                              |
+| --------------------------- | ---------------------------------------- |
+| `node setup.mjs`          | First-time install                       |
 | `node setup.mjs --update` | Update installed skills and dependencies |
-| `node setup.mjs --check` | Check environment only, no install |
+| `node setup.mjs --check`  | Check environment only, no install       |
 
 > Pure Node.js script — works on Windows / macOS / Linux without bash.
 
@@ -862,25 +875,25 @@ The system routes each request through the matching governance stage.
 
 ## Commands
 
-| Command | When to use it | What it does |
-| --- | --- | --- |
-| `node setup.mjs` | **first setup** | **one-click install (recommended)** |
-| `node setup.mjs --update` | when skills/deps need updating | one-click update |
-| `npm install` | manual setup | installs Node dependencies |
-| `npm run sync:runtimes` | after editing canonical source | rebuilds runtime mirrors |
-| `npm run check:runtimes` | when you only want a diff check | verifies mirrors are current without rewriting |
-| `npm run deps:install` | first Claude ecosystem setup | installs 9 global meta-skills |
-| `npm run deps:update` | when skill dependencies need updating | updates installed meta-skills |
-| `npm run discover:global` | first setup and after adding global capabilities | rebuilds the global capability index |
-| `npm run probe:clis` | when CLI availability is unclear | probes Claude / Codex / OpenClaw CLIs |
-| `npm run test:mcp` | after changing MCP-related code | self-tests `meta-runtime-server` |
-| `npm run validate` | before committing | runs static integrity validation |
-| `npm run check` | when you want a quick static pass | runs `check:runtimes + validate` |
-| `npm run eval:agents` | for fast runtime smoke | runs CLI/config/hook/runtime-registry smoke without LLM prompt checks |
-| `npm run eval:agents:live` | when you want live runtime acceptance | runs the slower Claude / Codex / OpenClaw prompt-backed evaluation |
-| `npm run verify:all` | before release or after bigger changes | runs `check + lightweight eval + tests` |
-| `npm run verify:all:live` | before runtime-sensitive releases | runs `check + live eval + tests` |
-| `node scripts/agent-health-report.mjs` | when you want an overview | generates a health report for all 8 agents |
+| Command                                  | When to use it                                   | What it does                                                          |
+| ---------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------- |
+| `node setup.mjs`                       | **first setup**                            | **one-click install (recommended)**                             |
+| `node setup.mjs --update`              | when skills/deps need updating                   | one-click update                                                      |
+| `npm install`                          | manual setup                                     | installs Node dependencies                                            |
+| `npm run sync:runtimes`                | after editing canonical source                   | rebuilds runtime mirrors                                              |
+| `npm run check:runtimes`               | when you only want a diff check                  | verifies mirrors are current without rewriting                        |
+| `npm run deps:install`                 | first Claude ecosystem setup                     | installs 9 global meta-skills                                         |
+| `npm run deps:update`                  | when skill dependencies need updating            | updates installed meta-skills                                         |
+| `npm run discover:global`              | first setup and after adding global capabilities | rebuilds the global capability index                                  |
+| `npm run probe:clis`                   | when CLI availability is unclear                 | probes Claude / Codex / OpenClaw CLIs                                 |
+| `npm run test:mcp`                     | after changing MCP-related code                  | self-tests `meta-runtime-server`                                    |
+| `npm run validate`                     | before committing                                | runs static integrity validation                                      |
+| `npm run check`                        | when you want a quick static pass                | runs `check:runtimes + validate`                                    |
+| `npm run eval:agents`                  | for fast runtime smoke                           | runs CLI/config/hook/runtime-registry smoke without LLM prompt checks |
+| `npm run eval:agents:live`             | when you want live runtime acceptance            | runs the slower Claude / Codex / OpenClaw prompt-backed evaluation    |
+| `npm run verify:all`                   | before release or after bigger changes           | runs `check + lightweight eval + tests`                             |
+| `npm run verify:all:live`              | before runtime-sensitive releases                | runs `check + live eval + tests`                                    |
+| `node scripts/agent-health-report.mjs` | when you want an overview                        | generates a health report for all 8 agents                            |
 
 **Windows / PATH:** a Node process started from a GUI app or editor task may inherit a shorter `PATH` than your terminal. If `eval:agents` cannot find a CLI, first check `%APPDATA%\\npm\\`, then `where.exe`, and if needed set absolute paths through:
 
@@ -959,12 +972,12 @@ If this is your first time here, the lowest-friction order is:
 
 ## Author and Resources
 
-- GitHub: <https://github.com/KimYx0207>
-- X: <https://x.com/KimYx0207>
-- Website: <https://www.aiking.dev/>
+- GitHub: [https://github.com/KimYx0207](https://github.com/KimYx0207)
+- X: [https://x.com/KimYx0207](https://x.com/KimYx0207)
+- Website: [https://www.aiking.dev/](https://www.aiking.dev/)
 - WeChat Official Account: `老金带你玩AI`
-- Feishu knowledge base: <https://my.feishu.cn/wiki/OhQ8wqntFihcI1kWVDlcNdpznFf>
-- Paper: <https://zenodo.org/records/18957649>
+- Feishu knowledge base: [https://my.feishu.cn/wiki/OhQ8wqntFihcI1kWVDlcNdpznFf](https://my.feishu.cn/wiki/OhQ8wqntFihcI1kWVDlcNdpznFf)
+- Paper: [https://zenodo.org/records/18957649](https://zenodo.org/records/18957649)
 - DOI: `10.5281/zenodo.18957649`
 
 ## License

@@ -99,7 +99,10 @@ describe("No-Agent Exception", async () => {
     const categories = ["Q", "A", "P", "S"];
     for (const cat of categories) {
       assert.ok(
-        devGov.includes(`**${cat}**`) || devGov.includes(`| **${cat}**`),
+        devGov.includes(`\`${cat}\``) ||
+          devGov.includes(`**${cat}**`) ||
+          devGov.includes(`| **${cat}**`) ||
+          devGov.includes(`"${cat}"`),
         `taskClass category "${cat}" not documented in dev-governance.md`
       );
     }

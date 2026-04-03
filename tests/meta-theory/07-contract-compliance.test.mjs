@@ -13,6 +13,7 @@ describe("workflow-contract.json — schema compliance", async () => {
 
   test("schemaVersion exists", () => {
     assert.notEqual(contract.schemaVersion, undefined);
+    assert.ok(contract.schemaVersion >= 2, "schemaVersion should be >= 2 after governance hardening");
   });
 
   test('owner is "Meta_Kim"', () => {
@@ -126,9 +127,10 @@ describe("workflow-contract.json — schema compliance", async () => {
     );
   });
 
-  test("protocols has all 7 packet types", () => {
+  test("protocols has all 8 packet types", () => {
     const expected = [
       "runHeader",
+      "taskClassification",
       "dispatchBoard",
       "workerTaskPacket",
       "workerResultPacket",
@@ -140,6 +142,7 @@ describe("workflow-contract.json — schema compliance", async () => {
     for (const packet of expected) {
       assert.ok(keys.includes(packet), `missing protocol packet: ${packet}`);
     }
+    assert.equal(expected.length, 8);
   });
 
   test("publicDisplayRequires has all 5 conditions", () => {
@@ -154,6 +157,91 @@ describe("workflow-contract.json — schema compliance", async () => {
     ];
     for (const cond of expected) {
       assert.ok(conditions.includes(cond), `missing condition: ${cond}`);
+    }
+  });
+
+  test("public display gate is a hard release gate", () => {
+    const gate = contract.gates?.publicDisplay ?? {};
+    assert.equal(gate.owner, "meta-warden");
+    assert.equal(gate.hardReleaseGate, true);
+    assert.equal(gate.blockFinalDraftWithoutVerifiedRun, true);
+    assert.equal(gate.blockExternalDisplayWithoutSummaryClosure, true);
+    assert.equal(gate.blockCompletionWithoutClosedDeliverableChain, true);
+    assert.deepEqual(
+      [...(gate.requiredConditions ?? [])].sort(),
+      [...(contract.runDiscipline?.publicDisplayRequires ?? [])].sort()
+    );
+  });
+
+  test("task classification hardening exists", () => {
+    const classification = contract.runDiscipline?.taskClassification ?? {};
+    assert.equal(classification.classifierVersion, "v2");
+    assert.deepEqual(classification.taskClassEnum, ["Q", "A", "P", "S"]);
+    assert.deepEqual(classification.requestClassEnum, ["query", "execute", "plan", "strategy"]);
+    assert.ok(classification.governanceFlowEnum.includes("simple_exec"));
+    assert.ok(classification.governanceFlowEnum.includes("complex_dev"));
+    assert.ok(classification.governanceFlowEnum.includes("proposal_review"));
+    assert.ok(classification.triggerReasonEnum.includes("multi_file"));
+    assert.ok(classification.triggerReasonEnum.includes("owner_missing"));
+    assert.ok(classification.upgradeReasonEnum.includes("owner_creation_required"));
+    assert.ok(classification.bypassReasonEnum.includes("pure_query"));
+    assert.equal(classification.ownerRequiredByDefault, true);
+    assert.equal(classification.onlyQueryMayBypassOwner, true);
+  });
+
+  test("protocolFirst requires taskClassification packet", () => {
+    const requiredPackets = contract.runDiscipline?.protocolFirst?.requiredPackets ?? [];
+    assert.ok(requiredPackets.includes("taskClassification"));
+  });
+
+  test("finding closure rules are explicit", () => {
+    const closure = contract.runDiscipline?.findingClosure ?? {};
+    assert.equal(closure.findingIdRequired, true);
+    assert.equal(closure.reviewFindingRequiresRevisionResponse, true);
+    assert.equal(closure.revisionResponseRequiresFixArtifact, true);
+    assert.equal(closure.verificationRequiresFreshEvidence, true);
+    assert.equal(closure.closureRequiresVerificationResult, true);
+    for (const state of ["open", "fixed_pending_verify", "verified_closed", "accepted_risk"]) {
+      assert.ok(closure.closeStateEnum?.includes(state), `missing close state: ${state}`);
+    }
+  });
+
+  test("review / revision / verification protocols have finding-level fields", () => {
+    const reviewPacketFields = contract.protocols?.reviewPacket?.requiredFields ?? [];
+    assert.ok(reviewPacketFields.includes("findings"));
+
+    const reviewFindingFields = contract.protocols?.reviewFinding?.requiredFields ?? [];
+    for (const field of ["findingId", "severity", "owner", "summary", "requiredAction", "fixArtifact", "verifiedBy", "closeState"]) {
+      assert.ok(reviewFindingFields.includes(field), `reviewFinding missing ${field}`);
+    }
+
+    const revisionFields = contract.protocols?.revisionResponse?.requiredFields ?? [];
+    for (const field of ["findingId", "actionId", "owner", "responseType", "status", "fixArtifact", "responseSummary"]) {
+      assert.ok(revisionFields.includes(field), `revisionResponse missing ${field}`);
+    }
+
+    const verificationPacketFields = contract.protocols?.verificationPacket?.requiredFields ?? [];
+    for (const field of ["fixEvidence", "revisionResponses", "verificationResults", "closeFindings"]) {
+      assert.ok(verificationPacketFields.includes(field), `verificationPacket missing ${field}`);
+    }
+
+    const verificationResultFields = contract.protocols?.verificationResult?.requiredFields ?? [];
+    for (const field of ["findingId", "verifiedBy", "result", "evidence", "closeState"]) {
+      assert.ok(verificationResultFields.includes(field), `verificationResult missing ${field}`);
+    }
+  });
+
+  test("evolution requires explicit writeback decision", () => {
+    const decision = contract.runDiscipline?.evolutionDecision ?? {};
+    assert.equal(decision.required, true);
+    assert.ok(decision.allowedDecisions?.includes("writeback"));
+    assert.ok(decision.allowedDecisions?.includes("none"));
+    assert.equal(decision.noneRequiresReason, true);
+    assert.equal(decision.writebackRequiresTargets, true);
+
+    const evolutionFields = contract.protocols?.evolutionWritebackPacket?.requiredFields ?? [];
+    for (const field of ["ownerAssessment", "writebackDecision", "decisionReason", "writebacks", "scarIds", "syncRequired"]) {
+      assert.ok(evolutionFields.includes(field), `evolutionWritebackPacket missing ${field}`);
     }
   });
 });

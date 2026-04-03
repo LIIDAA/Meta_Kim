@@ -248,6 +248,7 @@ async function validateRequiredFiles() {
     "openclaw/openclaw.template.json",
     "codex/config.toml.example",
     "contracts/workflow-contract.json",
+    "docs/runtime-capability-matrix.md",
     "memory/patterns/.gitkeep",
     "memory/scars/.gitkeep",
     "memory/capability-gaps.md",
@@ -268,6 +269,10 @@ async function validateWorkflowContract() {
   const contractPath = path.join(repoRoot, "contracts", "workflow-contract.json");
   const contract = JSON.parse(await fs.readFile(contractPath, "utf8"));
 
+  assert(
+    (contract.schemaVersion ?? 0) >= 2,
+    "workflow-contract.json schemaVersion must be >= 2 after governance hardening."
+  );
   assert(
     contract.runDiscipline?.singleDepartmentPerRun === true,
     "workflow-contract.json must enforce singleDepartmentPerRun."
@@ -322,6 +327,172 @@ async function validateWorkflowContract() {
       JSON.stringify([...EXPECTED_PUBLIC_DISPLAY_REQUIRES].sort()),
     "workflow-contract.json publicDisplayRequires must exactly match the canonical public-display gate set."
   );
+  assert(
+    contract.gates?.publicDisplay?.owner === "meta-warden",
+    "workflow-contract.json publicDisplay gate owner must be meta-warden."
+  );
+  assert(
+    contract.gates?.publicDisplay?.hardReleaseGate === true,
+    "workflow-contract.json publicDisplay gate must be a hard release gate."
+  );
+  assert(
+    JSON.stringify([...(contract.gates?.publicDisplay?.requiredConditions ?? [])].sort()) ===
+      JSON.stringify([...EXPECTED_PUBLIC_DISPLAY_REQUIRES].sort()),
+    "workflow-contract.json publicDisplay requiredConditions must match publicDisplayRequires."
+  );
+  for (const field of [
+    "blockFinalDraftWithoutVerifiedRun",
+    "blockExternalDisplayWithoutSummaryClosure",
+    "blockCompletionWithoutClosedDeliverableChain"
+  ]) {
+    assert(
+      contract.gates?.publicDisplay?.[field] === true,
+      `workflow-contract.json publicDisplay gate must set ${field} to true.`
+    );
+  }
+
+  const taskClassification = contract.runDiscipline?.taskClassification;
+  assert(taskClassification?.classifierVersion === "v2", "workflow-contract.json taskClassification classifierVersion must be v2.");
+  for (const [field, expected] of [
+    ["taskClassEnum", ["Q", "A", "P", "S"]],
+    ["requestClassEnum", ["query", "execute", "plan", "strategy"]],
+    ["governanceFlowEnum", ["query", "simple_exec", "complex_dev", "meta_analysis", "proposal_review", "rhythm"]],
+    ["triggerReasonEnum", ["multi_file", "cross_module", "external_side_effect", "durable_artifact", "owner_missing"]],
+    ["upgradeReasonEnum", ["cross_system_scope", "review_or_verify_required", "owner_creation_required"]],
+    ["bypassReasonEnum", ["pure_query", "read_only_explanation", "existing_verified_artifact_reuse"]]
+  ]) {
+    for (const item of expected) {
+      assert(
+        taskClassification?.[field]?.includes(item),
+        `workflow-contract.json taskClassification.${field} must include ${item}.`
+      );
+    }
+  }
+  assert(
+    taskClassification?.ownerRequiredByDefault === true &&
+      taskClassification?.onlyQueryMayBypassOwner === true,
+    "workflow-contract.json taskClassification must keep owner-required-by-default discipline."
+  );
+
+  const requiredPackets = contract.runDiscipline?.protocolFirst?.requiredPackets ?? [];
+  for (const packet of [
+    "runHeader",
+    "taskClassification",
+    "dispatchBoard",
+    "workerTaskPacket",
+    "workerResultPacket",
+    "reviewPacket",
+    "verificationPacket",
+    "evolutionWritebackPacket"
+  ]) {
+    assert(
+      requiredPackets.includes(packet),
+      `workflow-contract.json protocolFirst.requiredPackets must include ${packet}.`
+    );
+  }
+
+  const findingClosure = contract.runDiscipline?.findingClosure;
+  for (const field of [
+    "findingIdRequired",
+    "reviewFindingRequiresRevisionResponse",
+    "revisionResponseRequiresFixArtifact",
+    "verificationRequiresFreshEvidence",
+    "closureRequiresVerificationResult"
+  ]) {
+    assert(
+      findingClosure?.[field] === true,
+      `workflow-contract.json findingClosure must set ${field} to true.`
+    );
+  }
+  for (const closeState of [
+    "open",
+    "fixed_pending_verify",
+    "verified_closed",
+    "accepted_risk"
+  ]) {
+    assert(
+      findingClosure?.closeStateEnum?.includes(closeState),
+      `workflow-contract.json findingClosure.closeStateEnum must include ${closeState}.`
+    );
+  }
+
+  const reviewPacketFields = contract.protocols?.reviewPacket?.requiredFields ?? [];
+  assert(
+    reviewPacketFields.includes("findings"),
+    "workflow-contract.json reviewPacket must require findings."
+  );
+  for (const [protocolName, expectedFields] of [
+    ["taskClassification", ["taskClass", "requestClass", "governanceFlow", "triggerReasons", "upgradeReasons", "bypassReasons", "ownerRequired", "decisionSource", "classifierVersion", "complexity"]],
+    ["reviewFinding", ["findingId", "severity", "owner", "summary", "requiredAction", "fixArtifact", "verifiedBy", "closeState"]],
+    ["revisionResponse", ["findingId", "actionId", "owner", "responseType", "status", "fixArtifact", "responseSummary"]],
+    ["verificationResult", ["findingId", "verifiedBy", "result", "evidence", "closeState"]]
+  ]) {
+    const fields = contract.protocols?.[protocolName]?.requiredFields ?? [];
+    for (const field of expectedFields) {
+      assert(
+        fields.includes(field),
+        `workflow-contract.json protocol ${protocolName} must require ${field}.`
+      );
+    }
+  }
+
+  const verificationPacketFields = contract.protocols?.verificationPacket?.requiredFields ?? [];
+  for (const field of [
+    "verified",
+    "remainingIssues",
+    "evidence",
+    "fixEvidence",
+    "revisionResponses",
+    "verificationResults",
+    "closeFindings"
+  ]) {
+    assert(
+      verificationPacketFields.includes(field),
+      `workflow-contract.json verificationPacket must require ${field}.`
+    );
+  }
+
+  assert(
+    contract.runDiscipline?.evolutionDecision?.required === true,
+    "workflow-contract.json must require an explicit evolution decision."
+  );
+  for (const field of ["writeback", "none"]) {
+    assert(
+      contract.runDiscipline?.evolutionDecision?.allowedDecisions?.includes(field),
+      `workflow-contract.json evolutionDecision.allowedDecisions must include ${field}.`
+    );
+  }
+  assert(
+    contract.runDiscipline?.evolutionDecision?.noneRequiresReason === true &&
+      contract.runDiscipline?.evolutionDecision?.writebackRequiresTargets === true,
+    "workflow-contract.json evolutionDecision must require either writeback targets or an explicit reason."
+  );
+  const evolutionFields = contract.protocols?.evolutionWritebackPacket?.requiredFields ?? [];
+  for (const field of [
+    "ownerAssessment",
+    "writebackDecision",
+    "decisionReason",
+    "writebacks",
+    "scarIds",
+    "syncRequired"
+  ]) {
+    assert(
+      evolutionFields.includes(field),
+      `workflow-contract.json evolutionWritebackPacket must require ${field}.`
+    );
+  }
+  const publicDisplayGate = contract.runDiscipline?.publicDisplayGate;
+  for (const field of [
+    "hardReleaseGate",
+    "blockDisplayBeforeVerification",
+    "blockDisplayBeforeSummaryClosure",
+    "blockCompletionBeforeDeliverableClosure"
+  ]) {
+    assert(
+      publicDisplayGate?.[field] === true,
+      `workflow-contract.json publicDisplayGate must set ${field} to true.`
+    );
+  }
 
   assert(
     contract.departmentVisualPolicies?.game?.defaultMode === "generate_or_self_create",
@@ -331,6 +502,25 @@ async function validateWorkflowContract() {
     contract.departmentVisualPolicies?.ai?.defaultMode === "official_or_verified_reference",
     "workflow-contract.json ai visual policy must default to official_or_verified_reference."
   );
+}
+
+async function validateRuntimeParityMatrix() {
+  const matrixPath = path.join(repoRoot, "docs", "runtime-capability-matrix.md");
+  const raw = await fs.readFile(matrixPath, "utf8");
+
+  for (const marker of [
+    "行为一致性对照表",
+    "trigger parity",
+    "hook parity",
+    "review parity",
+    "verification parity",
+    "stop condition parity",
+    "writeback parity",
+    "`npm run eval:agents`",
+    "`npm run eval:agents:live`"
+  ]) {
+    assert(raw.includes(marker), `docs/runtime-capability-matrix.md must include ${marker}.`);
+  }
 }
 
 async function validateClaudeAgents() {
@@ -905,7 +1095,7 @@ function fail(msg) {
 }
 
 async function main() {
-  const TOTAL = 12;
+  const TOTAL = 13;
   let current = 1;
 
   console.log("\n========================================");
@@ -913,9 +1103,9 @@ async function main() {
   console.log("========================================");
 
   // 1. Required files
-  step(current++, TOTAL, "Checking required files", "README.md, CLAUDE.md, package.json, memory assets, etc. (27 files)");
+  step(current++, TOTAL, "Checking required files", "README.md, CLAUDE.md, package.json, runtime matrix, memory assets, etc. (28 files)");
   await validateRequiredFiles();
-  pass("All 27 required files present");
+  pass("All 28 required files present");
 
   // 2. Workflow contract
   step(current++, TOTAL, "Validating workflow contract", "single-department run discipline, primary deliverable, closed deliverable chain");
@@ -942,32 +1132,37 @@ async function main() {
   await validateCodexArtifacts(agentIds);
   pass(`${agentIds.length} Codex agents passed`);
 
-  // 7. npm scripts
+  // 7. Runtime parity matrix
+  step(current++, TOTAL, "Checking runtime parity matrix", "trigger/hook/review/verification/stop/writeback parity must be documented");
+  await validateRuntimeParityMatrix();
+  pass("Runtime parity matrix contains the required governance parity markers");
+
+  // 8. npm scripts
   step(current++, TOTAL, "Checking package.json scripts", "sync:runtimes / validate / eval:agents / verify:all, etc.");
   await validatePackageJson();
   pass("All required scripts registered");
 
-  // 8. .gitignore
+  // 9. .gitignore
   step(current++, TOTAL, "Checking .gitignore rules", "node_modules/ / docs/ / openclaw local config, etc.");
   await validateGitignore();
   pass(".gitignore contains all necessary rules");
 
-  // 9. Claude Code settings
+  // 10. Claude Code settings
   step(current++, TOTAL, "Checking Claude Code project settings", "permission deny rules / PreToolUse / SubagentStart hooks");
   await validateClaudeSettings();
   pass("Claude Code hooks and permissions configured correctly");
 
-  // 10. MCP config
+  // 11. MCP config
   step(current++, TOTAL, "Checking MCP server config", "meta-kim-runtime service definition and startup command");
   await validateMcpConfig();
   pass("MCP config is valid");
 
-  // 11. MCP self-test
+  // 12. MCP self-test
   step(current++, TOTAL, "Running MCP self-test", "start meta-runtime-server and verify agent count");
   await validateMcpSelfTest();
   pass("MCP self-test passed");
 
-  // 12. Factory release artifacts (skipped if factory/ not in public repo)
+  // 13. Factory release artifacts (skipped if factory/ not in public repo)
   step(current++, TOTAL, "Checking factory release artifacts", "100 departments / 1000 specialists / 20 flagship / 1100 runtime packs");
   await validateFactoryRelease();
   pass("Factory artifacts validated (or skipped — not in public repo)");

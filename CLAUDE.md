@@ -141,7 +141,12 @@ Typical state layers include:
 
 This skeleton is not a second front-end. It exists so the system can manage skips, interrupts, gates, verification closure, and evolution logging without inventing ad hoc rules each run.
 
-Claude-side synthesis should also respect public-display discipline. A run is not truly display-ready just because it has content. The workflow contract expects verification closure, summary closure, single-deliverable discipline, and deliverable-chain closure before public-ready claims are valid.
+Claude-side synthesis should also respect public-display discipline. A run is not truly display-ready just because it has content. The workflow contract now hardens this with:
+
+- explicit `taskClassification` before execution
+- finding-level closure across `reviewPacket -> revisionResponses -> verificationResults -> closeFindings`
+- explicit `writebackDecision = writeback | none`
+- hard public-display blocking until verification, summary, and deliverable closure all pass
 
 ### Anti-Pattern
 
@@ -225,6 +230,7 @@ After changing canonical prompts, skills, hooks, or runtime-facing contracts:
 5. run `npm run eval:agents:live` only when you explicitly need slower prompt-backed runtime acceptance
 6. run `npm run verify:all` before release or after larger changes
 7. run `npm run verify:all:live` only before runtime-sensitive releases that need the live acceptance layer
+8. check `docs/runtime-capability-matrix.md` when changing behavior that must stay parity-aligned across Claude / Codex / OpenClaw
 
 Useful supporting commands:
 

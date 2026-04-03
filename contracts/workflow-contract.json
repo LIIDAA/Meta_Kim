@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "owner": "Meta_Kim",
   "businessWorkflow": {
     "id": "business",
@@ -116,6 +116,20 @@
     "summary": {
       "owner": "meta-warden",
       "requiresVerifiedRun": true
+    },
+    "publicDisplay": {
+      "owner": "meta-warden",
+      "hardReleaseGate": true,
+      "blockFinalDraftWithoutVerifiedRun": true,
+      "blockExternalDisplayWithoutSummaryClosure": true,
+      "blockCompletionWithoutClosedDeliverableChain": true,
+      "requiredConditions": [
+        "verifyPassed",
+        "summaryClosed",
+        "singleDeliverableMaintained",
+        "deliverableChainClosed",
+        "consolidatedDeliverablePresent"
+      ]
     }
   },
   "runDiscipline": {
@@ -132,6 +146,56 @@
         "no_durable_execution_artifact",
         "no_downstream_handoff_required"
       ]
+    },
+    "taskClassification": {
+      "classifierVersion": "v2",
+      "taskClassEnum": [
+        "Q",
+        "A",
+        "P",
+        "S"
+      ],
+      "requestClassEnum": [
+        "query",
+        "execute",
+        "plan",
+        "strategy"
+      ],
+      "governanceFlowEnum": [
+        "query",
+        "simple_exec",
+        "complex_dev",
+        "meta_analysis",
+        "proposal_review",
+        "rhythm"
+      ],
+      "triggerReasonEnum": [
+        "multi_file",
+        "cross_module",
+        "external_side_effect",
+        "durable_artifact",
+        "owner_missing",
+        "cross_runtime_sync",
+        "security_sensitive",
+        "verification_required",
+        "writeback_candidate",
+        "user_explicit_review"
+      ],
+      "upgradeReasonEnum": [
+        "cross_system_scope",
+        "review_or_verify_required",
+        "owner_creation_required",
+        "parallel_merge_required",
+        "business_workflow_upgrade",
+        "security_gate_required"
+      ],
+      "bypassReasonEnum": [
+        "pure_query",
+        "read_only_explanation",
+        "existing_verified_artifact_reuse"
+      ],
+      "ownerRequiredByDefault": true,
+      "onlyQueryMayBypassOwner": true
     },
     "executionOwnership": {
       "executionRequiresAgentOwner": true,
@@ -162,12 +226,26 @@
       "enabled": true,
       "requiredPackets": [
         "runHeader",
+        "taskClassification",
         "dispatchBoard",
         "workerTaskPacket",
         "workerResultPacket",
         "reviewPacket",
         "verificationPacket",
         "evolutionWritebackPacket"
+      ]
+    },
+    "findingClosure": {
+      "findingIdRequired": true,
+      "reviewFindingRequiresRevisionResponse": true,
+      "revisionResponseRequiresFixArtifact": true,
+      "verificationRequiresFreshEvidence": true,
+      "closureRequiresVerificationResult": true,
+      "closeStateEnum": [
+        "open",
+        "fixed_pending_verify",
+        "verified_closed",
+        "accepted_risk"
       ]
     },
     "reviewMustConsolidate": true,
@@ -206,6 +284,15 @@
       "taskPacketId"
     ],
     "evolutionWritebackRequired": true,
+    "evolutionDecision": {
+      "required": true,
+      "allowedDecisions": [
+        "writeback",
+        "none"
+      ],
+      "noneRequiresReason": true,
+      "writebackRequiresTargets": true
+    },
     "evolutionWritebackTargets": [
       ".claude/agents/",
       ".claude/skills/",
@@ -219,7 +306,13 @@
       "singleDeliverableMaintained",
       "deliverableChainClosed",
       "consolidatedDeliverablePresent"
-    ]
+    ],
+    "publicDisplayGate": {
+      "hardReleaseGate": true,
+      "blockDisplayBeforeVerification": true,
+      "blockDisplayBeforeSummaryClosure": true,
+      "blockCompletionBeforeDeliverableClosure": true
+    }
   },
   "protocols": {
     "runHeader": {
@@ -230,6 +323,20 @@
         "freshnessRequirement",
         "visualPolicy",
         "handoffPlan"
+      ]
+    },
+    "taskClassification": {
+      "requiredFields": [
+        "taskClass",
+        "requestClass",
+        "governanceFlow",
+        "triggerReasons",
+        "upgradeReasons",
+        "bypassReasons",
+        "ownerRequired",
+        "decisionSource",
+        "classifierVersion",
+        "complexity"
       ]
     },
     "dispatchBoard": {
@@ -275,7 +382,31 @@
         "protocolCompliance",
         "qualityGate",
         "revisionNeeded",
-        "reviews"
+        "reviews",
+        "findings"
+      ]
+    },
+    "reviewFinding": {
+      "requiredFields": [
+        "findingId",
+        "severity",
+        "owner",
+        "summary",
+        "requiredAction",
+        "fixArtifact",
+        "verifiedBy",
+        "closeState"
+      ]
+    },
+    "revisionResponse": {
+      "requiredFields": [
+        "findingId",
+        "actionId",
+        "owner",
+        "responseType",
+        "status",
+        "fixArtifact",
+        "responseSummary"
       ]
     },
     "verificationPacket": {
@@ -284,12 +415,25 @@
         "remainingIssues",
         "evidence",
         "fixEvidence",
+        "revisionResponses",
+        "verificationResults",
         "closeFindings"
+      ]
+    },
+    "verificationResult": {
+      "requiredFields": [
+        "findingId",
+        "verifiedBy",
+        "result",
+        "evidence",
+        "closeState"
       ]
     },
     "evolutionWritebackPacket": {
       "requiredFields": [
         "ownerAssessment",
+        "writebackDecision",
+        "decisionReason",
         "writebacks",
         "scarIds",
         "syncRequired"

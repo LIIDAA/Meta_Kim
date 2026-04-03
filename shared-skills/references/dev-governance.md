@@ -53,6 +53,7 @@ When Fetch does not find a clean owner, resolve the gap in this order:
 
 Before Stage 4 starts, Thinking must produce explicit protocol artifacts for the run:
 - `runHeader`
+- `taskClassification`
 - `dispatchBoard`
 - `workerTaskPackets`
 - `resultMergePlan`
@@ -98,14 +99,41 @@ The 8-stage spine is the **human-readable orchestration surface**. Underneath it
 
 ### Task Classification Routing
 
-| Category | Determination Criteria | Execution Path |
-|----------|----------------------|----------------|
-| **Q** Query | No code/file changes, no side effects, no durable execution artifact needed | Answer directly, skip subsequent stages |
-| **A** Action | Clear, specific execution task (fix bug, add feature, deploy) | → Orchestration Layer decomposition → dispatch to an Execution owner |
-| **P** Planning | Needs design plan before execution (new module, architecture adjustment) | → Plan first → decompose into multiple A-tasks or planning owners → Dispatch one by one |
-| **S** Strategic | Involves global decisions, cross-system impact, long-term direction | → Warden arbitration → may trigger Type B creation pipeline |
+Meta_Kim now uses a **two-layer classifier** so trigger decisions are reviewable instead of intuitive:
 
-**Classification output field**: `taskClass: Q|A|P|S`
+| Layer | Field | Allowed values | Purpose |
+|-------|-------|----------------|---------|
+| Intent layer | `taskClass` | `Q / A / P / S` | Preserve the canonical query / action / planning / strategic split |
+| Runtime layer | `requestClass` | `query / execute / plan / strategy` | Explain what kind of ask the runtime saw |
+| Governance layer | `governanceFlow` | `query / simple_exec / complex_dev / meta_analysis / proposal_review / rhythm` | Decide which execution path and gate set must run |
+
+**Classification output fields**:
+- `taskClass`
+- `requestClass`
+- `governanceFlow`
+- `triggerReasons[]`
+- `upgradeReasons[]`
+- `bypassReasons[]`
+- `ownerRequired`
+- `decisionSource`
+- `classifierVersion`
+
+### Canonical Mapping
+
+| `taskClass` | `requestClass` | Default `governanceFlow` | Default handling |
+|-------------|----------------|--------------------------|------------------|
+| `Q` | `query` | `query` | Direct answer only when pure-query conditions all hold |
+| `A` | `execute` | `simple_exec` or `complex_dev` | Requires explicit owner; classify complexity before execution |
+| `P` | `plan` | `complex_dev` or `proposal_review` | Plan first, then produce owner-routable packets |
+| `S` | `strategy` | `meta_analysis` or `rhythm` | Warden / Conductor-led governance path |
+
+### Trigger / Upgrade / Bypass Reasons
+
+Record concrete reasons, not vibes:
+
+- `triggerReasons`: `multi_file`, `cross_module`, `external_side_effect`, `durable_artifact`, `owner_missing`, `cross_runtime_sync`, `security_sensitive`, `verification_required`, `writeback_candidate`, `user_explicit_review`
+- `upgradeReasons`: `cross_system_scope`, `review_or_verify_required`, `owner_creation_required`, `parallel_merge_required`, `business_workflow_upgrade`, `security_gate_required`
+- `bypassReasons`: `pure_query`, `read_only_explanation`, `existing_verified_artifact_reuse`
 
 ### No-Agent Exception (strict)
 
@@ -113,6 +141,8 @@ The only valid no-agent path is:
 
 ```text
 taskClass = Q
+AND requestClass = query
+AND governanceFlow = query
 AND no file/code/config change
 AND no external side effect
 AND no durable artifact/handoff packet required
@@ -201,8 +231,16 @@ On receiving an escalation signal: re-enter Fetch (Stage 2) to find a more capab
 ```json
 {
   "taskClass": "A",
+  "requestClass": "execute",
+  "governanceFlow": "complex_dev",
+  "triggerReasons": ["multi_file", "durable_artifact"],
+  "upgradeReasons": ["review_or_verify_required"],
+  "bypassReasons": [],
   "requiresAgentOwner": true,
+  "ownerRequired": true,
   "ownerPolicy": "existing-owner | create-owner-first | temporary-fallback-owner",
+  "decisionSource": "classifier-v2",
+  "classifierVersion": "v2",
   "skipLevel": "should-dispatch",
   "complexity": "medium",
   "clarity": "confirmed",
@@ -382,6 +420,17 @@ Thinking must lock down the execution protocol before any `Agent` tool invocatio
 
 ```json
 {
+  "taskClassification": {
+    "taskClass": "A",
+    "requestClass": "execute",
+    "governanceFlow": "complex_dev",
+    "triggerReasons": ["multi_file", "durable_artifact"],
+    "upgradeReasons": ["review_or_verify_required"],
+    "bypassReasons": [],
+    "ownerRequired": true,
+    "decisionSource": "classifier-v2",
+    "classifierVersion": "v2"
+  },
   "runHeader": {
     "department": "team or department",
     "primaryDeliverable": "single deliverable name",
@@ -460,6 +509,7 @@ Thinking must translate the plan into a **`cardDeck`** — the canonical Stage 3
 ```json
 {
   "subTasks": [],
+  "taskClassification": {},
   "runHeader": {},
   "dispatchBoard": {},
   "workerTaskPackets": [],
@@ -468,11 +518,11 @@ Thinking must translate the plan into a **`cardDeck`** — the canonical Stage 3
   "deliveryShellPlan": [],
   "interruptChannels": [],
   "reviewPlan": ["code-quality", "security"],
-  "reviewPacketPlan": ["owner-coverage", "protocol-compliance", "quality-findings"],
+  "reviewPacketPlan": ["owner-coverage", "protocol-compliance", "quality-findings", "finding-closure-model"],
   "metaReviewGate": "complexity=complex OR abnormal review confidence",
   "verificationGate": "all failed assertions must be re-run with fresh evidence",
-  "verificationPacketPlan": ["fixEvidence", "closeFindings", "regressionGuard"],
-  "evolutionWritebackPlan": ["agent-boundary", "skill", "contract", "scar"],
+  "verificationPacketPlan": ["fixEvidence", "revisionResponses", "verificationResults", "closeFindings", "regressionGuard"],
+  "evolutionWritebackPlan": ["writebackDecision", "agent-boundary", "skill", "contract", "scar"],
   "evolutionFocus": ["pattern reuse", "boundary drift", "process bottlenecks"]
 }
 ```
@@ -603,11 +653,25 @@ If files involve UI/components:
     { "type": "code-quality", "agent": "code-reviewer", "result": "PASS", "issues": [] },
     { "type": "security", "agent": "security-reviewer", "result": "FAIL", "issues": ["hardcoded API key in config.ts"] }
   ],
+  "findings": [
+    {
+      "findingId": "rev-001",
+      "severity": "high",
+      "owner": "security-reviewer",
+      "summary": "hardcoded API key in config.ts",
+      "requiredAction": "remove secret and load from secure runtime config",
+      "fixArtifact": "src/config.ts",
+      "verifiedBy": "meta-prism",
+      "closeState": "open"
+    }
+  ],
   "qualityGate": "FAIL",
   "revisionNeeded": true,
   "revisionRound": 1
 }
 ```
+
+Every non-pass issue must become a **review finding object**. Free-form issue lists are insufficient once revision and verification start.
 
 **Quality Gate rules — Auto-Fix Loop**:
 
@@ -661,11 +725,38 @@ Verification is an independent re-check using fresh evidence, not a trust-based 
 {
   "verified": true,
   "remainingIssues": [],
-  "evidence": ["current file or runtime evidence"]
+  "evidence": ["current file or runtime evidence"],
+  "fixEvidence": ["commit diff, file path, or test output showing the fix landed"],
+  "revisionResponses": [
+    {
+      "findingId": "rev-001",
+      "actionId": "fix-001",
+      "owner": "execution-owner",
+      "responseType": "code-change",
+      "status": "applied",
+      "fixArtifact": "src/config.ts",
+      "responseSummary": "removed hardcoded key and switched to env lookup"
+    }
+  ],
+  "verificationResults": [
+    {
+      "findingId": "rev-001",
+      "verifiedBy": "meta-prism",
+      "result": "pass",
+      "evidence": ["src/config.ts now reads process.env.API_KEY"],
+      "closeState": "verified_closed"
+    }
+  ],
+  "closeFindings": ["rev-001"]
 }
 ```
 
 If verification fails, route back to Execution with the accumulated issue list.
+
+**Closure rule**:
+- `review finding -> revision response -> verification result -> closeFindings`
+- Missing any link means the finding stays open
+- `closeFindings` may only contain finding ids that have a matching verification result with fresh evidence
 
 ### Rollback Protocol
 
@@ -743,6 +834,8 @@ scar:
 ```json
 {
   "ownerAssessment": "keep-existing | adjust-boundary | create-owner | retire-temporary-fallback",
+  "writebackDecision": "writeback | none",
+  "decisionReason": "why a writeback is required, or why none is acceptable for this run",
   "writebacks": [
     { "target": ".claude/agents/<agent>.md", "reason": "boundary drift" },
     { "target": ".claude/skills/<skill>/SKILL.md", "reason": "reusable execution pattern" },
@@ -752,6 +845,10 @@ scar:
   "syncRequired": true
 }
 ```
+
+**Rule**: Evolution may not silently disappear. Every run must emit either:
+- `writebackDecision = "writeback"` with concrete targets, or
+- `writebackDecision = "none"` with a concrete `decisionReason`
 
 ### Evolution Artifacts Storage
 
@@ -767,6 +864,18 @@ Evolution outputs must be persisted to specific locations — not left floating 
 | **Capability Gap Records** | `memory/capability-gaps.md` | Until resolved; Scout monitors and closes when filled |
 
 **Storage Rule**: If an evolution artifact has no defined storage location, it does not count as "captured". The 5+1 model's amplification actions are only complete when the artifact is written to disk and indexed.
+
+### Public Display Discipline
+
+External-ready output is a **gate state**, not a storytelling choice. Before any run is treated as publicly complete, all of these must hold:
+
+- `verifyPassed`
+- `summaryClosed`
+- `singleDeliverableMaintained`
+- `deliverableChainClosed`
+- `consolidatedDeliverablePresent`
+
+If any one of these is false, the run may produce internal notes, but it must not be framed as the final public deliverable.
 
 ---
 
