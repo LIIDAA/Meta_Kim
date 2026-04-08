@@ -1,285 +1,287 @@
-# 十步治理 — 完整参考
+# Ten-step governance — full reference
 
-> 来源：meta.md 第五部分（第498-554行），老金直播口播提炼
-> **前三步是"会动"，后七步是"成熟"。**
+> Distilled from `docs/meta.md`; aligns with the Meta_Kim methodology.
+> **Steps 1–3 = “it moves.” Steps 4–10 = “it matures.”**
 
-## 核心命题
+## Core proposition
 
-治理的本质是：**让系统不仅会做事，还会判断、会纠偏、会验证、会进化。**
+Governance means: **the system not only does work — it judges, corrects, verifies, and evolves.**
 
-第一次产出只能说明它"会动"。会动不等于可靠，可靠不等于可复用，可复用不等于可演化。
+A first output only proves motion. Motion ≠ reliability ≠ reusability ≠ evolvability.
 
-> **AI 系统的水平，不取决于它第一次能写多好，而取决于它有没有自我校正链路。**
-
----
-
-## 十步全景
-
-```
-方向(1) → 规划(2) → 执行(3) → 评审(4) → 元评审(5) → 修订(6) → 验证(7) → 汇总(8) → 反馈(9) → 进化(10)
-├────── 会动 ──────┤├──────────────────── 成熟 ─────────────────────────────────────────┤
-```
+> **AI maturity is not “how good the first draft is” but whether a self-correction loop exists.**
 
 ---
 
-## 每步详解
-
-### 步骤1：方向
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | Warden + 用户 |
-| **输入** | 用户需求（可能模糊） |
-| **核心动作** | 需求清晰度检测 → 意图核提取 → 复杂度评估 |
-| **输出** | 明确的意图核 + 复杂度等级（简单/中等/复杂） |
-| **质量门控** | 意图核必须可验证：能用一句话描述"做完了是什么样"？不能 → 追问 |
-
-**追问规则**：
-- 最多追问 2 轮（引导牌）
-- 2 轮后仍模糊 → 基于已有信息做最保守假设，标记假设点
-- 不假设用户意图，但也不无限追问
-
-### 步骤2：规划
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | Conductor |
-| **输入** | 意图核 + 复杂度等级 |
-| **核心动作** | 任务拆解 → 元分配 → 依赖分析 → 牌组编排 |
-| **输出** | 任务拆解方案 + 牌组配置 + 并行/串行标记 |
-| **质量门控** | 每个子任务必须能映射到一个具体元。无法映射 → 触发元创建 |
-
-**复杂度路由在此步决定**：
-- 简单（<2文件）→ 跳过规划，直接执行
-- 中等（2-5文件）→ 轻量规划
-- 复杂（>5文件）→ 完整规划 + 依赖图
-
-### 步骤3：执行
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | 执行元（按任务分配） |
-| **输入** | 任务拆解方案 + 具体子任务 |
-| **核心动作** | 搜索已有资源 → 能力匹配 → 分配执行 → 产出 |
-| **输出** | 具体产出物（代码/文档/配置/设计） |
-| **质量门控** | 文件所有权声明（一个文件同时只有一个元在写） |
-
-**执行原则**：
-- 文件不重叠 → 安全并行
-- 文件有重叠 → 串行，后者等前者完成
-- 找不到匹配元 → 触发类型B创建流水线
-
-### 步骤4：评审
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | Prism |
-| **输入** | 步骤3的产出物 |
-| **核心动作** | AI-Slop扫描 → 断言化评估 → 声明验证 → 思考深度量化 → 质量评级 |
-| **输出** | 【Prism分析报告】含断言PASS/FAIL列表 + 质量等级(S/A/B/C/D) |
-| **质量门控** | A/S → 通过。B → 修订。C/D → 重做 |
-
-**评审不是打分**，是法医式取证：
-- 每个论断必须有具体证据（文件路径、行号、数据）
-- 隐含声明必须被提取并验证
-- 无证据的判定 = FAIL
-
-### 步骤5：元评审 ⭐
-
-> **这一步是整个治理流程中最独特的——谁来评审评审者？**
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | Warden（审 Prism 的审查标准，不是审具体结论） |
-| **输入** | Prism 的审查报告 + 审查标准 |
-| **核心动作** | 断言覆盖性检查 → 断言强度检查 → 标准一致性检查 |
-| **输出** | 元评审判定：通过 / 要求补充 / 标准漂移警告 |
-| **质量门控** | 见下方元评审协议 |
-
-#### 元评审协议
-
-Warden 审查的是 Prism 的审查标准本身，不是重复审查产出：
-
-| 检查维度 | 方法 | 不通过处理 |
-|---------|------|-----------|
-| **断言覆盖性** | Prism 断言是否覆盖所有关键维度？ | 要求补充缺失维度的断言 |
-| **断言强度** | 有没有弱断言制造虚假信心？ | 要求收紧条件（如"有 Core Truths"→"有 ≥3 条且通过可替换性测试"） |
-| **标准一致性** | 和上次同类审查标准一致吗？ | 记录差异，判断是"进化"还是"漂移" |
-
-**触发规则**：
+## Ten-step map
 
 ```
-IF Prism pass_rate > 0.9 AND 产出明显有问题
-  THEN 强制触发元评审（Prism 的标准可能太宽松）
-
-IF Prism pass_rate < 0.3 AND 产出看起来合理
-  THEN 强制触发元评审（Prism 的标准可能太严格）
-
-IF 标准和上次同类审查差异 > 30%
-  THEN 标准漂移警告 → Warden 裁决。
-```
-
-> **通过弱断言的 PASS 比 FAIL 更危险——它制造虚假信心。**
-
-### 步骤6：修订
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | 原执行元（谁做的谁改） |
-| **输入** | Prism 评审报告 + Warden 元评审意见 |
-| **核心动作** | 按评审意见修复 → 重新提交 |
-| **输出** | 修订后的产出物 |
-| **质量门控** | 最多 3 轮修订（AutoFix 循环）。3 轮后仍 B 级 → 上报 Warden 决策。<br>**注**：AutoFix 是自动修复循环——Review 发现问题后自动派发修复任务给执行元，不需要用户介入。只有3轮自动修复全部失败后才上报 Warden 决策。 |
-
-**修订分级**：
-- B级问题 → 补充具体案例、数据引用
-- C级问题 → 重写套话段落，用实际数据替换
-- D级问题 → 回到执行步骤，从头重做
-
-### 步骤7：验证
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | Prism（独立于修订者） |
-| **输入** | 修订后的产出物 |
-| **核心动作** | 用同一套断言重新评估 → 确认修订确实解决了问题 |
-| **输出** | 验证结果：通过 / 需要继续修订 |
-| **质量门控** | 验证必须基于 fresh evidence，不是"我记得改过了" |
-
-> **验证不是自我感动。改了不等于改好了。必须重新跑断言。**
-
-### 步骤8：汇总
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | Warden |
-| **输入** | 所有步骤的过程数据 + 最终产出 |
-| **核心动作** | 综合各元报告 → 提取学习 → 生成CEO报告 |
-| **输出** | CEO报告（按交付壳适配）+ 学习记录 |
-| **质量门控** | CEO报告必须通过意图放大审查（壳适配检查） |
-
-**汇总不是复制粘贴**，是综合判断：
-- 多个元的报告可能矛盾 → Warden 做权衡决策
-- 提取本轮的关键学习 → 为步骤10进化做准备
-
-### 步骤9：反馈
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | 用户/CEO |
-| **输入** | 汇总报告 + 最终产出 |
-| **核心动作** | 用户确认满意度 → 补充修改意见 → 签收 |
-| **输出** | 用户确认 / 修改要求 |
-| **质量门控** | 必须获得明确确认。模糊确认（"还行吧"）→ 追问具体不满意的点 |
-
-### 步骤10：进化
-
-| 属性 | 内容 |
-|------|------|
-| **执行者** | 全员（每个元各自进化 + Conductor 统筹） |
-| **输入** | 全流程过程数据 + 用户反馈 |
-| **核心动作** | 5维度进化检测 → 进化放大操作 |
-| **输出** | 进化建议清单 + 已执行的进化操作 |
-| **质量门控** | 至少 1 个维度有具体进化操作（不能全是"维持现状"） |
-
-详细的5维度展开和放大操作见 `references/intent-amplification.md`。
-
----
-
-## 复杂度路由
-
-不是所有任务都要走完10步。按复杂度路由：
-
-### 简单（<2文件改动）
-
-```
-方向(1) → 执行(3) → 评审(4) → 验证(7) → 反馈(9)
-跳过：规划(2)、元评审(5)、修订(6)、汇总(8)、进化(10)
-```
-
-**理由**：2文件以内的改动，评审覆盖即可，不需要元评审和完整进化。
-
-### 中等（2-5文件改动）
-
-```
-方向(1) → 规划(2) → 执行(3) → 评审(4) → 元评审(5) → 修订(6) → 验证(7) → 反馈(9)
-跳过：汇总(8)、进化(10)
-```
-
-**理由**：需要规划和元评审保证质量，但规模不足以需要完整进化分析。
-
-### 复杂（>5文件/多模块）
-
-```
-方向(1) → 规划(2) → 执行(3) → 评审(4) → 元评审(5) → 修订(6) → 验证(7) → 汇总(8) → 反馈(9) → 进化(10)
-全部10步
-```
-
-**理由**：大规模变更需要完整治理，包括元评审防止审查盲区、汇总综合判断、进化提取学习。
-
-### 路由决策矩阵
-
-| 信号 | 升级条件 |
-|------|---------|
-| 文件数从 <2 增加到 >2 | 简单 → 中等 |
-| 出现跨模块依赖 | 中等 → 复杂 |
-| Sentinel 报安全问题 | 任何 → 复杂（全步骤） |
-| Prism 评审发现系统性问题 | 中等 → 复杂 |
-| 用户明确要求完整流程 | 任何 → 复杂 |
-
----
-
-## 步骤间的信号流
-
-```
-方向(1) ──意图核+复杂度──→ 规划(2)
-规划(2) ──牌组+分配──→ 执行(3)
-执行(3) ──产出物──→ 评审(4)
-评审(4) ──审查报告──→ 元评审(5)
-         ──评审意见──→ 修订(6)
-元评审(5) ──标准判定──→ 修订(6)（如有标准问题）
-修订(6) ──修订产出──→ 验证(7)
-验证(7) ──通过──→ 汇总(8)
-         ──未通过──→ 修订(6)（回环，最多3轮AutoFix）
-汇总(8) ──CEO报告──→ 反馈(9)
-反馈(9) ──用户确认──→ 进化(10)
-         ──修改要求──→ 修订(6)（回环）
-进化(10) ──进化操作──→ [下一轮的系统更强]
+Direction(1) → Plan(2) → Execute(3) → Review(4) → Meta-review(5) → Revise(6) → Verify(7) → Summary(8) → Feedback(9) → Evolve(10)
+├────── moves ──────┤├──────────────────── matures ─────────────────────────────────────────┤
 ```
 
 ---
 
-## 元评审的深入设计
+## Step by step
 
-元评审是十步治理中最容易被跳过、但最不该被跳过的步骤。
+### Step 1: Direction
 
-### 为什么需要元评审
+| Attribute | Content |
+|-----------|---------|
+| **Owners** | Warden + user |
+| **Input** | User need (possibly fuzzy) |
+| **Core work** | Clarity check → intent core → complexity class |
+| **Output** | Clear intent core + complexity (simple / medium / complex) |
+| **Gate** | Core must be testable: one sentence for “done looks like”? If not → clarify |
 
-**问题**：Prism 负责评审产出质量。但谁来评审 Prism 的评审质量？
+**Clarification rules**:
 
-**风险**：
-- Prism 用了太宽松的断言 → 低质量产出通过了（虚假信心）
-- Prism 用了太严格的断言 → 合理产出被打回了（浪费资源）
-- Prism 的标准随时间漂移 → 同类产出今天过、明天不过（不一致）
+- At most 2 rounds (guide cards)
+- Still fuzzy after 2 → conservative assumptions, mark assumptions
+- Do not guess intent forever
 
-### 元评审不做什么
+### Step 2: Planning
 
-- 不重复审查产出物本身（那是 Prism 的工作）
-- 不质疑 Prism 的具体结论（除非标准有问题）
-- 不替代 Prism 的角色
+| Attribute | Content |
+|-----------|---------|
+| **Owner** | Conductor |
+| **Input** | Intent core + complexity |
+| **Core work** | Decompose → assign metas → dependencies → deck |
+| **Output** | Task plan + deck config + parallel/serial flags |
+| **Gate** | Every subtask maps to a concrete meta; if not → creation pipeline |
 
-### 元评审只做什么
+**Complexity routing here**:
 
-- 审查 Prism 的断言是否覆盖关键维度
-- 审查 Prism 的断言强度是否足够（弱断言检测）
-- 审查 Prism 的标准是否与历史一致（漂移检测）
+- Simple (<2 files) → skip heavy planning, execute
+- Medium (2–5) → light plan
+- Complex (>5) → full plan + dependency picture
 
-### Prism 的配合义务
+### Step 3: Execute
 
-Prism 在被元评审时需要：
-- 公开完整的断言列表和评分标准
-- 说明每个断言的设计理由
-- 标记与上次同类审查的标准差异
-- 接受 Warden 的标准调整建议
+| Attribute | Content |
+|-----------|---------|
+| **Owners** | Execution metas (per assignment) |
+| **Input** | Plan + concrete subtasks |
+| **Core work** | Search assets → match capability → execute → artifacts |
+| **Output** | Code / docs / config / design |
+| **Gate** | Single writer per file at a time |
 
-详见 `.claude/agents/meta-prism.md` 的"被审查协议"。
+**Execution rules**:
+
+- No overlapping files → safe parallel
+- Overlap → serial; second waits
+- No owning meta → Type B creation pipeline
+
+### Step 4: Review
+
+| Attribute | Content |
+|-----------|---------|
+| **Owner** | Prism |
+| **Input** | Step 3 artifacts |
+| **Core work** | Slop scan → assertion review → declared checks → depth → grade |
+| **Output** | Prism report: assertions PASS/FAIL + grade S/A/B/C/D |
+| **Gate** | A/S pass; B revise; C/D redo |
+
+**Review is not a score** — it is forensic:
+
+- Every claim needs evidence (path, line, data)
+- Hidden assumptions must be surfaced and tested
+- No evidence → FAIL
+
+### Step 5: Meta-review
+
+> **Who reviews the reviewer?**
+
+| Attribute | Content |
+|-----------|---------|
+| **Owner** | Warden (reviews Prism’s *bar*, not re-judging the artifact) |
+| **Input** | Prism report + review standard |
+| **Core work** | Assertion coverage → assertion strength → standard consistency |
+| **Output** | Pass / need more / drift warning |
+| **Gate** | See meta-review protocol below |
+
+#### Meta-review protocol
+
+Warden examines Prism’s standard, not the artifact again:
+
+| Dimension | Method | If fail |
+|-----------|--------|---------|
+| **Coverage** | Do assertions cover all critical dimensions? | Add missing dimensions |
+| **Strength** | Weak assertions faking confidence? | Tighten (e.g. “has Core Truths” → “≥3 and replaceability-tested”) |
+| **Consistency** | Same bar as last similar review? | Log delta: evolution vs drift |
+
+**Triggers**:
+
+```
+IF Prism pass_rate > 0.9 AND output clearly bad
+  THEN force meta-review (bar too loose)
+
+IF Prism pass_rate < 0.3 AND output looks reasonable
+  THEN force meta-review (bar too tight)
+
+IF standard differs >30% from last similar review
+  THEN drift warning → Warden decides.
+```
+
+> **Weak PASS is worse than FAIL — it breeds false confidence.**
+
+### Step 6: Revision
+
+| Attribute | Content |
+|-----------|---------|
+| **Owner** | Original execution meta |
+| **Input** | Prism report + Warden meta-review notes |
+| **Core work** | Fix per feedback → resubmit |
+| **Output** | Revised artifacts |
+| **Gate** | Max 3 AutoFix rounds; still B after 3 → Warden. AutoFix = automatic fix loop without user until cap. |
+
+**Revision tiers**:
+
+- B → add cases, citations
+- C → replace generic text with real data
+- D → re-execute from scratch
+
+### Step 7: Verify
+
+| Attribute | Content |
+|-----------|---------|
+| **Owner** | Prism (independent of reviser) |
+| **Input** | Revised artifacts |
+| **Core work** | Re-run same assertions → confirm fixes landed |
+| **Output** | Pass / need more revision |
+| **Gate** | Fresh evidence required — not “I think I fixed it” |
+
+> **Verification is not self-congratulation. Changed ≠ fixed. Re-run assertions.**
+
+### Step 8: Summary
+
+| Attribute | Content |
+|-----------|---------|
+| **Owner** | Warden |
+| **Input** | Full run data + final artifacts |
+| **Core work** | Integrate reports → extract learning → exec-facing memo |
+| **Output** | Exec memo (shell-matched) + learning log |
+| **Gate** | Pass intent-amplification checks on the memo |
+
+**Summary ≠ paste** — reconcile conflicts, extract learning for Step 10.
+
+### Step 9: Feedback
+
+| Attribute | Content |
+|-----------|---------|
+| **Owners** | User / exec |
+| **Input** | Summary + artifacts |
+| **Core work** | Satisfaction → change requests → acceptance |
+| **Output** | Confirmed / changes requested |
+| **Gate** | Explicit confirmation; vague (“fine I guess”) → ask what failed |
+
+### Step 10: Evolution
+
+| Attribute | Content |
+|-----------|---------|
+| **Owners** | Everyone (per-meta) + Conductor coordination |
+| **Input** | Full trace + user feedback |
+| **Core work** | Five-dimension scan → amplification actions |
+| **Output** | Evolution backlog + executed changes |
+| **Gate** | At least one dimension with a concrete action (not all “no change”) |
+
+Detail: `references/intent-amplification.md`.
+
+---
+
+## Complexity routing
+
+Not every task runs all ten steps.
+
+### Simple (<2 files)
+
+```
+Direction(1) → Execute(3) → Review(4) → Verify(7) → Feedback(9)
+Skip: Plan(2), Meta-review(5), Revise(6), Summary(8), Evolve(10)
+```
+
+Small change: review + verify suffice; no meta-review or full evolution.
+
+### Medium (2–5 files)
+
+```
+Direction(1) → Plan(2) → Execute(3) → Review(4) → Meta-review(5) → Revise(6) → Verify(7) → Feedback(9)
+Skip: Summary(8), Evolve(10)
+```
+
+Planning + meta-review matter; evolution optional at this scale.
+
+### Complex (>5 files / multi-module)
+
+```
+Full 1–10
+```
+
+Large change: meta-review against blind spots, summary, evolution.
+
+### Escalation matrix
+
+| Signal | Escalate |
+|--------|----------|
+| File count crosses 2 | simple → medium |
+| Cross-module deps | medium → complex |
+| Sentinel security | any → complex (full path) |
+| Prism finds systemic issue | medium → complex |
+| User demands full process | any → complex |
+
+---
+
+## Signal flow
+
+```
+Direction(1) ──core+complexity──→ Plan(2)
+Plan(2) ──deck+assignments──→ Execute(3)
+Execute(3) ──artifacts──→ Review(4)
+Review(4) ──report──→ Meta-review(5)
+         ──feedback──→ Revise(6)
+Meta-review(5) ──standard fix──→ Revise(6) if needed
+Revise(6) ──revised──→ Verify(7)
+Verify(7) ──pass──→ Summary(8)
+         ──fail──→ Revise(6) (loop, max 3 AutoFix)
+Summary(8) ──exec memo──→ Feedback(9)
+Feedback(9) ──confirm──→ Evolve(10)
+         ──changes──→ Revise(6)
+Evolve(10) ──actions──→ [stronger next run]
+```
+
+---
+
+## Meta-review deep dive
+
+Easiest to skip; worst to skip.
+
+### Why it exists
+
+Prism judges output quality. **Who judges Prism’s judgment?**
+
+**Risks**:
+
+- Too loose → bad output passes (false confidence)
+- Too tight → good output blocked (waste)
+- Drifting standard → same work passes today, fails tomorrow
+
+### What meta-review does **not** do
+
+- Re-review the artifact (Prism’s job)
+- Nitpick Prism’s conclusions (unless the standard is wrong)
+- Replace Prism
+
+### What it **does**
+
+- Assertion coverage on critical dimensions
+- Assertion strength (weak-PASS detection)
+- Historical consistency (drift)
+
+### Prism’s obligations under meta-review
+
+- Publish full assertion list and rubric
+- Explain each assertion’s design
+- Mark deltas vs last similar review
+- Accept Warden’s standard adjustments
+
+See `.claude/agents/meta-prism.md` “reviewed-party protocol.”

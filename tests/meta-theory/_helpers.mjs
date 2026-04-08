@@ -77,17 +77,18 @@ export const REFERENCE_FILES = [
   "create-agent.md",
 ];
 
+/** Canonical English labels (aligned with references/rhythm-orchestration.md). */
 export const TEN_CARD_TYPES = [
-  "澄清",
-  "范围收缩",
-  "方案",
-  "执行",
-  "校验",
-  "修复",
-  "回滚",
-  "风险",
-  "建议",
-  "留白",
+  "Clarify",
+  "Shrink scope",
+  "Options",
+  "Execute",
+  "Verify",
+  "Fix",
+  "Rollback",
+  "Risk",
+  "Nudge",
+  "Pause",
 ];
 
 export const DELIVERY_SHELL_DIMENSIONS = [

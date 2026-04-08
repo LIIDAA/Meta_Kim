@@ -1,190 +1,190 @@
-# 意图放大 — 完整参考
+# Intent amplification — full reference
 
-> 来源：meta.md 第八部分启发7（第882-896行）+ 第九部分总纲，老金直播口播提炼
+> Distilled from `docs/meta.md` (long-form narrative); aligns with the Meta_Kim methodology.
 
-## 核心命题
+## Core proposition
 
-**高层意图被结构性展开后的结果。不是一个人把所有事做完，而是一个意图通过组织结构被逐层放大成系统级产出。**
+**High-level intent, structurally expanded.** Not one actor doing everything — intent amplified layer by layer through the organization into system-level output.
 
-> **同一意图，不该只有一种表达方式。成熟系统应该按触点、角色、上下文，换壳不换核。**
-
----
-
-## 意图核 + 交付壳模型
-
-### 意图核（不变）
-
-意图核是底层目标/信息/决策，不随交付形式改变。
-
-示例：
-- "用户认证系统需要Token刷新机制" — 这是意图核
-- "当前进度落后预期 20%" — 这是意图核
-- "Genesis 产出的 SOUL.md 缺少 Decision Rules" — 这是意图核
-
-### 交付壳（按场景换）
-
-交付壳是意图核在不同场景下的包装形式。同一个意图核，交付给不同受众时，壳不同。
-
-示例 — 同一意图核"Token刷新机制需要实现"：
-
-| 受众 | 交付壳 |
-|------|-------|
-| CEO | "认证模块还差一个安全关键功能，预计增加 2 天工期" |
-| 开发者 | "需要实现 `refreshToken()` 函数，JWT 过期前 5 分钟触发，详见 API 设计文档" |
-| 用户 | "登录状态将自动保持，无需重复登录" |
+> **One intent should not have only one expression. Mature systems swap shells, not cores, by touchpoint, role, and context.**
 
 ---
 
-## 壳选择4维度
+## Intent core + delivery shell
 
-### 维度矩阵
+### Intent core (stable)
 
-| 维度 | 选项 | 影响 |
-|------|------|------|
-| **受众角色** | CEO / 开发者 / 用户 / 审查员 | 决定抽象层级和专业深度 |
-| **触点类型** | 文档 / 对话 / 通知 / 报告 | 决定格式和详细程度 |
-| **上下文密度** | 首次 / 复查 / 紧急 | 决定上下文铺垫量 |
-| **注意力预算** | 高 / 中 / 低 | 决定信息密度和长度 |
+The underlying goal / information / decision. Does not change with packaging.
 
-### 壳选择决策表
+Examples:
+
+- “The auth system needs a token refresh mechanism” — intent core
+- “Progress is ~20% behind plan” — intent core
+- “Genesis SOUL.md is missing Decision Rules” — intent core
+
+### Delivery shell (contextual)
+
+How the core is wrapped for a given audience. Same core, different shell.
+
+Example — core: “Token refresh must be implemented”:
+
+| Audience | Shell |
+|----------|-------|
+| Exec | “Auth module lacks one security-critical item; ~2 extra days.” |
+| Developer | “Implement `refreshToken()`, trigger JWT refresh 5 minutes before expiry; see API design doc.” |
+| End user | “You stay signed in without re-entering credentials.” |
+
+---
+
+## Four dimensions of shell choice
+
+### Matrix
+
+| Dimension | Options | Effect |
+|-----------|---------|--------|
+| **Audience** | Exec / developer / user / auditor | Abstraction and depth |
+| **Touchpoint** | Doc / chat / notification / report | Format and length |
+| **Context density** | First view / revisit / emergency | How much background |
+| **Attention budget** | High / medium / low | Information density |
+
+### Decision sketch
 
 ```
 selectDeliveryShell(card, audience, context):
 
-  IF audience = CEO:
-    → 高抽象、重结论、附决策建议
-    → 格式：摘要 + 关键数据 + 建议行动
+  IF audience = exec:
+    → high abstraction, conclusions first, recommended actions
+    → format: summary + key numbers + next steps
 
-  IF audience = 开发者:
-    → 低抽象、重实现细节、附代码引用
-    → 格式：技术说明 + 文件路径 + 代码片段
+  IF audience = developer:
+    → low abstraction, implementation detail, code refs
+    → format: technical note + paths + snippets
 
-  IF audience = 审查员:
-    → 中等抽象、重证据链、附断言验证
-    → 格式：断言 + 证据 + 判定
+  IF audience = auditor:
+    → medium abstraction, evidence chain, verifiable claims
+    → format: assertion + evidence + verdict
 
-  THEN 叠加上下文密度调整:
-    IF 首次 → 补充背景说明
-    IF 复查 → 只给差异和变化
-    IF 紧急 → 只给结论和行动项
+  THEN adjust for context density:
+    IF first view → add background
+    IF revisit → deltas only
+    IF emergency → conclusions + actions only
 
-  THEN 叠加注意力预算调整:
-    IF 高 → 完整详细输出
-    IF 中 → 核心内容 + 可展开链接
-    IF 低 → 一句话摘要
+  THEN adjust for attention budget:
+    IF high → full detail
+    IF medium → core + expandable links
+    IF low → one-line summary
 ```
 
 ---
 
-## 出牌成本与壳的关系
+## Card cost vs shell
 
-壳选择直接影响出牌成本：
+Shell choice directly affects attention cost:
 
-| 壳类型 | 注意力成本 | 适用场景 |
-|--------|-----------|---------|
-| 一句话摘要 | low | 低注意力预算、信息确认 |
-| 结构化报告 | mid | 中等预算、需要全面了解 |
-| 完整技术文档 | high | 高预算、首次深入理解 |
-| 差异增量 | low | 复查场景、只看变化 |
-| 决策建议 | mid | CEO场景、需要行动指引 |
+| Shell type | Attention cost | When |
+|------------|----------------|------|
+| One-liner | low | Low budget, confirmation |
+| Structured report | mid | Medium budget, overview |
+| Full technical doc | high | First deep dive |
+| Delta-only | low | Revisit, changes only |
+| Decision memo | mid | Exec, needs actions |
 
-**与节奏编排的对接**：每张牌出牌时，Conductor 根据当前受众和上下文选择交付壳，控制注意力成本。
-
----
-
-## 5维进化放大操作
-
-进化检测不是终点。检测结果必须转化为结构性的放大操作，让系统通过每次执行变得更强。
-
-### 维度1：模式复用 → 提取放大
-
-| 检测结果 | 放大操作 | 执行者 |
-|---------|---------|--------|
-| 发现可复用的代码模式 | 提取为 Skill → 注册到 Artisan 候选池 | Artisan |
-| 发现可复用的工作流模式 | 提取为编排模板 → 注册到 Conductor 模板库 | Conductor |
-| 发现可复用的审查模式 | 提取为断言模板 → 注册到 Prism 签名库 | Prism |
-
-### 维度2：agent边界 → 结构放大
-
-| 检测结果 | 放大操作 | 执行者 |
-|---------|---------|--------|
-| agent 职责膨胀（>2域） | 触发拆分 → 走类型B创建流水线 | Warden |
-| agent 过于碎片化 | 触发合并 → 重新分组 | Warden |
-| 5标准仍全部PASS | 维持现状，记录验证快照 | Prism |
-
-### 维度3：引导优化 → 交互放大
-
-| 检测结果 | 放大操作 | 执行者 |
-|---------|---------|--------|
-| 追问轮数 >2 | 优化引导牌触发条件 → 预设常见意图模板 | Conductor |
-| 用户需提供过多上下文 | 增强记忆策略 → 自动从历史补全 | Librarian |
-| 误解率 >0 | 更新 Decision Rules → 增加歧义消解规则 | Genesis |
-
-### 维度4：流程瓶颈 → 效率放大
-
-| 检测结果 | 放大操作 | 执行者 |
-|---------|---------|--------|
-| 某步骤耗时最长 | 分析原因 → 增加并行或预计算 | Conductor |
-| 某步骤失败率最高 | 增加前置检查 → 或降级为更简单的替代方案 | Sentinel |
-| 串行浪费 | 标记可并行步骤 → 更新牌组依赖关系 | Conductor |
-
-### 维度5：能力覆盖 → 规模放大
-
-| 检测结果 | 放大操作 | 执行者 |
-|---------|---------|--------|
-| 发现新能力缺口 | 创建新元/Skill → 或调用 Scout 搜索外部工具 | Scout/Genesis |
-| 工具/Skill缺失 | 触发 Scout 扫描 → ROI 评估 → 引入决策 | Scout |
-| 知识缺失 | 添加到记忆/references → 更新 Librarian 索引 | Librarian |
+**Ties to rhythm**: on each card, Conductor picks shell for audience + context to control cost.
 
 ---
 
-## Warden 的意图放大审查
+## Five evolution amplification actions
 
-Warden 在综合报告环节需要检查意图放大质量：
+Evolution scans are not the end state — they must become structural upgrades.
 
-### CEO报告壳适配检查
+### 1. Pattern reuse → extract
 
-| 检查项 | 方法 | 不通过处理 |
-|--------|------|-----------|
-| 报告是否按受众调整了抽象层级？ | CEO报告不应包含代码片段或文件路径 | 要求重写，提高抽象层级 |
-| 关键结论是否前置？ | 第一段必须包含核心结论 | 调整结构，结论前置 |
-| 是否附带决策建议？ | CEO需要可行动的建议，不只是信息 | 补充"建议行动"段 |
-| 信息密度是否匹配注意力预算？ | CEO预算通常为"中" | 删减细节，保留核心 |
+| Finding | Action | Owner |
+|---------|--------|-------|
+| Reusable code pattern | Skill → Artisan pool | Artisan |
+| Reusable workflow | Orchestration template → Conductor library | Conductor |
+| Reusable review pattern | Assertion template → Prism library | Prism |
 
-### 跨受众一致性检查
+### 2. Agent boundaries → restructure
 
-同一意图核交付给不同受众时：
-- 核心信息必须一致（不能给CEO说进度正常，给开发者说进度延迟）
-- 只有壳的形式不同，不是内容矛盾
-- 如果发现矛盾 → 回溯意图核，确认事实后统一
+| Finding | Action | Owner |
+|---------|--------|-------|
+| Role creep (>2 domains) | Split → Type B pipeline | Warden |
+| Over-fragmentation | Merge / regroup | Warden |
+| Five criteria still pass | Snapshot verification | Prism |
+
+### 3. Guidance UX → interaction
+
+| Finding | Action | Owner |
+|---------|--------|-------|
+| >2 clarification rounds | Tune guide cards / intent presets | Conductor |
+| User must supply too much context | Stronger memory / history fill | Librarian |
+| Misunderstanding rate > 0 | Tighten Decision Rules / disambiguation | Genesis |
+
+### 4. Process bottleneck → throughput
+
+| Finding | Action | Owner |
+|---------|--------|-------|
+| Slowest step | Root cause → parallelize or precompute | Conductor |
+| Highest failure rate | Pre-checks or simpler fallback | Sentinel |
+| Serial waste | Mark parallelizable steps, update deck deps | Conductor |
+
+### 5. Capability coverage → scale
+
+| Finding | Action | Owner |
+|---------|--------|-------|
+| New capability gap | New meta/skill or Scout | Scout / Genesis |
+| Missing tool/skill | Scout scan → ROI → adopt? | Scout |
+| Knowledge gap | Memory / references + Librarian index | Librarian |
 
 ---
 
-## 意图放大与其他主线的关系
+## Warden: intent amplification review
+
+During synthesis, check delivery quality:
+
+### Exec shell checklist
+
+| Check | Method | If fail |
+|-------|--------|---------|
+| Right abstraction level? | Exec memo should not embed raw code paths | Rewrite higher |
+| Conclusion first? | First paragraph states the core verdict | Restructure |
+| Actionable recommendation? | Not information-only | Add “recommended actions” |
+| Density matches budget? | Exec usually “medium” budget | Trim detail |
+
+### Cross-audience consistency
+
+Same core across audiences:
+
+- Facts must agree (cannot tell exec “on track” and dev “late”)
+- Only the shell differs, not contradictory substance
+- If contradiction → reconcile the core, then re-shell
+
+---
+
+## Relationship to other threads
 
 ```
-元(拆)
-  ↓ 提供：可独立交付的最小单位
-组织镜像(组)
-  ↓ 提供：分层的受众结构（CEO/中层/执行层）
-节奏编排(发)
-  ↓ 提供：出牌时机和注意力预算
-意图放大(成) ← 本层
-  ↓ 产出：按受众、触点、上下文适配的结构化交付
+Meta (split)
+  ↓ yields independently deliverable units
+Organizational mirror (compose)
+  ↓ yields layered audiences (exec / middle / execution)
+Rhythm orchestration (deal)
+  ↓ yields timing and attention budget
+Intent amplification (deliver) ← this layer
+  ↓ yields structured delivery by audience, touchpoint, context
 ```
 
-意图放大是四条主线的终点——前三层的所有工作，最终都要通过意图放大转化为有效的系统级产出。
+Intent amplification is the **terminal layer** — upstream work becomes effective system output here.
 
 ---
 
-## 场景示例
+## Scenario: security fix shipped
 
-### 场景：安全漏洞修复完成
+**Intent core**: XSS fixed on three pages; verification needed.
 
-**意图核**：XSS 漏洞已修复，影响范围 3 个页面，需要验证。
-
-| 受众 | 交付壳 |
-|------|-------|
-| CEO | "安全关键修复完成，3个面向用户的页面已加固。建议行动：安排一次安全审查确认。" |
-| 开发者 | "修复了 `pages/profile.tsx:42`、`pages/settings.tsx:88`、`pages/dashboard.tsx:156` 的 XSS 漏洞。使用 DOMPurify sanitize 用户输入。需要 code review + 回归测试。" |
-| 审查员 | "断言：所有用户输入路径已做 sanitize。证据：3 处 innerHTML 替换为 DOMPurify.sanitize()。验证方法：注入 `<script>alert(1)</script>` 测试。" |
+| Audience | Shell |
+|----------|-------|
+| Exec | “Security-critical fix shipped; three user-facing pages hardened. Suggested next step: schedule a security review.” |
+| Developer | “XSS fixed at `pages/profile.tsx:42`, `pages/settings.tsx:88`, `pages/dashboard.tsx:156`. DOMPurify on user input. Needs code review + regression.” |
+| Auditor | “Claim: all user-input paths sanitized. Evidence: three `innerHTML` sites → `DOMPurify.sanitize()`. Test: inject `<script>alert(1)</script>`.” |

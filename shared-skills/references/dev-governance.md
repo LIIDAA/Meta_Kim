@@ -2,7 +2,7 @@
 
 > Detailed operating spec for Type C (Development Governance Flow).
 > The Type C section in `SKILL.md` is the entry summary; this file contains the full procedure.
-> For the same narrative in Chinese, see `docs/meta.md`.
+> For extended long-form narrative (including historical Chinese material), see `docs/meta.md`.
 > Read this file when executing Type C — Development Governance Flow.
 
 ## 1. AGENT INVOCATION PRINCIPLE (Non-Negotiable)

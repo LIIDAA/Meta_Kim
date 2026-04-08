@@ -38,47 +38,35 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
   await loadFixtures();
 
   describe("Part A: Structure Verification (references/intent-amplification.md)", () => {
-    test("A-01: Intent Core (意图核) definition present", () => {
+    test("A-01: Intent core definition present", () => {
+      assert.match(refContent, /### Intent core \(stable\)/i, "Missing Intent core section");
       assert.match(
         refContent,
-        /意图核/,
-        "Missing '意图核' definition"
+        /intent core|underlying goal/i,
+        "Intent core should be described as the invariant part"
       );
       assert.match(
         refContent,
-        /Intent Core|意图核.*不变/i,
-        "Intent Core should be described as the invariant part"
-      );
-      assert.match(
-        refContent,
-        /底层目标|信息|决策/,
-        "Intent Core definition should mention goals/information/decisions"
+        /goal.*information.*decision|information\/decision/i,
+        "Intent core should mention goals/information/decisions"
       );
     });
 
-    test("A-02: Delivery Shell (交付壳) definition present", () => {
+    test("A-02: Delivery shell definition present", () => {
+      assert.match(refContent, /### Delivery shell/i, "Missing Delivery shell section");
       assert.match(
         refContent,
-        /交付壳/,
-        "Missing '交付壳' definition"
-      );
-      assert.match(
-        refContent,
-        /交付壳.*按场景换|包装形式/,
-        "Delivery Shell should be described as context-dependent wrapping"
+        /wrapped for a given audience|Same core, different shell/i,
+        "Delivery shell should be context-dependent wrapping"
       );
     });
 
     test("A-03: Shell selection 4 dimensions (audience, touchpoint, context density, attention budget)", () => {
-      assert.match(
-        refContent,
-        /壳选择4维度|4维度/,
-        "Missing shell selection 4-dimensions section"
-      );
-      assert.match(refContent, /受众角色/, "Missing '受众角色' dimension");
-      assert.match(refContent, /触点类型/, "Missing '触点类型' dimension");
-      assert.match(refContent, /上下文密度/, "Missing '上下文密度' dimension");
-      assert.match(refContent, /注意力预算/, "Missing '注意力预算' dimension");
+      assert.match(refContent, /Four dimensions of shell choice/i, "Missing four-dimensions section");
+      assert.match(refContent, /\*\*Audience\*\*/i, "Missing Audience dimension");
+      assert.match(refContent, /Touchpoint/i, "Missing Touchpoint dimension");
+      assert.match(refContent, /Context density/i, "Missing Context density dimension");
+      assert.match(refContent, /Attention budget/i, "Missing Attention budget dimension");
     });
 
     test("A-04: Shell selection decision table (selectDeliveryShell pseudocode)", () => {
@@ -89,162 +77,109 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
       );
       assert.match(
         refContent,
-        /IF audience\s*=\s*CEO/i,
-        "Decision table should handle CEO audience"
+        /IF audience\s*=\s*exec/i,
+        "Decision table should handle exec audience"
       );
       assert.match(
         refContent,
-        /IF audience\s*=\s*开发者/i,
+        /IF audience\s*=\s*developer/i,
         "Decision table should handle developer audience"
       );
       assert.match(
         refContent,
-        /IF audience\s*=\s*审查员/i,
-        "Decision table should handle reviewer audience"
+        /IF audience\s*=\s*auditor/i,
+        "Decision table should handle auditor audience"
       );
     });
 
-    test("A-05: CEO shell characteristics (高抽象, 重结论)", () => {
+    test("A-05: Exec shell characteristics", () => {
       assert.match(
         refContent,
-        /高抽象/,
-        "Missing '高抽象' characteristic for CEO shell"
+        /high abstraction.*conclusions first/i,
+        "Missing high abstraction / conclusions first for exec shell"
       );
       assert.match(
         refContent,
-        /重结论/,
-        "Missing '重结论' characteristic for CEO shell"
-      );
-      assert.match(
-        refContent,
-        /决策建议/,
-        "CEO shell should mention decision recommendations"
+        /recommended actions/i,
+        "Exec shell should mention recommended actions"
       );
     });
 
-    test("A-06: Developer shell characteristics (低抽象, 重实现)", () => {
+    test("A-06: Developer shell characteristics", () => {
       assert.match(
         refContent,
-        /低抽象/,
-        "Missing '低抽象' characteristic for developer shell"
+        /low abstraction.*implementation detail/i,
+        "Missing low abstraction / implementation detail for developer shell"
       );
       assert.match(
         refContent,
-        /重实现/,
-        "Missing '重实现' characteristic for developer shell"
-      );
-      assert.match(
-        refContent,
-        /代码引用|代码片段/,
+        /code refs|snippets/i,
         "Developer shell should mention code references"
       );
     });
 
-    test("A-07: Reviewer shell characteristics (中等抽象, 重证据链)", () => {
+    test("A-07: Auditor shell characteristics", () => {
       assert.match(
         refContent,
-        /中等抽象/,
-        "Missing '中等抽象' characteristic for reviewer shell"
+        /medium abstraction.*evidence chain/i,
+        "Missing medium abstraction / evidence chain for auditor shell"
       );
       assert.match(
         refContent,
-        /重证据链/,
-        "Missing '重证据链' characteristic for reviewer shell"
-      );
-      assert.match(
-        refContent,
-        /断言验证|断言.*证据.*判定/,
-        "Reviewer shell should mention assertion verification"
+        /assertion \+ evidence \+ verdict/i,
+        "Auditor shell should mention assertion + evidence + verdict"
       );
     });
 
-    test("A-08: 5+1 evolution amplification operations documented", () => {
+    test("A-08: Five evolution amplification operations documented", () => {
       assert.match(
         refContent,
-        /5维进化放大/,
-        "Missing '5维进化放大' section"
+        /Five evolution amplification actions/i,
+        "Missing five evolution amplification section"
       );
 
       const dimensions = [
-        "模式复用.*提取放大",
-        "agent边界.*结构放大",
-        "引导优化.*交互放大",
-        "流程瓶颈.*效率放大",
-        "能力覆盖.*规模放大",
+        "Pattern reuse",
+        "Agent boundaries",
+        "Guidance UX",
+        "Process bottleneck",
+        "Capability coverage",
       ];
       for (const dim of dimensions) {
-        assert.match(
-          refContent,
-          new RegExp(dim),
+        assert.ok(
+          refContent.includes(dim),
           `Missing evolution dimension: ${dim}`
         );
       }
 
-      assert.match(
-        refContent,
-        /Artisan/,
-        "Dimension 1 executor (Artisan) must be documented"
-      );
-      assert.match(
-        refContent,
-        /Warden/,
-        "Dimension 2 executor (Warden) must be documented"
-      );
-      assert.match(
-        refContent,
-        /Conductor/,
-        "Dimension 3/4 executor (Conductor) must be documented"
-      );
-      assert.match(
-        refContent,
-        /Scout|Genesis/,
-        "Dimension 5 executor (Scout/Genesis) must be documented"
-      );
+      assert.match(refContent, /Artisan/, "Dimension 1 executor (Artisan) must be documented");
+      assert.match(refContent, /Warden/, "Dimension 2 executor (Warden) must be documented");
+      assert.match(refContent, /Conductor/, "Dimension 3/4 executor (Conductor) must be documented");
+      assert.match(refContent, /Scout|Genesis/, "Dimension 5 executor (Scout/Genesis) must be documented");
     });
 
-    test("A-09: Warden's intent amplification review checklist", () => {
+    test("A-09: Warden intent amplification review checklist", () => {
       assert.match(
         refContent,
-        /Warden.*意图放大审查/,
+        /## Warden: intent amplification review/i,
         "Missing Warden intent amplification review section"
       );
 
-      const checkItems = [
-        "按受众调整.*抽象层级",
-        "关键结论.*前置",
-        "决策建议",
-        "信息密度.*注意力预算",
-      ];
-      for (const item of checkItems) {
-        assert.match(
-          refContent,
-          new RegExp(item),
-          `Missing Warden review checklist item: ${item}`
-        );
-      }
+      assert.match(refContent, /Exec shell checklist/i, "Missing exec shell checklist");
+      assert.match(refContent, /Conclusion first/i, "Missing conclusion-first check");
+      assert.match(refContent, /Actionable recommendation/i, "Missing actionable recommendation");
+      assert.match(refContent, /Density matches budget/i, "Missing density vs budget check");
     });
 
     test("A-10: Cross-audience consistency check rule", () => {
+      assert.match(refContent, /### Cross-audience consistency/i, "Missing cross-audience consistency section");
+      assert.match(refContent, /Facts must agree/i, "Must state facts must agree");
       assert.match(
         refContent,
-        /跨受众一致性检查/,
-        "Missing cross-audience consistency check section"
+        /on track.*late|exec.*on track.*dev/i,
+        "Must include exec vs developer contradiction example"
       );
-      assert.match(
-        refContent,
-        /核心信息必须一致/,
-        "Must state core message consistency rule"
-      );
-      assert.match(
-        refContent,
-        /不能给CEO说.*正常.*开发者说.*延迟|不能给CEO说进度正常.*给开发者说进度延迟/,
-        "Must include the CEO-vs-developer contradiction example"
-      );
-      assert.match(
-        refContent,
-        /回溯意图核/,
-        "Must mention tracing back to intent core for resolution"
-      );
+      assert.match(refContent, /reconcile the core/i, "Must mention reconciling intent core");
     });
   });
 
@@ -257,7 +192,7 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
     test("B-01 (IA-01): Same intent core, 3 shells — CEO/developer/reviewer variants", () => {
       const s = scenarios.find((sc) => sc.id === "IA-01");
       assert.ok(s, "IA-01 scenario missing");
-      assert.match(s.intentCore, /Token.*刷新/);
+      assert.match(s.intentCore, /Token.*refresh/i);
 
       const shells = s.expectedShells;
       assert.ok(shells.CEO, "Must have CEO shell");
@@ -265,7 +200,7 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
       assert.ok(shells.reviewer, "Must have reviewer shell");
 
       assert.equal(shells.CEO.audience, "CEO");
-      assert.equal(shells.CEO.abstractionLevel, "高抽象");
+      assert.equal(shells.CEO.abstractionLevel, "high abstraction");
       assert.ok(
         shells.CEO.forbiddenContent.includes("code snippets"),
         "CEO shell must forbid code snippets"
@@ -275,20 +210,20 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
         "CEO shell must forbid file paths"
       );
 
-      assert.equal(shells.developer.audience, "开发者");
-      assert.equal(shells.developer.abstractionLevel, "低抽象");
+      assert.equal(shells.developer.audience, "developer");
+      assert.equal(shells.developer.abstractionLevel, "low abstraction");
       assert.match(
         shells.developer.exampleText,
-        /refreshToken|函数|JWT/i,
+        /refreshToken|JWT/i,
         "Developer shell must include technical specifics"
       );
 
-      assert.equal(shells.reviewer.audience, "审查员");
-      assert.equal(shells.reviewer.abstractionLevel, "中等抽象");
+      assert.equal(shells.reviewer.audience, "auditor");
+      assert.equal(shells.reviewer.abstractionLevel, "medium abstraction");
       assert.match(
         shells.reviewer.format,
-        /断言.*证据.*判定/,
-        "Reviewer shell must follow assertion+evidence+judgment format"
+        /assertion.*evidence.*verdict/i,
+        "Reviewer shell must follow assertion+evidence+verdict format"
       );
     });
 
@@ -297,20 +232,20 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
       assert.ok(s, "IA-02 scenario missing");
 
       assert.equal(s.dimensions.audience, "CEO");
-      assert.equal(s.dimensions.contextDensity, "紧急");
-      assert.equal(s.dimensions.attentionBudget, "低");
+      assert.equal(s.dimensions.contextDensity, "emergency");
+      assert.equal(s.dimensions.attentionBudget, "low");
 
       const result = s.expectedShells.result;
-      assert.equal(result.shellType, "一句话摘要");
+      assert.equal(result.shellType, "One-line summary");
       assert.equal(result.attentionCost, "low");
       assert.match(
         result.contextAdjustment,
-        /紧急.*结论.*行动项/,
+        /emergency.*conclusions.*actions/i,
         "Urgent context should produce conclusion + action only"
       );
       assert.match(
         result.budgetAdjustment,
-        /低.*一句话摘要/,
+        /low.*one-line summary/i,
         "Low budget should produce one-line summary"
       );
     });
@@ -323,17 +258,17 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
       assert.ok(violation.contradiction, "Must flag as contradiction");
       assert.match(
         violation.ceoShell,
-        /正常/,
-        "CEO shell says progress is normal"
+        /on track|On track/i,
+        "CEO shell says progress is on track"
       );
       assert.match(
         violation.developerShell,
-        /落后.*20%/,
-        "Developer shell says behind by 20%"
+        /20%.*behind|behind plan/i,
+        "Developer shell says behind by ~20%"
       );
       assert.match(
         violation.resolution,
-        /回溯意图核/,
+        /intent core/i,
         "Resolution must trace back to intent core"
       );
     });
@@ -377,10 +312,10 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
         /3 consecutive/i,
         "Must trigger after 3 consecutive high-cost rounds"
       );
-      assert.equal(silence.cardType, "留白");
+      assert.equal(silence.cardType, "Pause");
       assert.ok(
         TEN_CARD_TYPES.includes(silence.cardType),
-        "留白 must be a valid card type from TEN_CARD_TYPES"
+        "Pause must be a valid card type from TEN_CARD_TYPES"
       );
       assert.equal(
         silence.attentionCost,
@@ -394,20 +329,20 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
       assert.ok(s, "IA-06 scenario missing");
 
       assert.equal(s.dimensions.audience, "developer");
-      assert.equal(s.dimensions.contextDensity, "首次");
-      assert.equal(s.dimensions.attentionBudget, "高");
+      assert.equal(s.dimensions.contextDensity, "first view");
+      assert.equal(s.dimensions.attentionBudget, "high");
 
       const result = s.expectedShells.result;
-      assert.equal(result.shellType, "完整技术文档");
+      assert.equal(result.shellType, "Full technical document");
       assert.equal(result.attentionCost, "high");
       assert.match(
         result.contextAdjustment,
-        /首次.*背景说明/,
+        /first view.*background/i,
         "First-time context should add background"
       );
       assert.match(
         result.budgetAdjustment,
-        /高.*完整详细/,
+        /high.*full detail/i,
         "High budget should produce complete detailed output"
       );
       assert.ok(
@@ -425,15 +360,15 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
       assert.ok(s, "IA-07 scenario missing");
 
       assert.equal(s.dimensions.audience, "reviewer");
-      assert.equal(s.dimensions.contextDensity, "复查");
-      assert.equal(s.dimensions.attentionBudget, "中");
+      assert.equal(s.dimensions.contextDensity, "revisit");
+      assert.equal(s.dimensions.attentionBudget, "medium");
 
       const result = s.expectedShells.result;
-      assert.equal(result.shellType, "差异增量");
+      assert.equal(result.shellType, "Delta-only");
       assert.equal(result.attentionCost, "low");
       assert.match(
         result.contextAdjustment,
-        /复查.*差异.*变化/,
+        /revisit.*deltas only/i,
         "Re-review context should produce delta only"
       );
     });
@@ -468,7 +403,7 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
       const selfCheck = s.expectedShells.selfCheck;
       assert.match(
         selfCheck.rule,
-        /CEO.*不应包含代码片段.*文件路径/,
+        /CEO.*must not contain code snippets or file paths/i,
         "Must state CEO reports should not contain code/paths"
       );
 
@@ -600,18 +535,18 @@ describe("06 — Intent Amplification (Intent Core + Delivery Shell)", async () 
 
       assert.match(
         shells.reviewer.exampleText,
-        /断言/,
-        "Reviewer shell must include assertion"
+        /Claim:/i,
+        "Reviewer shell must include claim/assertion"
       );
       assert.match(
         shells.reviewer.exampleText,
-        /证据/,
+        /Evidence:/i,
         "Reviewer shell must include evidence"
       );
       assert.match(
         shells.reviewer.exampleText,
-        /验证方法/,
-        "Reviewer shell must include verification method"
+        /Test:/i,
+        "Reviewer shell must include verification test"
       );
       assert.ok(
         shells.reviewer.requiredContent.includes("assertion"),

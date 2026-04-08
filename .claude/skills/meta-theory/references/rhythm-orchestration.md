@@ -1,257 +1,246 @@
-# 节奏编排 — 完整参考
+# Rhythm orchestration — full reference
 
-> 来源：meta.md 第七、八部分（第648-896行），老金直播口播提炼
+> Distilled from `docs/meta.md`; aligns with the Meta_Kim methodology.
 
-## 核心命题
+## Core proposition
 
-**成熟系统不只是会拆、会组、会治理，还得会出牌。**
+**Mature systems must split, compose, govern — and deal cards.**
 
-编排不只是流程编排（谁先谁后），还包括节奏编排（什么时候给什么、什么时候不给）。
-
----
-
-## 注意力成本模型
-
-### 第一定律：出牌有成本
-
-> **告诉用户某件事，是有成本的。**
-
-| 场景 | 成本 |
-|------|------|
-| 给用户一条建议 | 占用用户注意力带宽 |
-| 给系统加一个待办 | 与其他待办竞争优先级 |
-| 给Agent多塞一个目标 | 稀释当前任务的聚焦度 |
-| 给用户多推一个任务 | 增加用户的认知负荷 |
-
-每多说一件事，它就和前面那些事形成竞争。用户/组织/系统的注意力、带宽、吞吐都是有限的。
-
-### 第二定律：时机决定价值
-
-> **成熟系统不是知道的都说，而是知道什么时候说最值钱。**
-
-同一条信息在不同时机推送，价值天差地别：
-- 用户正在专注执行时推安全警告 → 高价值（可以防止事故）
-- 用户正在消化上一轮结果时推新任务 → 低价值（信息过载）
-- 用户刚完成一轮工作时推进化建议 → 中等价值（有余力吸收）
-
-### 第三定律：沉默也是设计
-
-> **什么都不做，不一定是系统失效。什么都不做，可能恰恰是最优动作。**
+Orchestration is not only sequencing (who goes first). It includes **rhythm**: what to deliver when — and when not to.
 
 ---
 
-## 事件牌组机制
+## Attention cost model
 
-### 设计哲学
+### Law 1: Dealing has a cost
 
-来自开放世界任务设计的启发：**表面给玩家自由，底层保留一套隐藏的节奏骨架。**
+> **Every message to the user costs attention.**
 
-用户感觉自由，最优交付顺序是设计过的。系统通过不同触点，把当前最该出现的内容送到用户面前。
+| Scenario | Cost |
+|----------|------|
+| One suggestion | Uses user attention bandwidth |
+| One new todo | Competes with existing todos |
+| One more agent goal | Dilutes current focus |
+| One more pushed task | Raises cognitive load |
 
-### 牌的数据结构
+Each extra message competes with prior ones. Attention, bandwidth, and throughput are finite.
 
-每张牌包含以下属性：
+### Law 2: Timing changes value
+
+> **Mature systems do not say everything they know — they say what matters most when it matters most.**
+
+Same information, different moment → very different value:
+
+- Security warning while user is executing → high value (prevents harm)
+- New task while user is digesting last output → low value (overload)
+- Evolution suggestion right after a completed round → medium value (room to absorb)
+
+### Law 3: Silence is design
+
+> **Doing nothing is not always failure. Sometimes it is the optimal action.**
+
+---
+
+## Event card deck
+
+### Design philosophy
+
+From open-world quest design: **surface freedom, hidden ideal rhythm.**
+
+The user feels free; optimal delivery order is designed. Touchpoints surface what should appear now.
+
+### Card schema
 
 ```yaml
 card:
-  id: string           # 唯一标识（如 "guide-01"）
-  type: enum           # 澄清/范围收缩/方案/执行/校验/修复/回滚/风险/建议/留白
-  priority: 1-10       # 默认优先级（10最高）
-  cost: low|mid|high   # 注意力成本等级
-  precondition: string # 出牌前提（如 "需求已明确"）
-  skip_condition: string # 跳过条件（如 "用户已知该信息"）
-  interrupt_trigger: string # 被插队的触发条件
-  delivery_shell: string   # 交付壳类型（详见意图放大）
-  max_iterations: number   # 迭代牌专用：最大循环次数（默认3）
+  id: string           # e.g. "guide-01"
+  type: enum           # clarify / shrink-scope / options / execute / verify / fix / rollback / risk / nudge / pause
+  priority: 1-10       # default priority (10 = highest)
+  cost: low|mid|high   # attention cost tier
+  precondition: string # e.g. "requirements clear"
+  skip_condition: string # e.g. "user already knows"
+  interrupt_trigger: string # preempt condition
+  delivery_shell: string   # see intent-amplification
+  max_iterations: number   # for iteration cards (default 3)
 ```
 
-### 十种牌的完整定义（对齐 `docs/meta.md` 原始设计）
+### Ten cards (aligned with `docs/meta.md`)
 
-| 牌 | 原始设计名称 | 触发条件 | 动作 | 注意力成本 | 设计哲学 |
-|----|-----------|---------|------|-----------|---------|
-| **澄清牌** | 澄清 | 需求模糊 | 追问≤2轮，明确要改什么 | low | 信息不足时先收集再行动 |
-| **范围收缩牌** | 范围收缩 | 仓库太大/文件太多/同名冲突 | 先把边界缩小到可处理范围 | low | 环境复杂度变高时继续冲会误改 |
-| **方案牌** | 方案 | 需求清晰但有多条路径 | 把路线摆出来，好处/代价/该选哪条 | mid | 复杂问题不能一口吞，先给路线再动手 |
-| **执行牌** | 执行 | 规划完成，风险可控 | 分配到具体元，真正动代码 | high | 有计划才执行 |
-| **校验牌** | 校验 | 执行完成 | 编译/类型/依赖/需求对齐 | mid | 第一次做出来不等于做对 |
-| **修复牌** | 修复 | 校验不通过 | 重新修正，不要装作已完成 | mid | 修到过为止，设上限防死循环 |
-| **回滚牌** | 回滚 | 风险超预期或影响范围扩大 | 退回到上一个稳定状态 | high | 不要硬顶，能退回来才是成熟系统 |
-| **风险牌** | 风险 | 牵扯公共组件/鉴权/全局逻辑/多人协作 | 把风险抬到台面上，必要时插队 | high | 关键状态落后于预期，安全/权限/全局影响优先 |
-| **建议牌** | 建议 | 系统发现用户卡住但不需要太重打断 | 给一个更低成本的下一步推进动作 | low | 非紧急，但值得给一个方向 |
-| **留白牌** | 留白 | 连续完成/需消化/≥3连续高成本牌 | 暂停推送，给简短状态总结 | zero | 空白也是被设计的体验，什么都不做可能是最优动作 |
+| Card | Original name | Trigger | Action | Attention | Philosophy |
+|------|---------------|---------|--------|-----------|------------|
+| **Clarify** | 澄清 | Ambiguous need | ≤2 rounds of questions | low | Gather before act |
+| **Shrink scope** | 范围收缩 | Repo too large / many files / clashes | Narrow boundary | low | Complexity → reckless edits |
+| **Options** | 方案 | Clear need, many paths | Routes + tradeoffs + pick | mid | Map before code |
+| **Execute** | 执行 | Plan done, risk OK | Assign metas, change code | high | Plan before code |
+| **Verify** | 校验 | Execution done | Build / types / deps / reqs | mid | First pass ≠ correct |
+| **Fix** | 修复 | Verify fails | Repair until pass | mid | Cap iterations |
+| **Rollback** | 回滚 | Risk or blast radius grows | Last stable state | high | Retreat = maturity |
+| **Risk** | 风险 | Shared parts / auth / global / multi-party | Surface risk; preempt | high | Safety / global first |
+| **Nudge** | 建议 | User stuck, light touch | Low-cost next step | low | Helpful, not loud |
+| **Pause** | 留白 | Streak done / digest / ≥3 high-cost | Stop pushing; short status | zero | Designed silence |
 
-### 发牌规则
+### Dealing rules (priority order)
 
-5条核心规则，按优先级排序：
+1. **Default**: deal by `priority`
+2. **After each card**: evaluate next `skip_condition` — if true, skip
+3. **After ≥3 consecutive `high` cost**: force **Pause**
+4. **If `interrupt_trigger` fires**: preempting card to front
+5. **Iteration cards**: at most `max_iterations`; else escalate to Warden
 
-1. **默认按 priority 出牌**（理想顺序）
-2. **每出一张评估下一张的 skip_condition** — 满足则跳过
-3. **连续 ≥3 张 high 成本牌后，强制插入留白牌** — 防过载
-4. **interrupt_trigger 满足时，被触发的牌跳到队首** — 紧急优先
-5. **迭代牌最多循环 max_iterations 次，超出上报 Warden** — 防死循环
-
-### 发牌决策流程
+### Dealing flow
 
 ```
-[当前牌出完]
+[Current card done]
   ↓
-检查下一张牌的 skip_condition
-  ├─ 满足 → 跳过，继续检查下一张
-  └─ 不满足 → 检查 interrupt_trigger 队列
-       ├─ 有插队牌 → 插队牌提到队首
-       └─ 无插队 → 检查留白条件
-            ├─ 连续 ≥3 high → 强制留白
-            └─ 不需要留白 → 正常出牌
+Check next skip_condition
+  ├─ satisfied → skip, continue
+  └─ not satisfied → check interrupt queue
+       ├─ preempt → move to front
+       └─ no preempt → check pause rule
+            ├─ ≥3 high in a row → force Pause
+            └─ else → deal next
 ```
 
 ---
 
-## 七大启发（从开放世界任务设计到AI系统）
+## Seven heuristics (open world → AI systems)
 
-### 启发1：表面自由，底层有理想顺序
+### 1. Freedom on top, ideal order underneath
 
-编排元不只决定"谁先谁后"，还要决定：什么时候给什么、什么时候不给、什么内容先给、什么内容晚给、什么状态下要插队、什么状态下该跳过。
+Orchestration meta decides not only order but **when** to speak, **when** to stay silent, what comes first vs later, when to preempt, when to skip.
 
-**应用**：编排元从单纯任务调度升级为节奏控制器。
+**Apply**: orchestration becomes rhythm control, not only task order.
 
-### 启发2：发牌接口
+### 2. Deal interface
 
-NPC、悬赏板、露营点不是内容本体，它们是内容投递接口。
+NPCs, boards, campsites are **delivery interfaces**, not the content itself.
 
-**应用**：AI系统中的聊天框、通知、日报、面板、Agent回复都是发牌员。不是所有元都负责生成内容，有些元的职责是交付内容。
+**Apply**: chat, notifications, dashboards, agent replies are dealers. Some metas deliver rather than author.
 
-发牌接口选择：
+| Channel | When | Attention |
+|---------|------|-----------|
+| Direct reply | Live interaction, immediate feedback | high |
+| Write file | Large artifact, persistent, async read | low |
+| Spawn subagent | Specialist work | mid |
+| Wait for user | Needs input / decision | zero (waiting) |
+| Notification / digest | Background work, status | low |
 
-| 交付通道 | 适用场景 | 注意力占用 |
-|---------|---------|-----------|
-| 直接对话回复 | 用户正在交互、需要即时反馈 | high |
-| 写入文件 | 产出较大、需要持久化、用户稍后查看 | low |
-| spawn子代理 | 需要专业元独立完成的工作 | mid |
-| 等待用户操作 | 需要用户确认/输入/决策 | zero（等待中） |
-| 通知/摘要 | 后台完成的工作、状态更新 | low |
+### 3. Pause mechanism
 
-### 启发3：留白机制
+Pause does not advance work; it **reduces noise**, prevents overload, leaves room to digest, preserves a sense of exploration.
 
-留白不负责推进，它负责：降噪、降打扰、防过载、给用户留出消化空间、让探索感有机会发生。
+**Triggers**:
 
-**触发条件**：
-- 连续 ≥3 轮高密度推送
-- 用户未响应上一轮输出
-- 当前信息密度已超过可消化阈值
+- ≥3 dense pushes in a row
+- User did not respond to last output
+- Information density above digest threshold
 
-**留白时的行为**：
-- 不推送新任务
-- 给简短状态总结（"当前进度：X/Y 完成"）
-- 等待用户主动发起下一步
+**During pause**:
 
-### 启发4：出牌成本意识
+- No new tasks
+- Short status (“Progress: X/Y done”)
+- Wait for user to drive next step
 
-每条推送都和已有推送竞争注意力。
+### 4. Cost-aware dealing
 
-**实践规则**：
-- 推送前自问：这条信息现在说，比 5 分钟后说更值钱吗？
-- 如果答案是否，不推
-- 如果答案不确定，降级为写入文件（低成本通道）
+Every push competes with prior pushes.
 
-### 启发5：跳过机制
+**Rules**:
 
-跳过不是偷懒，是注意力管理。
+- Before push: is this more valuable *now* than in five minutes?
+- If no → do not push
+- If unsure → downgrade to file write (lower cost)
 
-**跳过条件设计**：
-- 用户已知同类信息 → 跳过
-- 当前上下文已包含该信息 → 跳过
-- 注意力预算不足（连续高密度后）→ 跳过或降级
+### 5. Skip mechanism
 
-### 启发6：紧急治理机制
+Skipping is attention management.
 
-某些元可以越过默认节奏直接顶上来。
+**Skip when**:
 
-**触发信号**：
+- User already knows
+- Context already contains it
+- Budget exhausted after dense streak → skip or downgrade
 
-| 信号源 | 信号 | 插队牌类型 |
-|--------|------|-----------|
-| Sentinel | 安全漏洞/权限问题 | 安全插队 — 最高优先级 |
-| Prism | pass_rate < 0.5 的严重质量漂移 | 质量插队 |
-| 用户 | 明确说"紧急"/"马上" | 用户插队 |
-| 系统 | 资源不足/超时/错误 | 系统插队 |
+### 6. Emergency governance
 
-**Sentinel → Conductor 信号通道**：
-- Sentinel 检测到安全问题 → 发送 `{type: "interrupt", source: "sentinel", severity: "critical", detail: "..."}`
-- Conductor 收到后暂停当前牌组，创建安全插队牌并提到队首
+Some signals can preempt the default rhythm.
 
-**Prism → Conductor 信号通道**：
-- Prism 检测到质量漂移 → 发送 `{type: "interrupt", source: "prism", severity: "high", detail: "..."}`
-- Conductor 收到后评估：severity=critical 立即插队，severity=high 下一张牌前插入
+| Source | Signal | Preempt type |
+|--------|--------|--------------|
+| Sentinel | Security / permission issue | Safety — highest |
+| Prism | Severe quality drift (e.g. pass_rate < 0.5) | Quality |
+| User | “Urgent” / “now” | User |
+| System | Resource / timeout / error | System |
 
-### 启发7：同一意图多种交付壳
+**Sentinel → Conductor**: `{type: "interrupt", source: "sentinel", severity: "critical", detail: "..."}` → pause deck, safety card to front.
 
-底层核不变，外层壳按场景换。
+**Prism → Conductor**: `{type: "interrupt", source: "prism", severity: "high", detail: "..."}` → critical now; high before next card.
 
-**应用**：与意图放大直接对接。每张牌出牌时，除了决定"出什么"，还要决定"用什么壳交付"。
+### 7. Same intent, many shells
+
+Core stable; shell swaps by scenario.
+
+**Apply**: on each card, choose **what** to deal and **which shell** (intent amplification).
 
 ---
 
-## 节奏编排与其他主线的关系
+## Relationship to other threads
 
 ```
-元(拆)
-  ↓ 提供：独立的可调度单位
-组织镜像(组)
-  ↓ 提供：层级结构和协作关系
-节奏编排(发) ← 本层
-  ↓ 提供：有节奏的出牌策略
-意图放大(成)
-  ↓ 消费：节奏控制下的结构化产出
+Meta (split)
+  ↓ independent schedulable units
+Organizational mirror (compose)
+  ↓ structure and collaboration
+Rhythm orchestration (deal) ← this layer
+  ↓ paced dealing strategy
+Intent amplification (deliver)
+  ↓ structured output under rhythm
 ```
 
-### 与 Conductor 的关系
+### Conductor
 
-Conductor 是节奏编排的**执行者**，本文档是节奏编排的**方法论**。
+Conductor **executes** rhythm; this doc is the **method**. Implementation (deck data, deal function, pause/preempt) lives in `.claude/agents/meta-conductor.md`.
 
-Conductor 的具体实现（牌组数据结构、发牌函数、留白/插队逻辑）详见 `.claude/agents/meta-conductor.md`。
+### Warden
 
-### 与 Warden 的关系
+Escalation for pause and conflicts:
 
-Warden 是留白和插队的**决策升级点**：
-- 迭代牌超过 max_iterations → 上报 Warden 决策
-- 多个插队牌冲突 → Warden 裁定优先级
+- Iteration exceeds `max_iterations` → Warden decides
+- Conflicting preempts → Warden arbitrates
 
-### 与 Sentinel/Prism 的关系
+### Sentinel / Prism
 
-Sentinel 和 Prism 是插队信号的**发送者**：
-- 安全问题 → Sentinel 发送插队信号
-- 质量漂移 → Prism 发送插队信号
-- Conductor 接收并处理这些信号
+**Send** preempt signals; Conductor receives and applies.
 
 ---
 
-## 场景模拟
+## Scenarios
 
-### 场景1：正常流程
-
-```
-澄清牌(low) → 范围收缩牌(low) → 方案牌(mid) → 执行牌(high) → 校验牌(mid)
-→ 修复牌(mid) → [进化检测] → 完成
-```
-
-### 场景2：过载留白
+### 1. Happy path
 
 ```
-执行牌(high) → 校验牌(high) → 修复牌-1(high)
-→ [连续3张high] → 强制留白牌 → "当前进度：修订第2轮，1/3项已通过"
-→ 用户确认继续 → 修复牌-2(mid)
+Clarify(low) → Shrink(low) → Options(mid) → Execute(high) → Verify(mid)
+→ Fix(mid) → [evolution scan] → done
 ```
 
-### 场景3：紧急插队
+### 2. Overload → pause
 
 ```
-执行牌(high) → [Sentinel安全警报] → 暂停当前牌组
-→ 风险牌(最高) → 安全修复 → 恢复原牌组 → 校验牌(mid)
+Execute(high) → Verify(high) → Fix-1(high)
+→ [3× high] → forced Pause → "Revision round 2: 1/3 checks passed"
+→ user continues → Fix-2(mid)
 ```
 
-### 场景4：回滚
+### 3. Emergency preempt
 
 ```
-执行牌(high) → [影响范围超预期] → 回滚牌(high)
-→ 回退到上一稳定状态 → 重新评估范围 → 范围收缩牌(low) → 重新执行
+Execute(high) → [Sentinel alert] → pause deck
+→ Risk (highest) → fix security → resume → Verify(mid)
+```
+
+### 4. Rollback
+
+```
+Execute(high) → [scope explodes] → Rollback(high)
+→ stable state → reassess → Shrink(low) → re-Execute
 ```

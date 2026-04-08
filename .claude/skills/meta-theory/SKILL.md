@@ -95,6 +95,29 @@ Read `.claude/skills/meta-theory/references/create-agent.md` for the full pipeli
 4. Review → meta-prism quality check
 5. Integration → write `.claude/agents/{name}.md`
 
+### Station Deliverable Contract (Mandatory)
+
+Every station that participates in Type B must leave behind explicit deliverables, not vague prose. The next station or a future maintainer must be able to continue without guessing.
+
+| Station | Mandatory deliverables |
+|---------|------------------------|
+| Warden | Participation Summary + Gate Decisions + Escalation Decisions + Final Synthesis |
+| Genesis | SOUL.md Draft + Boundary Definition + Reasoning Rules + Stress-Test Record |
+| Artisan | Skill Loadout + MCP / Tool Loadout + Fallback Plan + Capability Gap List + Adoption Notes |
+| Sentinel | Threat Model + Permission Matrix + Hook Configuration + Rollback Rules |
+| Librarian | Memory Architecture + Continuity Protocol + Retention Policy + Recovery Evidence |
+| Conductor | Dispatch Board + Card Deck + Worker Task Board + Handoff Plan |
+| Prism (when used for iteration) | Assertion Report + Verification Closure Packet + Drift Findings + Closure Conditions |
+| Scout (when used for iteration) | Capability Baseline + Candidate Comparison + Security Notes + Adoption Brief |
+
+Rule: a station only counts as complete when its deliverables are explicit enough that another operator could pick them up and continue without guessing.
+
+**Required Genesis deliverables**: SOUL.md Draft; Boundary Definition; Reasoning Rules; Stress-Test Record.
+
+**Required Artisan deliverables**: Skill Loadout; MCP / Tool Loadout; Fallback Plan; Capability Gap List; Adoption Notes.
+
+**Required Conductor deliverables**: Dispatch Board; Card Deck; Worker Task Board; Handoff Plan.
+
 ## Type C: Development Governance
 
 Read `.claude/skills/meta-theory/references/dev-governance.md` for the complete spec. Core flow:
