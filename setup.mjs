@@ -85,7 +85,8 @@ const I18N = {
     modeUpdate: "update",
     modeSilent: "silent",
     modeInteractive: "interactive",
-    stepEnv: "Step 1/5: Environment Check",
+    /** Shared gate before menu / CLI modes — headings below are titles only, no “step 1/N” */
+    preflightHeading: "Environment check",
     nodeOld: (v) => `Node.js v${v} too old, need >=18`,
     nodeOk: (v) => `Node.js v${v}`,
     npmNotFound: "npm not found",
@@ -95,7 +96,7 @@ const I18N = {
     pkgNotFound: "package.json not found — run from Meta_Kim root",
     envFailed: "Environment check failed. Fix the issues above.",
     envOk: "Environment OK!",
-    stepRuntime: "Step 2/5: Runtime Detection",
+    stepRuntime: "Runtime detection",
     claudeDetected: (v) => `Claude Code ${v}`,
     claudeNotDetected: "Claude Code CLI not detected",
     codexDetected: (v) => `Codex ${v}`,
@@ -108,7 +109,7 @@ const I18N = {
       "Install at least one: https://docs.anthropic.com/en/docs/claude-code",
     continueAnyway: "Continue setup anyway?",
     setupCancelled: "Setup cancelled. Install a runtime and re-run.",
-    stepConfig: "Step 3/5: Project Configuration",
+    stepConfig: "Project configuration",
     mcpExists: ".mcp.json already configured",
     mcpCreated: ".mcp.json created — MCP runtime server registered",
     settingsExists: ".claude/settings.json already configured",
@@ -118,7 +119,7 @@ const I18N = {
     settingsSkipped: ".claude/settings.json skipped by user",
     settingsSkippedNoClaude:
       ".claude/settings.json skipped (Claude Code not detected)",
-    stepSkills: "Step 4/5: Install Skills",
+    stepSkills: "Install skills",
     shipsSkills: (n) => `Meta_Kim ships ${n} skills:`,
     runningNpm: "Running npm install ...",
     npmDone: "npm dependencies installed",
@@ -132,7 +133,7 @@ const I18N = {
     skillSubdirNotFound: (n) => `${n} — subdir not found`,
     skillsReady: (ok, total, fail) =>
       `${ok}/${total} skills ready${fail > 0 ? `, ${fail} failed` : ""}`,
-    stepValidate: "Step 5/5: Validate",
+    stepValidate: "Validate project",
     agentPrompts: (n) => `${n} meta-agent prompts`,
     validationPassed: "Project validation passed",
     validationWarnings: "Validation has warnings (non-blocking)",
@@ -177,8 +178,8 @@ const I18N = {
     syncClaudeMcp: "Claude Code .mcp.json",
     syncCodexAgents: (n) => `Codex agents: ${n}/8 .toml files`,
     syncCodexSkills: "Codex skills/meta-theory.md",
-    syncOpenclawWorkspaces: (n, f) =>
-      `OpenClaw workspaces: ${n}/8 agents, ${f} files each`,
+    syncOpenclawWorkspaces: (n) =>
+      `OpenClaw workspaces: ${n}/8 agents — each folder has the 9 required .md files (BOOT, SOUL, …)`,
     syncOpenclawSkill: "OpenClaw shared meta-theory",
     syncSharedSkills: "shared-skills/meta-theory.md",
     syncOk: "All runtime sync targets verified",
@@ -187,10 +188,11 @@ const I18N = {
     updateHeading: "Update Mode",
     updateNpm: "Reinstalling npm dependencies...",
     updateSkills: "Updating all skills...",
-    updateSyncRuntimes: "Re-sync cross-runtime files (npm run sync:runtimes)?",
-    updateSyncing: "Running sync:runtimes...",
-    updateSyncDone: "Runtime sync complete",
-    updateSyncSkip: "Runtime sync skipped",
+    updateSyncRuntimes:
+      "Regenerate Codex + OpenClaw mirror files in this repo from the canonical `.claude/` definitions? Same agent roles and skill text, but not identical files (Codex `.toml`, OpenClaw generated workspace markdown + config). Edit `.claude/agents` and meta-theory first, then sync.",
+    updateSyncing: "Regenerating Codex / OpenClaw mirrors from `.claude/`...",
+    updateSyncDone: "Copy step finished",
+    updateSyncSkip: "Copy step skipped or failed",
     updateReGlobal: "Re-select global skills directory?",
     updateComplete: "Update complete!",
     actionPrompt: "What would you like to do?",
@@ -209,7 +211,7 @@ const I18N = {
     modeUpdate: "更新",
     modeSilent: "静默",
     modeInteractive: "交互式",
-    stepEnv: "第 1/5 步：环境检查",
+    preflightHeading: "环境检查",
     nodeOld: (v) => `Node.js v${v} 版本过低，需要 >=18`,
     nodeOk: (v) => `Node.js v${v}`,
     npmNotFound: "npm 未找到",
@@ -219,7 +221,7 @@ const I18N = {
     pkgNotFound: "package.json 未找到 — 请在 Meta_Kim 根目录运行",
     envFailed: "环境检查未通过，请先解决上述问题。",
     envOk: "环境检查通过！",
-    stepRuntime: "第 2/5 步：运行时检测",
+    stepRuntime: "运行时检测",
     claudeDetected: (v) => `Claude Code ${v}`,
     claudeNotDetected: "未检测到 Claude Code CLI",
     codexDetected: (v) => `Codex ${v}`,
@@ -232,7 +234,7 @@ const I18N = {
       "至少安装一个：https://docs.anthropic.com/en/docs/claude-code",
     continueAnyway: "仍然继续安装？",
     setupCancelled: "安装已取消。请先安装运行时。",
-    stepConfig: "第 3/5 步：项目配置",
+    stepConfig: "项目配置",
     mcpExists: ".mcp.json 已配置",
     mcpCreated: ".mcp.json 已创建 — MCP 运行时服务器已注册",
     settingsExists: ".claude/settings.json 已配置",
@@ -241,7 +243,7 @@ const I18N = {
     settingsSkipped: ".claude/settings.json 已跳过（用户选择）",
     settingsSkippedNoClaude:
       ".claude/settings.json 已跳过（未检测到 Claude Code）",
-    stepSkills: "第 4/5 步：安装技能",
+    stepSkills: "安装技能",
     shipsSkills: (n) => `Meta_Kim 内置 ${n} 个技能：`,
     runningNpm: "正在运行 npm install ...",
     npmDone: "npm 依赖安装完成",
@@ -255,7 +257,7 @@ const I18N = {
     skillSubdirNotFound: (n) => `${n} — 子目录未找到`,
     skillsReady: (ok, total, fail) =>
       `${ok}/${total} 个技能就绪${fail > 0 ? `，${fail} 个失败` : ""}`,
-    stepValidate: "第 5/5 步：验证",
+    stepValidate: "项目验证",
     agentPrompts: (n) => `${n} 个 meta-agent 提示词`,
     validationPassed: "项目验证通过",
     validationWarnings: "验证有警告（不影响使用）",
@@ -299,8 +301,8 @@ const I18N = {
     syncClaudeMcp: "Claude Code .mcp.json",
     syncCodexAgents: (n) => `Codex 智能体: ${n}/8 .toml 文件`,
     syncCodexSkills: "Codex 技能/meta-theory.md",
-    syncOpenclawWorkspaces: (n, f) =>
-      `OpenClaw 工作区: ${n}/8 个智能体，每个 ${f} 文件`,
+    syncOpenclawWorkspaces: (n) =>
+      `OpenClaw 工作区：${n}/8 个智能体，各目录 9 个必备 Markdown 已齐（含 BOOT、SOUL 等；不含子文件夹里的额外文件）`,
     syncOpenclawSkill: "OpenClaw 共享 meta-theory",
     syncSharedSkills: "共享技能/meta-theory.md",
     syncOk: "所有运行时同步目标验证通过",
@@ -309,10 +311,11 @@ const I18N = {
     updateHeading: "更新模式",
     updateNpm: "正在重新安装 npm 依赖...",
     updateSkills: "正在更新所有技能...",
-    updateSyncRuntimes: "是否重新同步跨运行时文件（npm run sync:runtimes）？",
-    updateSyncing: "正在运行 sync:runtimes...",
-    updateSyncDone: "运行时同步完成",
-    updateSyncSkip: "运行时同步已跳过",
+    updateSyncRuntimes:
+      "是否根据 `.claude/`（正典）重新生成本仓库里 Codex、OpenClaw 用的文件？不是整文件夹原样复制：同一套 meta agent / meta-theory 的职责与正文一致，但格式不同（例如 Codex 为 .toml，OpenClaw 为工作台里的 SOUL 等生成件）。日常请只改 `.claude/agents` 与 `.claude/skills/meta-theory`，再执行本步。",
+    updateSyncing: "正从 `.claude/` 生成 Codex / OpenClaw 镜像文件...",
+    updateSyncDone: "同步完成",
+    updateSyncSkip: "未同步或同步失败",
     updateReGlobal: "是否重新选择全局技能目录？",
     updateComplete: "更新完成！",
     actionPrompt: "你想做什么？",
@@ -331,7 +334,7 @@ const I18N = {
     modeUpdate: "更新",
     modeSilent: "サイレント",
     modeInteractive: "インタラクティブ",
-    stepEnv: "ステップ 1/5：環境チェック",
+    preflightHeading: "環境チェック",
     nodeOld: (v) => `Node.js v${v} は古すぎます。>=18 が必要です`,
     nodeOk: (v) => `Node.js v${v}`,
     npmNotFound: "npm が見つかりません",
@@ -342,7 +345,7 @@ const I18N = {
       "package.json が見つかりません — Meta_Kim ルートで実行してください",
     envFailed: "環境チェックに失敗しました。上記の問題を解決してください。",
     envOk: "環境チェックOK！",
-    stepRuntime: "ステップ 2/5：ランタイム検出",
+    stepRuntime: "ランタイム検出",
     claudeDetected: (v) => `Claude Code ${v}`,
     claudeNotDetected: "Claude Code CLI が検出されませんでした",
     codexDetected: (v) => `Codex ${v}`,
@@ -357,7 +360,7 @@ const I18N = {
     continueAnyway: "セットアップを続行しますか？",
     setupCancelled:
       "セットアップがキャンセルされました。ランタイムをインストールして再実行してください。",
-    stepConfig: "ステップ 3/5：プロジェクト設定",
+    stepConfig: "プロジェクト設定",
     mcpExists: ".mcp.json は既に設定されています",
     mcpCreated: ".mcp.json 作成済み — MCP ランタイムサーバー登録完了",
     settingsExists: ".claude/settings.json は既に設定されています",
@@ -367,7 +370,7 @@ const I18N = {
     settingsSkipped: ".claude/settings.json スキップ（ユーザー選択）",
     settingsSkippedNoClaude:
       ".claude/settings.json スキップ（Claude Code 未検出）",
-    stepSkills: "ステップ 4/5：スキルインストール",
+    stepSkills: "スキルインストール",
     shipsSkills: (n) => `Meta_Kim には ${n} 個のスキルが含まれています：`,
     runningNpm: "npm install を実行中...",
     npmDone: "npm 依存関係のインストール完了",
@@ -382,7 +385,7 @@ const I18N = {
     skillSubdirNotFound: (n) => `${n} — サブディレクトリが見つかりません`,
     skillsReady: (ok, total, fail) =>
       `${ok}/${total} スキル準備完了${fail > 0 ? `、${fail} 失敗` : ""}`,
-    stepValidate: "ステップ 5/5：検証",
+    stepValidate: "プロジェクト検証",
     agentPrompts: (n) => `${n} 個のメタエージェントプロンプト`,
     validationPassed: "プロジェクト検証に合格しました",
     validationWarnings: "検証に警告があります（機能に影響なし）",
@@ -427,8 +430,8 @@ const I18N = {
     syncClaudeMcp: "Claude Code .mcp.json",
     syncCodexAgents: (n) => `Codex エージェント: ${n}/8 .toml ファイル`,
     syncCodexSkills: "Codex スキル/meta-theory.md",
-    syncOpenclawWorkspaces: (n, f) =>
-      `OpenClaw ワークスペース: ${n}/8 エージェント、各 ${f} ファイル`,
+    syncOpenclawWorkspaces: (n) =>
+      `OpenClaw ワークスペース: ${n}/8 エージェント — 各フォルダに必須の .md 9 件（BOOT、SOUL など）`,
     syncOpenclawSkill: "OpenClaw 共有 meta-theory",
     syncSharedSkills: "共有スキル/meta-theory.md",
     syncOk: "すべてのランタイム同期ターゲット検証済み",
@@ -438,10 +441,10 @@ const I18N = {
     updateNpm: "npm依存関係を再インストール中...",
     updateSkills: "すべてのスキルを更新中...",
     updateSyncRuntimes:
-      "ランタイム間ファイルを再同期しますか（npm run sync:runtimes）？",
-    updateSyncing: "sync:runtimes を実行中...",
-    updateSyncDone: "ランタイム同期完了",
-    updateSyncSkip: "ランタイム同期スキップ",
+      "`.claude/` を正典として、Codex / OpenClaw 向けの生成ミラーを作り直しますか？単純コピーではなく、内容は同じでも形式は異なります（Codex は .toml、OpenClaw はワークスペース用 Markdown など）。編集は `.claude/agents` と meta-theory から。",
+    updateSyncing: "`.claude/` から Codex / OpenClaw ミラーを再生成中...",
+    updateSyncDone: "同期が完了しました",
+    updateSyncSkip: "同期をスキップしたか失敗しました",
     updateReGlobal: "グローバルスキルディレクトリを再選択しますか？",
     updateComplete: "アップデート完了！",
     actionPrompt: "何をしますか？",
@@ -460,7 +463,7 @@ const I18N = {
     modeUpdate: "업데이트",
     modeSilent: "자동",
     modeInteractive: "대화형",
-    stepEnv: "단계 1/5: 환경 확인",
+    preflightHeading: "환경 확인",
     nodeOld: (v) => `Node.js v${v} 버전이 너무 낮습니다. >=18 필요`,
     nodeOk: (v) => `Node.js v${v}`,
     npmNotFound: "npm을 찾을 수 없습니다",
@@ -471,7 +474,7 @@ const I18N = {
       "package.json을 찾을 수 없습니다 — Meta_Kim 루트에서 실행하세요",
     envFailed: "환경 확인 실패. 위 문제를 먼저 해결하세요.",
     envOk: "환경 확인 통과!",
-    stepRuntime: "단계 2/5: 런타임 감지",
+    stepRuntime: "런타임 감지",
     claudeDetected: (v) => `Claude Code ${v}`,
     claudeNotDetected: "Claude Code CLI 감지되지 않음",
     codexDetected: (v) => `Codex ${v}`,
@@ -485,7 +488,7 @@ const I18N = {
       "최소 하나를 설치하세요: https://docs.anthropic.com/en/docs/claude-code",
     continueAnyway: "설정을 계속 진행할까요?",
     setupCancelled: "설정이 취소되었습니다. 런타임을 설치하고 다시 실행하세요.",
-    stepConfig: "단계 3/5: 프로젝트 설정",
+    stepConfig: "프로젝트 설정",
     mcpExists: ".mcp.json이 이미 구성되어 있습니다",
     mcpCreated: ".mcp.json 생성됨 — MCP 런타임 서버 등록 완료",
     settingsExists: ".claude/settings.json이 이미 구성되어 있습니다",
@@ -494,7 +497,7 @@ const I18N = {
     settingsSkipped: ".claude/settings.json 건너뜀 (사용자 선택)",
     settingsSkippedNoClaude:
       ".claude/settings.json 건너뜀 (Claude Code 미감지)",
-    stepSkills: "단계 4/5: 스킬 설치",
+    stepSkills: "스킬 설치",
     shipsSkills: (n) => `Meta_Kim에는 ${n}개의 스킬이 포함되어 있습니다:`,
     runningNpm: "npm install 실행 중...",
     npmDone: "npm 의존성 설치 완료",
@@ -508,7 +511,7 @@ const I18N = {
     skillSubdirNotFound: (n) => `${n} — 하위디렉토리를 찾을 수 없음`,
     skillsReady: (ok, total, fail) =>
       `${ok}/${total} 스킬 준비 완료${fail > 0 ? `, ${fail} 실패` : ""}`,
-    stepValidate: "단계 5/5: 검증",
+    stepValidate: "프로젝트 검증",
     agentPrompts: (n) => `${n}개의 메타 에이전트 프롬프트`,
     validationPassed: "프로젝트 검증 통과",
     validationWarnings: "검증에 경고가 있습니다 (기능에 영향 없음)",
@@ -553,8 +556,8 @@ const I18N = {
     syncClaudeMcp: "Claude Code .mcp.json",
     syncCodexAgents: (n) => `Codex 에이전트: ${n}/8 .toml 파일`,
     syncCodexSkills: "Codex 스킬/meta-theory.md",
-    syncOpenclawWorkspaces: (n, f) =>
-      `OpenClaw 워크스페이스: ${n}/8 에이전트, 각 ${f} 파일`,
+    syncOpenclawWorkspaces: (n) =>
+      `OpenClaw 워크스페이스: ${n}/8 에이전트 — 각 폴더에 필수 .md 9개(BOOT, SOUL 등)`,
     syncOpenclawSkill: "OpenClaw 공유 meta-theory",
     syncSharedSkills: "공유 스킬/meta-theory.md",
     syncOk: "모든 런타임 동기화 대상 확인 완료",
@@ -564,10 +567,10 @@ const I18N = {
     updateNpm: "npm 의존성 재설치 중...",
     updateSkills: "모든 스킬 업데이트 중...",
     updateSyncRuntimes:
-      "런타임 간 파일을 다시 동기화할까요 (npm run sync:runtimes)?",
-    updateSyncing: "sync:runtimes 실행 중...",
-    updateSyncDone: "런타임 동기화 완료",
-    updateSyncSkip: "런타임 동기화 건너뜀",
+      "`.claude/`를 기준으로 Codex / OpenClaw용 생성 미러를 다시 만들까요? 단순 복사가 아니라 내용은 같지만 형식은 다릅니다 (Codex .toml, OpenClaw 워크스페이스 Markdown 등). 편집은 `.claude/agents`·meta-theory에서.",
+    updateSyncing: "`.claude/`에서 Codex / OpenClaw 미러 재생성 중...",
+    updateSyncDone: "동기화 완료",
+    updateSyncSkip: "동기화를 건너뛰었거나 실패했습니다",
     updateReGlobal: "전역 스킬 디렉토리를 다시 선택할까요?",
     updateComplete: "업데이트 완료!",
     actionPrompt: "무엇을 하시겠습니까?",
@@ -769,7 +772,24 @@ const META_AGENTS = [
   "meta-sentinel",
   "meta-warden",
 ];
-const OPENCLAW_WS_FILES = 10; // expected files per workspace
+/** Same nine as scripts/validate-project.mjs (not “everything in readdir”) */
+const OPENCLAW_WORKSPACE_MD = [
+  "BOOT.md",
+  "BOOTSTRAP.md",
+  "IDENTITY.md",
+  "MEMORY.md",
+  "USER.md",
+  "SOUL.md",
+  "AGENTS.md",
+  "HEARTBEAT.md",
+  "TOOLS.md",
+];
+
+function openclawWorkspaceMdComplete(wsPath) {
+  return OPENCLAW_WORKSPACE_MD.every((name) =>
+    existsSync(join(wsPath, name)),
+  );
+}
 
 function checkSync(runtimes) {
   heading(t.syncHeading);
@@ -866,19 +886,17 @@ function checkSync(runtimes) {
         .filter((d) => d.isDirectory())
         .map((d) => d.name);
       const wsCount = wsDirs.filter((n) => META_AGENTS.includes(n)).length;
-      // Check each workspace has expected file count
-      const minFiles = wsDirs.reduce((min, name) => {
-        const files = readdirSync(join(ocWorkspaces, name));
-        return Math.min(min, files.length);
-      }, Infinity);
-      if (wsCount === META_AGENTS.length && minFiles >= OPENCLAW_WS_FILES) {
-        ok(t.syncOpenclawWorkspaces(wsCount, minFiles));
+      const completeAgents = META_AGENTS.filter((id) =>
+        openclawWorkspaceMdComplete(join(ocWorkspaces, id)),
+      ).length;
+      if (wsCount === META_AGENTS.length && completeAgents === META_AGENTS.length) {
+        ok(t.syncOpenclawWorkspaces(wsCount));
       } else {
         warn(
           t.syncPartial(
             "OpenClaw workspaces",
-            `${wsCount} agents, ${minFiles} files`,
-            `${META_AGENTS.length} agents, ${OPENCLAW_WS_FILES}+ files`,
+            `${completeAgents}/${META_AGENTS.length} agents with 9 core .md`,
+            `${META_AGENTS.length} agents, 9 .md each (BOOT … TOOLS)`,
           ),
         );
         allOk = false;
@@ -905,7 +923,7 @@ function checkSync(runtimes) {
 // ── Step 1: Pre-flight checks ───────────────────────────
 
 function preflight() {
-  heading(t.stepEnv);
+  heading(t.preflightHeading);
   let passed = true;
 
   const nodeVer = process.versions.node;
@@ -1273,10 +1291,11 @@ ${C.bold}  ${t.howToUse}${C.reset}
 
 function bannerLogo() {
   const G = {
+    /** Clear “M” apex (avoid 1010101 mid rows — reads like W) */
     M: [
       "1000001",
       "1100011",
-      "1010101",
+      "1011101",
       "1001001",
       "1000001",
       "1000001",
@@ -1379,15 +1398,23 @@ function bannerLogo() {
   const leftPad = (text) =>
     " ".repeat(PAD) + padVis(text, contentW) + " ".repeat(PAD);
 
+  const sep = "─".repeat(30);
+  const frame = `${C.bold}${C.cyan}`;
+
   console.log(`
-${C.bold}${C.cyan}  ┏${bar}┓
+${frame}  ┏${bar}┓
   ┃${blank}┃
-${art.map((l) => `  ┃${C.bold}${C.white}${leftPad(l)}${C.reset}${C.bold}${C.cyan}┃`).join("\n")}
+${art.map(
+    (l) =>
+      `  ┃${C.bold}${C.white}${leftPad(l)}${C.reset}${frame}┃`,
+  ).join("\n")}
   ┃${blank}┃
-  ┃${C.green}${center(`Setup ${packageVersion}`)}${C.reset}${C.bold}${C.cyan}┃
+  ┃${C.green}${center(`Setup ${packageVersion}`)}${C.reset}${frame}┃
   ┃${blank}┃
-  ┃${C.dim}${center("─".repeat(30))}${C.reset}${C.bold}${C.cyan}┃
-${contacts.map((c) => `  ┃${C.dim}${leftPad(c)}${C.reset}${C.bold}${C.cyan}┃`).join("\n")}
+  ┃${blank}┃
+  ┃${C.dim}${center(sep)}${C.reset}${frame}┃
+  ┃${blank}┃
+${contacts.map((c) => `  ┃${C.dim}${leftPad(c)}${C.reset}${frame}┃`).join("\n")}
   ┃${blank}┃
   ┗${bar}┛${C.reset}`);
 }

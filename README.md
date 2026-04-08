@@ -21,6 +21,8 @@
 
 **A governance layer for AI coding assistants — designed to make complex tasks done right, with one unified discipline that runs on Claude Code, Codex, and OpenClaw.**
 
+<!-- Maintainer: suggested GitHub About (avoid implying “only a mirror stack”). Example: Governance layer for AI coding: meta agents, workflow contract, meta-theory; canonical in .claude/, with generated companion assets for Codex and OpenClaw. -->
+
 Most AI coding tools jump straight to writing code. Meta_Kim adds a step in between: clarify what you actually need, plan who does what, then execute with review.
 
 The result: fewer broken multi-file changes, clearer agent responsibilities, and reusable patterns instead of one-shot hacks.

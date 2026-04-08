@@ -1,7 +1,7 @@
 {
   "name": "meta-kim",
   "version": "1.2.1",
-  "description": "Cross-runtime Meta_Kim prompt pack for Claude Code, OpenClaw, and Codex.",
+  "description": "Governance layer for AI coding: meta agents, workflow contract, meta-theory; canonical in .claude/, with generated Codex/OpenClaw companions.",
   "private": true,
   "type": "module",
   "scripts": {
