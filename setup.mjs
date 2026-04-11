@@ -47,6 +47,7 @@ const silentMode = args.includes("--silent") || !process.stdout.isTTY;
 
 const langIdx = args.indexOf("--lang");
 const langArg = langIdx >= 0 && args[langIdx + 1] ? args[langIdx + 1] : null;
+let currentLangCode = langArg || "en"; // Current language code for passing to child scripts
 
 const RUNTIME_CHOICES = [
   { id: "claude", label: "Claude Code" },
@@ -1112,15 +1113,20 @@ async function selectLanguage() {
     const match = LANGUAGES.find((l) => l.code === langArg);
     if (match) {
       t = I18N[match.code];
+      currentLangCode = match.code;
       return match;
     }
   }
 
-  if (silentMode) return LANGUAGES[0];
+  if (silentMode) {
+    currentLangCode = LANGUAGES[0].code;
+    return LANGUAGES[0];
+  }
 
   const labels = LANGUAGES.map((l) => `${l.label} (${l.code})`);
   const idx = await askSelect(t.selectLang, labels);
   t = I18N[LANGUAGES[idx].code];
+  currentLangCode = LANGUAGES[idx].code;
   return LANGUAGES[idx];
 }
 
@@ -1653,9 +1659,11 @@ async function selectActiveTargets(runtimes) {
 }
 
 function runNodeScript(scriptRelative, extraArgs = []) {
+  // Automatically pass --lang to child scripts
+  const langArgs = currentLangCode ? ["--lang", currentLangCode] : [];
   return spawnSync(
     process.execPath,
-    [join(PROJECT_DIR, scriptRelative), ...extraArgs],
+    [join(PROJECT_DIR, scriptRelative), ...langArgs, ...extraArgs],
     {
       cwd: PROJECT_DIR,
       stdio: "inherit",
