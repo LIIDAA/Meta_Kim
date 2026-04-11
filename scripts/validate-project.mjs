@@ -688,10 +688,7 @@ async function validateWorkflowContract() {
     ),
     "workflow-contract.json capabilityGapPacketRequiredWhenUpgradeReasons must include owner_creation_required.",
   );
-  for (const action of [
-    "create_execution_agent",
-    "upgrade_execution_agent",
-  ]) {
+  for (const action of ["create_execution_agent", "upgrade_execution_agent"]) {
     assert(
       contract.runDiscipline?.protocolFirst?.executionAgentCardRequiredWhenResolutionActions?.includes(
         action,
@@ -1272,7 +1269,8 @@ async function validateSyncConfiguration() {
   assert(
     supportedTargets.every(
       (target) =>
-        Array.isArray(generatedTargets[target]) && generatedTargets[target].length > 0,
+        Array.isArray(generatedTargets[target]) &&
+        generatedTargets[target].length > 0,
     ),
     "config/sync.json must declare generatedTargets for every supported target.",
   );
@@ -1744,15 +1742,15 @@ async function validateFactoryRelease() {
 
 function step(num, total, label, detail = "") {
   console.log(`\n[${num}/${total}] ${label}`);
-  if (detail) console.log(`    ${detail}`);
+  if (detail) console.log(`${detail}`);
 }
 
 function pass(msg = "") {
-  console.log(`    ✓ ${msg}`);
+  console.log(`✓ ${msg}`);
 }
 
 function fail(msg) {
-  console.error(`    ✗ ${msg}`);
+  console.error(`✗ ${msg}`);
 }
 
 async function main() {
@@ -1760,7 +1758,7 @@ async function main() {
   let current = 1;
 
   console.log("\n========================================");
-  console.log("  Meta_Kim Project Integrity Check");
+  console.log("Meta_Kim Project Integrity Check");
   console.log("========================================");
 
   // 1. Required files
@@ -1916,8 +1914,8 @@ async function main() {
   pass("Factory artifacts validated (or skipped — not in public repo)");
 
   console.log("\n========================================");
-  console.log(`  All ${TOTAL} checks passed`);
-  console.log(`  8 agents ready`);
+  console.log(`All ${TOTAL} checks passed`);
+  console.log(`8 agents ready`);
   console.log("========================================\n");
 }
 

@@ -1070,10 +1070,11 @@ async function askYesNo(question, defaultYes = true) {
 }
 
 async function askSelect(question, options) {
-  console.log(`\n  ${C.bold}?${C.reset} ${question}`);
+  console.log(`\n${C.bold}?${C.reset} ${question}\n`);
   options.forEach((opt, i) => {
-    console.log(`    ${C.dim}${i + 1}.${C.reset} ${opt}`);
+    console.log(`${C.dim}${i + 1}.${C.reset} ${opt}`);
   });
+  console.log("");
   const answer = await ask(t.choose(options.length));
   const idx = parseInt(answer, 10) - 1;
   return idx >= 0 && idx < options.length ? idx : 0;
@@ -1085,13 +1086,14 @@ async function askMultiSelectTargets(question, choices, defaultIds) {
   }
 
   const defaultSet = new Set(defaultIds);
-  console.log(`\n  ${C.bold}?${C.reset} ${question}`);
+  console.log(`\n${C.bold}?${C.reset} ${question}\n`);
   choices.forEach((choice, index) => {
     const marker = defaultSet.has(choice.id) ? `${C.green}x${C.reset}` : " ";
     console.log(
-      `    ${C.dim}${index + 1}.${C.reset} [${marker}] ${choice.label} ${C.dim}(${choice.id})${C.reset}`,
+      `${C.dim}${index + 1}.${C.reset} [${marker}] ${choice.label} ${C.dim}(${choice.id})${C.reset}`,
     );
   });
+  console.log("");
   const answer = await ask(
     `${t.inputTargetsHint(`${C.dim}${defaultIds.join(", ")}${C.reset}`)}`,
   );
@@ -1172,15 +1174,15 @@ function showInstallOverview(activeTargets, installScope) {
     }[installScope] || installScope;
 
   console.log(`
-${C.bold}  ${t.installOverviewTitle}${C.reset}
+${C.bold}${t.installOverviewTitle}${C.reset}
 
-  ${C.dim}${t.installOverviewWill}${C.reset}
+${C.dim}${t.installOverviewWill}${C.reset}
 ${bullets.map((b) => `${C.dim}•${C.reset} ${b}`).join("\n")}
-  ${C.dim}•${C.reset} ${C.dim}${t.installOverviewOptionalPython}${C.reset} ${C.yellow}(optional)${C.reset}
+${C.dim}•${C.reset} ${C.dim}${t.installOverviewOptionalPython}${C.reset} ${C.yellow}(optional)${C.reset}
 
-  ${C.dim}${t.installOverviewTargets}${C.reset}${activeTargets.join(", ")}
-  ${C.dim}${t.installOverviewScope}${C.reset}${scopeLabel}
-  ${C.dim}${t.installOverviewEstimated}${C.reset}${t.installOverviewTime}
+${C.dim}${t.installOverviewTargets}${C.reset}${activeTargets.join(", ")}
+${C.dim}${t.installOverviewScope}${C.reset}${scopeLabel}
+${C.dim}${t.installOverviewEstimated}${C.reset}${t.installOverviewTime}
 `);
 }
 
@@ -1237,9 +1239,9 @@ async function askInstallScope() {
     const defaultMark =
       scope.id === "both" ? `${C.green}(default)${C.reset} ` : "";
     console.log(
-      `    ${C.dim}${i + 1}.${C.reset} ${C.bold}${scope.label}${C.reset} ${defaultMark}`,
+      `${C.dim}${i + 1}.${C.reset} ${C.bold}${scope.label}${C.reset} ${defaultMark}`,
     );
-    console.log(`        ${C.dim}${scope.desc}${C.reset}`);
+    console.log(`${C.dim}${scope.desc}${C.reset}\n`);
   });
 
   const answer = await ask(t.choose(3));
