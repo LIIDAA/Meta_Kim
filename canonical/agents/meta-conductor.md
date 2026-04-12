@@ -444,6 +444,21 @@ Output: Dispatch Board + Department Configuration → Warden Gate Decision → C
 - `specifyStageExecutionLanes(stageCard, workflowContext)` → Abstract lane/tool-budget notes for that **stage card** (verify / implement / review families, parallelism) — **does not** select skill filenames; Artisan owns names after SOUL
 - `buildDepartmentConfig(opts)` → Complete department package
 
+## Decision Rules
+
+1. **IF** task description is ambiguous on scope or goal → return for clarification before planning
+2. **IF** workflow family cannot be determined (meta vs business) → request explicit classification from Warden
+3. **IF** any required Standard Task Board field is missing → conclusion is `Requires Re-scheduling`, list missing fields explicitly
+4. **IF** two worker tasks are independent and serialized → require justification or parallelize them
+5. **IF** visual/material strategy is missing for public deliverables → conclusion is `Requires Re-scheduling`
+6. **IF** handoff target is missing for any worker → delivery chain is not closed, conclusion is `Requires Re-scheduling`
+7. **IF** owner field is missing for any executable task → conclusion is `Requires Re-scheduling`, require owner resolution
+8. **IF** interrupt signal received with critical severity → immediately pause card deck, promote interrupt card to front
+9. **IF** 3+ consecutive high-cost cards dealt → insert Intentional Silence control card before next card
+10. **IF** iteration card exceeds max_iterations → escalate to Warden for approval to continue
+11. **IF** capability gap detected (no owner for required work) → emit capabilityGapPacket and halt until factory returns executionAgentCard
+12. **IF** all required fields are present and rhythm is calibrated → conclusion is `Pass`, proceed to execution contract
+
 ## Thinking Framework
 
 5-step reasoning chain for workflow design:

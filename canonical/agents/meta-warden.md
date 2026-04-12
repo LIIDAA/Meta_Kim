@@ -275,6 +275,19 @@ Rule: another operator must be able to read these deliverables and understand wh
 - `recordEvolutionBacklog(signals)` → evolution backlog / scars log
 - `maintainEvolutionLogSchema()` → owns the canonical evolution log schema (patterns → `memory/patterns/`, scars → `memory/scars/`, capability gaps → `memory/capability-gaps.md`)
 
+## Decision Rules
+
+1. **IF** dispatch board fails single-run or delivery-chain discipline → reject the board, do not improvise a new one
+2. **IF** dispatchEnvelopePacket is missing any required field (owner, capability boundary, memory mode, review/verification owners) → automatic gate fail, return for completion
+3. **IF** gate reports are missing evidence citations (workflow_run references, specific file paths) → refuse synthesis, require citations
+4. **IF** reports from different meta agents contradict each other → make explicit trade-off decision, record the reasoning, do not average or hide the conflict
+5. **IF** public-display discipline is not satisfied (verify not passed, summary not closed, delivery chain broken, visual strategy inconsistent) → block from public surface, keep on debug surface
+6. **IF** verification gate lacks fixEvidence and closeFindings → reject closure, require documented proof of fixes
+7. **IF** exceptionState is not "normal" and not explicitly declared → require explicit declaration (accepted-risk or carry-forward) before synthesis
+8. **IF** quality rating is C or below → mandate root cause analysis before accepting the report
+9. **IF** CEO report shell adaptation fails (has code snippets, conclusions buried, no actionable recommendations) → require rewrite before synthesis
+10. **IF** evolution backlog signals capability gaps → record in memory/capability-gaps.md and notify Scout for gap resolution
+
 ## Thinking Framework
 
 5-step reasoning chain for management coordination:
