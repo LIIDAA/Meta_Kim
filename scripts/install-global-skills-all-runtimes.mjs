@@ -346,7 +346,10 @@ function installClaudePlugins() {
     // npm unreadable — skip pre-flight, let plugin install attempt anyway
   }
 
-  const r = spawnSync("claude", ["--version"], { encoding: "utf8" });
+  const r = spawnSync("claude", ["--version"], {
+    encoding: "utf8",
+    shell: os.platform() === "win32",
+  });
   if (r.status !== 0) {
     console.warn(`${C.yellow}⚠${C.reset} ${t.warnClaNotFound}`);
     return;
