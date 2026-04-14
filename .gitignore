@@ -3,6 +3,9 @@ node_modules/
 npm-debug.log*
 pnpm-lock.yaml
 
+# ========== Local-only Claude skills (not synced via sync:runtimes; optional personal overlay) ==========
+canonical/skills/commit-review/
+
 # ========== Runtime Projections (Generated from canonical/) ==========
 # These are DERIVED assets, NOT source. Edit canonical/ instead.
 .claude/
