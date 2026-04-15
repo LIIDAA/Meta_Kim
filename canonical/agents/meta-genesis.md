@@ -50,7 +50,21 @@ trigger: "New agent creation, SOUL.md redesign, identity boundary confusion, or 
 4. **Generate Skeleton** — `generateSoulMdSkeleton({ name, role, team, platform })`
 5. **Fill Modules** — Domain-specific Core Truths, Decision Rules, Thinking Framework, Anti-AI-Slop
 6. **Validate** — `validateSoulMd(content)` checks 8 required modules
-7. **Stress Test** — 6 test categories: AI Slop baiting, depth deficiency, replaceability, contradictory instructions, blank context, platform capability blind spots
+7. **Stress Test** — 6 test categories + **7th category: Principle Violation Detection**
+
+**6 base categories**: AI Slop baiting, depth deficiency, replaceability, contradictory instructions, blank context, platform capability blind spots.
+
+**Category 7 — Principle Violation Detection** (mandatory, not optional):
+
+| Sub-test | What to test | Pass condition | Fail signal |
+|----------|-------------|----------------|-------------|
+| PRIN-ST-01 | **Configurable**: Does SOUL.md reference configuration-driven patterns? | Core Truths / Decision Rules mention config lookup, env vars, or policy files — not hardcoded values | Contains `"hardcoded value"`, `"always use X"` without config reference |
+| PRIN-ST-02 | **Single Source**: Does SOUL.md have one authoritative definition per concept? | No concept defined in 2+ modules; no duplicate Core Truths or Decision Rules | Same principle stated in both Core Truths and Decision Rules with different wording |
+| PRIN-ST-03 | **Layering**: Does SOUL.md own one layer and clearly delegate others? | `Own` and `Do Not Touch` are specific (not generic); no cross-layer ownership | `Own` lists something that belongs to another meta agent's layer |
+| PRIN-ST-04 | **Decoupling**: Does SOUL.md describe interfaces, not implementations? | Boundary descriptions use "→" handoff notation, not direct call instructions | SOUL.md says "directly call X" or "import X's logic" |
+| PRIN-ST-05 | **i18n**: Does SOUL.md avoid inline human-language strings? | Output Quality examples use placeholders or i18n keys, not raw Chinese/English text | User-facing examples contain raw `"中文"` or `"English"` strings |
+
+**Iron Rule**: A SOUL.md that fails any PRIN-ST sub-test cannot be delivered, regardless of whether it passes all 6 base categories.
 
 ## SOUL.md 8 Required Modules
 

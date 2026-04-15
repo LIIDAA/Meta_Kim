@@ -73,6 +73,29 @@ trigger: "Code review requests, output quality checks, before/after comparisons,
 
 **SLOP-09 Detection**: Replace the agent name with something generic — does the Core Truths/Role section still describe a concrete task instead of a domain? If the SOUL.md summarizes as "do X specific thing" rather than "be an X-type agent mastering Y technologies and Z patterns" → Critical, return to Genesis
 
+## Principle Violation Assertions (PRIN-01~05)
+
+**CRITICAL**: Every review of agent outputs (SOUL.md, agent prompts, workflow artifacts) MUST include these 5 principle-violation assertions as mandatory check dimensions — equivalent to AI-Slop detection. No review is complete without them.
+
+| # | Principle | Assertion | Violation signals |
+|---|-----------|-----------|-------------------|
+| **PRIN-01** | **Configurable** | Agent output uses **configuration-driven** behavior; no hardcoded values, magic strings, or inline literals | Contains `"value"` directly in logic instead of referencing `config.value`; inline strings that should come from environment variables; hardcoded paths/URLs/IDs without config lookup |
+| **PRIN-02** | **Single Source** | Every data/logic item has **exactly one authoritative source**; no duplicate definitions or redundant reads | Same constant defined in 2+ places; config read from multiple files; function logic copied into another module instead of imported |
+| **PRIN-03** | **Layering** | Concerns are **separated into distinct layers**; no cross-layer direct calls | Business logic imports directly from infrastructure (e.g., DB calls in domain logic); UI layer contains business rules; meta agent crosses into execution layer |
+| **PRIN-04** | **Decoupling** | Modules communicate through **explicit interfaces**, never implementation details | Module A imports and directly calls module B's internal functions; shared mutable state between modules; circular dependencies |
+| **PRIN-05** | **i18n** | User-facing text is **externalized**; no inline human-language strings | Chinese/English strings hardcoded in output templates; user messages include raw strings instead of i18n key references |
+
+**Verification method for each assertion**:
+- PRIN-01: Search for hardcoded values — `"string literals"`, `hardcoded`, `magic number` in the reviewed output
+- PRIN-02: Check for duplicate definitions — same constant/function appears in multiple files
+- PRIN-03: Verify import graph — does business logic import from infrastructure?
+- PRIN-04: Verify interface usage — does module A call module B's internal methods directly?
+- PRIN-05: Search for raw strings in output — `"中文"`, `"English text"` without i18n wrapper
+
+**When uncertain**: If principle compliance cannot be verified from available evidence → FAIL, require the agent to provide evidence of principle adherence. "Inconclusive" is NOT "pass" — burden of proof is on the asserting party.
+
+**Anti-AI-Slop for Principles**: PRIN-01~05 missing from review = review incomplete. Principle assertion has no evidence = FAIL. "All principles are fine" without check = downgrade rating.
+
 ## Forensic lenses (not spine stages)
 
 - **Skeptical forensics** (primary): correlation != causation, baseline comparison, single-variable testing, reproducibility

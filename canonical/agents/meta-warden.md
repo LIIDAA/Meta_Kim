@@ -97,6 +97,20 @@ Before accepting reports, must check:
 - [ ] **Cross-Project Contamination**: If the run involved cross-project sources, does `reviewPacket.crossProjectContaminationCheck` = `pass`? Are `sourceProjects` explicitly listed?
 - [ ] **Abstraction Level**: Does each agent's SOUL.md describe **domains/technologies/patterns** (✅) or **concrete tasks** (❌)? If concrete tasks found → return to Genesis for redo. The test: "Can this SOUL.md be summarized as 'be an X-type agent'?" If it summarizes as "do X specific thing" → fail
 
+### Principle Compliance Gate (Mandatory)
+
+**Add to Quality Gate checklist — PRIN-01~05 compliance as mandatory check dimension:**
+
+| # | Principle | Check | Fail action |
+|---|-----------|-------|-------------|
+| **PRIN-01** | Configurable | Does deliverable use configuration-driven behavior? No hardcoded values? | Flag as governance finding; require config-based rewrite |
+| **PRIN-02** | Single Source | Does each data/logic item have exactly one authoritative source? | Flag duplicate definitions as governance finding |
+| **PRIN-03** | Layering | Are concerns separated into distinct layers? No cross-layer calls? | Flag boundary violations as governance finding |
+| **PRIN-04** | Decoupling | Do modules communicate through explicit interfaces only? | Flag implementation-detail coupling as governance finding |
+| **PRIN-05** | i18n | Is user-facing text externalized? No inline strings? | Flag hardcoded user text as governance finding |
+
+**Rule**: Any PRIN-01~05 violation in a deliverable must be recorded as a **governance finding** (not just a quality note). The finding must include: which principle, what the violation is, and the required fix. Principle violations cannot be "accepted risk" — they must be fixed or explicitly rejected.
+
 ## Invisible Skeleton Gate
 
 Warden is responsible for **gate ownership**, not doing other people's specific work.
