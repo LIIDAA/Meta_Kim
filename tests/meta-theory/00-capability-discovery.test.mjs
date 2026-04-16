@@ -575,39 +575,36 @@ describe("Part F: Command Discovery", async () => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 describe("Part G: Memory & Knowledge Graph", async () => {
-  test("memory/ directory exists for capability gaps and patterns", async () => {
-    const memDir = path.join(REPO_ROOT, "memory");
-    try {
-      await fs.access(memDir);
-    } catch {
-      // memory/ might not exist yet; this is created by Evolution
-      // Just verify the contract references it
-      const skillContent = await readFile(
-        "canonical/skills/meta-theory/SKILL.md",
+  test("evolution writes back directly to agent definitions, not memory/ dir", async () => {
+    // memory/ is Claude Code's session memory, NOT Meta_Kim's evolution mechanism
+    // Evolution writes capability gaps and patterns directly into agent SOUL.md files
+    const skillContent = await readFile(
+      "canonical/skills/meta-theory/SKILL.md",
+    );
+    // SKILL.md should describe direct SOUL.md editing, NOT memory/ reference
+    const noMemoryDir = !/memory\//.test(skillContent);
+    const mentionsDirectEdit =
+      /directly edit|direct.*edit|edit.*SOUL\.md|agent.*definition/i.test(
+        skillContent,
       );
-      const mentionsMemory = /memory\//i.test(skillContent);
-      assert.ok(
-        mentionsMemory,
-        "SKILL.md must reference memory/ directory for evolution writeback",
-      );
-    }
+    assert.ok(
+      noMemoryDir || mentionsDirectEdit,
+      "SKILL.md should describe direct agent self-evolution (editing SOUL.md), not memory/ directory",
+    );
   });
 
-  test("config/contracts/evolution-contract.json references memory/ paths", async () => {
+  test("evolution-contract.json maps evolution targets to agent definition files", async () => {
     const evolutionContract = await readJson(
       "config/contracts/evolution-contract.json",
     );
     const contractStr = JSON.stringify(evolutionContract);
-    const hasMemoryRefs =
-      /memory\//.test(contractStr) ||
-      /memory\//.test(
-        await readFile("config/contracts/evolution-contract.json").catch(
-          () => "",
-        ),
-      );
+    // All evolution targets should point to canonical/agents/{agent}.md or skill files
+    // NOT memory/ directory
+    const noMemoryRefs = !/memory\//.test(contractStr);
+    const hasAgentRef = /canonical\/agents\//.test(contractStr);
     assert.ok(
-      hasMemoryRefs,
-      "config/contracts/evolution-contract.json must reference memory/ paths",
+      noMemoryRefs && hasAgentRef,
+      "evolution-contract.json must reference canonical/agents/ paths, not memory/",
     );
   });
 
@@ -771,14 +768,15 @@ describe("Part I: Capability Gap Resolution", async () => {
     );
   });
 
-  test("Evolution contract documents capability-gaps.md as writeback target", async () => {
+  test("Evolution contract documents capability gap feedback loop", async () => {
     const evolutionContract = await readJson(
       "config/contracts/evolution-contract.json",
     );
     const contractStr = JSON.stringify(evolutionContract);
+    // capabilityGap key exists (note: no dot, this is camelCase)
     assert.ok(
-      /capability.gap/i.test(contractStr),
-      "evolution-contract.json must reference capability gaps",
+      /capabilityGap/i.test(contractStr),
+      "evolution-contract.json must reference capabilityGap feedback loop",
     );
   });
 

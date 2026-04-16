@@ -23,7 +23,7 @@
     },
     "capabilityGap": {
       "target": "scout-discovery-queue",
-      "storage": "memory/capability-gaps.md",
+      "storage": "canonical/agents/{agent}.md",
       "trigger": "external-search",
       "evidence": "Fetch returned 0 matches for a required capability"
     },

@@ -12,7 +12,7 @@ tools:
 description: |
   Meta Arsenal — governance skill for meta architecture, agent design/review, and rhythm orchestration.
   Distinguish meta architecture from project technical architecture before acting.
-  Evolution writeback may record capability gaps and patterns under memory/ when configured.
+  Evolution writeback records capability gaps and pattern insights into agent definitions directly.
   Complex development work follows the 8-stage execution spine:
   Critical → Fetch → Thinking → Execution → Review → Meta-Review → Verification → Evolution.
 ---
@@ -115,6 +115,8 @@ If you are about to write analysis, code, or reviews yourself — STOP. That wor
 
 ## Available Agents
 
+### Governance Meta Agents (8 total)
+
 | subagent_type | Role | When to dispatch |
 |---|---|---|
 | `meta-warden` | Coordination, final synthesis | Always for final output |
@@ -125,6 +127,10 @@ If you are about to write analysis, code, or reviews yourself — STOP. That wor
 | `meta-librarian` | Memory, continuity | Cross-session context |
 | `meta-prism` | Quality review, anti-slop | Review and audit tasks |
 | `meta-scout` | External capability discovery | Need to search outside |
+
+### Execution Agents (from capability index)
+
+Execution agents are **discovered via Fetch-first pattern** from the capability index at Stage 4 (Execution). They are NOT enumerated here — use `Glob .claude/agents/*.md` or `npm run discover:global` to locate them. Conductor's task board drives their invocation. Governance meta agents use `Agent()` tool to call execution agents; they do not self-execute business logic.
 
 ## How to Dispatch
 
@@ -144,13 +150,40 @@ The `prompt` must contain everything the agent needs — files, context, user re
 
 > **Dual-End Warden Architecture**: Warden is the **entry gate** (clarification + solution enumeration) for ALL types, AND the **exit gate** (quality gate + final synthesis). Conductor orchestrates ALL types through their execution phase.
 
-| User intent | Type | Entry Warden | Full Flow |
+**Universal Entry Chain** (all Types share the first two stages):
+
+```
+SKILL trigger → Type classify → [1] Warden entry → [2] Conductor orchestrate
+```
+
+| User intent | Type | Universal Entry (shared) | Type-Specific Continuation |
 |---|---|---|---|
-| Discuss meta-theory, evaluate agents, Five Criteria | **A** | Clarify ambiguous intent; Enumerate solution approaches | meta-theory classify → **Warden entry** (clarify + enumerate) → **Conductor orchestrate** → Prism audit → **Warden exit** (synthesize) |
-| Create new agent, split existing agent | **B** | Confirm gap is real; Enumerate creation approaches | meta-theory classify → **Warden entry** (confirm + enumerate) → **Conductor orchestrate** → Station pipeline → **Warden exit** (synthesize) |
-| Complex dev task, feature implementation | **C** | Confirm scope/constraints; Enumerate implementation approaches | meta-theory classify → **Warden entry** (confirm + enumerate) → **Conductor orchestrate** (8-stage spine) → **Warden exit** (synthesize) |
-| Review existing proposal/article | **D** | Confirm review scope; Enumerate verification approaches | meta-theory classify → **Warden entry** (confirm + enumerate) → **Conductor orchestrate** → Prism + Scout → **Warden exit** (synthesize) |
-| Rhythm/card play/orchestration strategy | **E** | Confirm rhythm problem; Enumerate orchestration approaches | meta-theory classify → **Warden entry** (confirm + enumerate) → **Conductor orchestrate** (card deck) → **Warden exit** (synthesize) |
+| Discuss meta-theory, evaluate agents, Five Criteria | **A** | **Warden**: Clarify intent; Enumerate ≥2 approaches | Conductor sequences → Prism audit → **Warden exit** |
+| Create new agent, split existing agent | **B** | **Warden**: Confirm gap is real; Enumerate approaches | Conductor → Factory Station → **Warden exit** |
+| Complex dev task, feature implementation | **C** | **Warden**: Confirm scope/constraints; Enumerate approaches | Conductor (8-stage spine) → **Warden exit** |
+| Review existing proposal/article | **D** | **Warden**: Confirm scope; Enumerate approaches | Conductor → Prism + Scout → **Warden exit** |
+| Rhythm/card play/orchestration strategy | **E** | **Warden**: Confirm rhythm problem; Enumerate approaches | Conductor (card deck) → **Warden exit** |
+
+## Factory Station (Collaboration Model)
+
+When Conductor's task board assigns a node that requires capability matching, the **Factory Station** activates. This is the collaboration pipeline for agent capability decisions.
+
+**Collaboration order**:
+1. **Mandatory sequential pair**: Genesis (SOUL.md identity) → Artisan (skill/tool loadout). Genesis must complete first — Artisan designs loadout against a specific SOUL, not a generic brief. These are NOT parallel.
+2. **Conditional parallel** (after Artisan completes, only if triggered):
+   - Scout → triggered when Fetch returns 0 matches for required capability (`capabilityGapPacket.gapType = "owner_creation_required"`)
+   - Sentinel → triggered when new skill admission introduces new permissions or supply chain dependencies
+   - Librarian → triggered when cross-session continuity requirements exist
+
+**Decision matrix** (output as `capabilityGapPacket.resolutionAction`):
+| Resolution | Trigger |
+|-----------|---------|
+| `create_execution_agent` | No existing agent owns the capability; Genesis → Artisan pipeline runs |
+| `upgrade_execution_agent` | Existing agent partially covers; Artisan adds loadout to fill gap |
+| `reuse_existing_owner` | Fetch found a match; route to existing agent |
+| `accepted_gap` | Capability not critical; documented and deferred |
+
+**Rule**: Execution agents (from capability index) are discovered via Fetch-first pattern at Stage 4. Conductor's task board maps sub-tasks to agent capabilities. All 8 meta-agents use `Agent()` tool to call execution agents — meta-agents do NOT self-execute business logic.
 
 ---
 
@@ -238,23 +271,28 @@ Conductor executes the 8-stage spine. Read `canonical/skills/meta-theory/referen
 | 2 | Fetch | Search who can do this: `Glob canonical/agents/*.md` |
 | 3 | Thinking | Plan sub-tasks with owners and dependencies |
 | 4 | **Execution** | **Dispatch to agents via `Agent()` tool** |
-| 5 | Review | Inspect agent outputs |
+| 5 | Review | Inspect agent outputs; if governance violations found (Skip-Level, self-execution, circular evidence), directly edit the offending agent's SOUL.md to prevent recurrence |
 | 6 | Meta-Review | Check review standards |
 | 7 | Verification | Confirm fixes closed findings |
-| 8 | Evolution | Capture reusable patterns |
+| 8 | Evolution | Directly evolve agent definitions: update `Own/Do Not Touch/CT/Decision Rules` in the specific agent file that revealed the gap; emit `evolutionWritebackPacket` with agent file as primary target |
 
-**Stage 4 is THE key stage.** For each sub-task, dispatch:
+**Stage 4 is THE key stage.** Conductor's task board drives execution agents from the capability index. For each sub-task:
+1. Conductor generates the dispatch board (which agents, which capabilities, which order)
+2. Conductor's task board maps sub-tasks to execution agent capabilities
+3. Dispatch via `Agent()` tool, discovered via Fetch-first pattern (not hardcoded by name)
+
 ```
 Agent(
-  subagent_type: "<best-matching-agent>",
+  subagent_type: "<best-matching-agent-discovered-via-fetch>",
   description: "<what this agent does>",
   prompt: "<files to read, code to write, constraints to follow — full context>"
 )
 ```
 
 Stage 4 rules:
-- Every executable sub-task MUST have an owner agent
+- Every executable sub-task MUST have an owner agent (from capability index)
 - Independent sub-tasks MUST run in parallel (multiple Agent calls at once)
+- Conductor orchestrates; execution agents execute — meta-agents do NOT self-execute business logic
 - You MUST NOT write code yourself — only dispatch and synthesize
 
 **Option Exploration is MANDATORY in Stage 3 (Thinking):** explore **≥2 solution paths** (at least 2 solution paths). Capture a Pros/Cons table or a **Decision Record** with rejected alternatives. **Stage 4 may not start** until **Protocol-first** artifacts exist (`runHeader`, `dispatchBoard`, `workerTaskPackets` with `dependsOn`, `parallelGroup`, and `mergeOwner`, `evolutionWritebackPlan`, etc.) — see `dev-governance.md`.
@@ -341,8 +379,17 @@ Constitutional principles for ALL Meta_Kim agents and every system they create o
 | 7 | **Explicitness** | Declare state, boundaries, and intent explicitly; reject implicit assumptions |
 | 8 | **Composability** | Build from small, combinable units; avoid monolithic, single-purpose constructs |
 
-**Dispatcher application**: Before dispatching ANY agent, verify the task brief includes relevant principle constraints. During Stage 5 (Review) and Stage 7 (Verification), include principle compliance as a mandatory check dimension. When capturing evolution patterns (Stage 8), record principle violations as scars.
+**Dispatcher application**: Before dispatching ANY agent, verify the task brief includes relevant principle constraints. During Stage 5 (Review) and Stage 7 (Verification), include principle compliance as a mandatory check dimension. When capturing evolution patterns (Stage 8), directly edit the responsible agent's SOUL.md — do not create a middle abstraction layer.
 
+**Evolution rule — direct over indirect**: When a gap is discovered, evolve the specific agent that revealed it. NOT a separate memory file. NOT a pattern directory. The agent definition IS the memory.
+
+| Gap type | Evolution target |
+|---------|----------------|
+| Agent boundary unclear | Edit that agent's `Own/Do Not Touch` directly |
+| CT too generic | Edit that agent's Core Truths directly |
+| Missing card deck alignment | Edit that agent's SOUL.md directly |
+| Circular self-assessment | Edit that agent's Meta-Theory Compliance section |
+| Pattern spans multiple agents | Extract as skill template (not pattern file) |
 ## References
 
 Theory and detailed specs live in `canonical/skills/meta-theory/references/`:

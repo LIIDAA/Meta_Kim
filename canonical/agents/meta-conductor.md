@@ -446,6 +446,15 @@ Output: Dispatch Board + Department Configuration → Warden Gate Decision → C
 
 **Reference**: See `meta-artisan.md` § "Collaboration Boundary with Conductor" for the corresponding perspective.
 
+## Rollback Mechanism
+
+Conductor's rollback is governed by `controlState: rollback` in the run artifact:
+
+- **Trigger**: Sentinel interrupt (security violation), Prism `FAIL` with no fix path, or ≥2 consecutive `Nudge` cards without forward progress.
+- **Scope**: Rollback resets the card deck to the last verified state. Does NOT roll back files already written — Sentinel and the execution agent own that recovery.
+- **Recovery**: Conductor re-deals the deck from the rollback checkpoint. Previous card outcomes are logged as `scars` in the verification closure packet.
+- **Evidence**: Rollback decision is recorded in the `evolutionWritebackPacket` with `rollbackCheckpoint` and `scarReason` fields.
+
 ## Core Functions
 
 - `selectWorkflowFamily(opts)` → business/meta
@@ -456,7 +465,7 @@ Output: Dispatch Board + Department Configuration → Warden Gate Decision → C
 - `checkPauseCondition(history)` → Whether to trigger Intentional Silence
 - `generateWorkflowConfig(opts)` → Phase configuration
 - `validateWorkflowConfig(config)` → Completeness check
-- `specifyStageExecutionLanes(stageCard, workflowContext)` → Abstract lane/tool-budget notes for that **stage card** (verify / implement / review families, parallelism) — **does not** select skill filenames; Artisan owns names after SOUL
+- `specifyStageExecutionLanes(stageCard, workflowContext)` → Abstract lane/tool-budget notes for each **stage card**: which families run in parallel, which are serial, and what tool budget (attention cost) each stage consumes. Artisan owns skill filename selection after SOUL is finalized — this function produces the structural lane map, not the loadout.
 - `buildDepartmentConfig(opts)` → Complete department package
 
 ## Decision Rules
@@ -544,12 +553,14 @@ Constitutional principles for ALL Meta_Kim agents and every system they create o
 
 **Conductor application**: Workflow orchestration must follow these principles. Stage cards are Composable units that combine into new workflows. dispatchEnvelopePacket enforces Explicitness for every non-query run. Single-Run Contract is Single Source in action. Parallel lane design is Decoupling between independent work streams.
 
-## Meta-Theory Verification
+## Meta-Theory Compliance
 
-| Criterion | Pass | Evidence |
-|-----------|------|----------|
-| Independent | ✅ | Given department goals + team, can output complete workflow configuration + Card Deck |
-| Small Enough | ✅ | Only covers workflow Orchestration + rhythm control; does not touch security/memory/persona/quality standards |
-| Clear Boundaries | ✅ | Does not touch persona/skills/security/memory/quality standard formulation |
-| Replaceable | ✅ | Removal does not affect other meta agents' independent output |
-| Reusable | ✅ | Needed every time department setup / Pipeline upgrade / task execution occurs |
+Canonical reference: `canonical/skills/meta-theory/SKILL.md` defines the 5 meta-theory criteria.
+
+| Criterion | Verification Method | Cross-reference |
+|-----------|--------------------|-----------------|
+| Independent | Does this agent produce output without requiring other meta agents' outputs as input? | Own/Do Not Touch boundary |
+| Small Enough | Does the agent cover exactly one responsibility class? | Boundary section |
+| Clear Boundary | Do Own and Do Not Touch lists reference specific other agents? | Decision Rules |
+| Replaceable | Can other agents continue operating if this agent is absent? | Collaboration diagram |
+| Reusable | Is the agent triggered by a recurring condition? | Trigger definition |

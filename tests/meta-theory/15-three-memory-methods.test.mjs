@@ -494,22 +494,18 @@ describe("Part F: memory layer roles (Claude Code vs Librarian)", async () => {
 // Part G: Evolution Writeback to Memory
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-describe("Part G: evolution writeback to memory", async () => {
+describe("Part G: evolution writeback to agent definitions", async () => {
   const contract = await readJson("config/contracts/workflow-contract.json");
 
-  test("evolutionWritebackTargets includes memory/scars/", () => {
+  test("evolutionWritebackTargets points to canonical/agents/, not memory/", () => {
     const targets = contract.runDiscipline?.evolutionWritebackTargets ?? [];
+    // Evolution writes back to agent definitions directly
+    // memory/ is Claude Code's session memory, not Meta_Kim's evolution storage
+    const noMemory = !targets.some((t) => t.includes("memory/"));
+    const hasAgentDir = targets.some((t) => t.includes("canonical/agents"));
     assert.ok(
-      targets.some((t) => t.includes("memory/scars/")),
-      "evolutionWritebackTargets must include memory/scars/",
-    );
-  });
-
-  test("evolutionWritebackTargets includes memory/capability-gaps.md", () => {
-    const targets = contract.runDiscipline?.evolutionWritebackTargets ?? [];
-    assert.ok(
-      targets.some((t) => t.includes("memory/capability-gaps")),
-      "evolutionWritebackTargets must include memory/capability-gaps.md",
+      noMemory && hasAgentDir,
+      "evolutionWritebackTargets must point to canonical/agents/, not memory/",
     );
   });
 
@@ -517,17 +513,19 @@ describe("Part G: evolution writeback to memory", async () => {
     const evo = await readJson("config/contracts/evolution-contract.json");
     const scarStorage = evo.evolutionFeedbackLoop?.scarDetected?.storage ?? "";
     assert.ok(
-      scarStorage.includes("scar") || scarStorage.includes("memory"),
+      scarStorage.includes("scar") || scarStorage.includes("contracts/"),
       "scarDetected storage must reference scar storage location",
     );
   });
 
-  test("capability gap storage is documented", async () => {
+  test("capability gap storage is documented in agent definitions", async () => {
     const evo = await readJson("config/contracts/evolution-contract.json");
     const gapStorage = evo.evolutionFeedbackLoop?.capabilityGap?.storage ?? "";
+    // Evolution writes capability gaps directly to canonical/agents/{agent}.md
+    const hasAgentRef = gapStorage.includes("canonical/agents");
     assert.ok(
-      gapStorage.includes("capability-gap") || gapStorage.includes("memory"),
-      "capabilityGap storage must reference capability gaps location",
+      hasAgentRef,
+      "capabilityGap storage must reference canonical/agents/{agent}.md",
     );
   });
 });

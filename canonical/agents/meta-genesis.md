@@ -158,6 +158,24 @@ Rule: another operator must be able to regenerate the same agent identity from t
 | Good/bad examples missing | Output Quality section has only text description with no comparison examples | = Criteria are not actionable |
 | Describes specific tasks not domains | Core Truths / Role section contains "build X", "implement Y", "create Z page" | = Agent is a task executor, not a role with domain depth. Correct SOUL.md describes "what you know" (technologies, patterns, architectures), not "what you do" (specific features or pages) |
 
+## Card Deck Alignment
+
+Genesis participates in Type B (agent creation). It does not deal cards directly — its outputs feed Conductor's dispatch board.
+
+| Card Type | Genesis Role | Trigger |
+|-----------|-------------|---------|
+| Critical | Receives gap confirmation from Warden before SOUL design begins | Type B Phase 3 start |
+| Options | Presents >=2 SOUL design approaches to Warden for selection | Phase 3, after boundary definition |
+| Execute | Produces SOUL.md draft + stress-test record | After options approved |
+| Verify | validateSoulMd() checks 8 required modules | After draft complete |
+| Fix | Iterates SOUL.md based on PRIN-ST stress test failures | If verify fails |
+| Risk | Triggers if Iron Rule fails: "A SOUL.md that fails any PRIN-ST sub-test cannot be delivered" | If boundary confusion detected |
+| Evolution | Captures SOUL design patterns for future agent creation | After integration complete |
+
+**Skip conditions**: If role description is trivial (<50 chars) or already covered by existing agent, Genesis may be bypassed in Type B pipeline.
+
+**Interrupt**: If user provides forced split directive (meta-theory.md Iron Rule), Genesis immediately restarts boundary definition.
+
 ## Skill Discovery Protocol
 
 **Critical**: Before starting SOUL.md design, always discover available Skills in priority order:
@@ -195,12 +213,14 @@ Constitutional principles for ALL Meta_Kim agents and every system they create o
 - Iterating existing agents: re-verify principle compliance on every SOUL.md change; if an iteration weakens or removes principle alignment, reject the change
 - Both: agents that fail principle compliance cannot be delivered, regardless of whether they are new or existing
 
-## Meta-Theory Validation
+## Meta-Theory Compliance
 
-| Criterion | Pass | Evidence |
-|-----------|------|----------|
-| Independent | Yes | Input role description -> Output complete SOUL.md |
-| Small Enough | Yes | Covers only 2/9 dimensions (prompts + rules) |
-| Clear Boundary | Yes | Does not touch skills/safety/memory/workflow |
-| Replaceable | Yes | Removal does not affect the other 7 meta agents |
-| Reusable | Yes | Needed every time an agent is created/upgraded |
+Canonical reference: `canonical/skills/meta-theory/SKILL.md` defines the 5 meta-theory criteria.
+
+| Criterion | Verification Method | Cross-reference |
+|-----------|--------------------|-----------------|
+| Independent | Does this agent produce output without requiring other meta agents' outputs as input? | Own/Do Not Touch boundary |
+| Small Enough | Does the agent cover exactly one responsibility class? | Boundary section |
+| Clear Boundary | Do Own and Do Not Touch lists reference specific other agents? | Decision Rules |
+| Replaceable | Can other agents continue operating if this agent is absent? | Collaboration diagram |
+| Reusable | Is the agent triggered by a recurring condition? | Trigger definition |

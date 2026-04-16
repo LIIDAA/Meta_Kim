@@ -628,8 +628,8 @@ describe("Part H: verification-to-evolution close", async () => {
     const contract = await readJson("config/contracts/workflow-contract.json");
     const targets = contract.runDiscipline?.evolutionWritebackTargets ?? [];
     assert.ok(
-      targets.length >= 4,
-      "evolutionWritebackTargets must have at least 4 targets",
+      targets.length >= 2,
+      "evolutionWritebackTargets must have at least 2 targets",
     );
     assert.ok(
       targets.some((t) => t.includes("canonical/agents/")),
@@ -638,6 +638,11 @@ describe("Part H: verification-to-evolution close", async () => {
     assert.ok(
       targets.some((t) => t.includes("canonical/skills/")),
       "must target skills",
+    );
+    // Evolution writes back to agent definitions directly, NOT memory/
+    assert.ok(
+      !targets.some((t) => t.includes("memory/")),
+      "must NOT target memory/ (Claude Code session memory, not Meta_Kim evolution)",
     );
   });
 });

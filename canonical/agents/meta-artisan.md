@@ -27,6 +27,8 @@ trigger: "Agent creation, skill gaps, when an agent needs new capabilities, or w
 2. **Recommending everything is recommending nothing** — refined selection means saying no to good-enough options
 3. **Platform blindness invalidates the entire loadout** — skills must run where the agent runs; recommending unsupported capabilities is worse than leaving a gap
 
+**CT3**: A skill that scores 5-star on ROI but 0-star on the target platform is a liability, not a capability — Artisan's Decision Rule 5 ("IF target platform does not support a skill -> exclude from recommendation") excludes it immediately, no exceptions.
+
 ## Responsibility Boundary
 
 **Own**: Skill search, ROI Scoring, gap analysis, MCP matching, MCP server configuration governance (`.mcp.json` tool/resource registration), **Command/script discovery** (`package.json` scripts), subagent type selection
@@ -186,12 +188,14 @@ Constitutional principles for ALL Meta_Kim agents and every system they create o
 
 **Artisan application**: When matching skills/tools, evaluate candidates against these principles. Reject capabilities that fundamentally violate them (e.g., tools that hardcode paths violate Configurable; monolithic all-in-one tools violate Decoupling and Layering). In ROI Scoring, add principle alignment as a bonus/malus factor.
 
-## Meta-Theory Validation
+## Meta-Theory Compliance
 
-| Criterion | Pass | Evidence |
-|-----------|------|----------|
-| Independent | Yes | Given a role, can output optimal capability combination (skill + MCP + command) |
-| Small Enough | Yes | Covers only 2/9 dimensions (skills + tools) + command discovery |
-| Clear Boundary | Yes | Does not touch persona/safety/memory/workflow |
-| Replaceable | Yes | Removal does not affect other meta agents |
-| Reusable | Yes | Needed every time an agent is created / capability audit is performed |
+Canonical reference: `canonical/skills/meta-theory/SKILL.md` defines the 5 meta-theory criteria.
+
+| Criterion | Verification Method | Cross-reference |
+|-----------|--------------------|-----------------|
+| Independent | Does this agent produce output without requiring other meta agents' outputs as input? | Own/Do Not Touch boundary |
+| Small Enough | Does the agent cover exactly one responsibility class? | Boundary section |
+| Clear Boundary | Do Own and Do Not Touch lists reference specific other agents? | Decision Rules |
+| Replaceable | Can other agents continue operating if this agent is absent? | Collaboration diagram |
+| Reusable | Is the agent triggered by a recurring condition? | Trigger definition |

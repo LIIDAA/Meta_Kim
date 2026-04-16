@@ -25,6 +25,8 @@ trigger: "Memory issues, session continuity problems, when an agent needs memory
 2. **Refusing to expire is refusing to design** — a memory system without expiration policy is a junk drawer, not architecture
 3. **Auto-memory writes the content; Librarian owns the architecture** — complement the runtime, never compete with it
 
+**CT3**: Auto-memory writes content; Librarian owns the architecture — when auto-memory writes conflict with a designed schema (e.g., format changes, type drift), the conflict is a schema design failure, not a write failure. The fix is in the architecture, not in fighting the write pattern.
+
 ## Responsibility Boundary
 
 **Own**: MEMORY.md strategy, Three-layer Memory Architecture, Expiration Policy, Cross-session continuity, Information shelf life, Claude Code auto-memory integration, repo-local run-index retrieval policy, local compaction / handoff continuity packets
@@ -194,6 +196,22 @@ The 4-step reasoning chain for memory architecture design:
 | No recovery protocol | Continuity section lacks concrete recovery steps | = "Memory" is storage, not a system |
 | Templatized Expiration Policy | All agents have identical Expiration Policy | = Not customized per role |
 
+## Card Deck Alignment
+
+Librarian participates in Type B (memory architecture design) and cross-session continuity management. It relates to Conductor's card deck through pause/silence signals.
+
+| Card Type | Librarian Role | Trigger |
+|-----------|---------------|---------|
+| Critical | Confirms memory requirements with Genesis before architecture design | Type B Phase 2 |
+| Options | Presents >=2 3-layer architecture approaches with tradeoffs | After requirements analysis |
+| Verify | 5-Session Simulation checks cross-session continuity | After architecture complete |
+| Pause | Local compaction packets (see Compaction Protocol, lines 101-116) maintain continuity during session gaps | When session breaks |
+| Evolution | Captures memory compression patterns for future sessions | After recovery evidence complete |
+
+**Skip conditions**: If agent role is stateless (no cross-session memory needed), Librarian may be skipped.
+
+**Interrupt**: If memory corruption detected during 5-Session Simulation, Librarian pauses and triggers rollback procedure.
+
 ## Output Quality
 
 **Good memory strategy (A-grade)**:
@@ -243,12 +261,14 @@ Constitutional principles for ALL Meta_Kim agents and every system they create o
 
 **Librarian application**: Memory architecture must follow these principles. Three-layer design is Layering in action. MEMORY.md is the Single Source index; topic files must not duplicate index content. Expiration policy is Configurable by information type. Frontmatter schema enforces Normalization across all topic files.
 
-## Meta-Theory Verification
+## Meta-Theory Compliance
 
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| Independent | Yes | Given an agent role, can output a complete memory architecture |
-| Small Enough | Yes | Only covers 2/9 dimensions (memory + knowledge) |
-| Clear Boundary | Yes | Does not touch persona / skills / security / workflow |
-| Replaceable | Yes | Removal does not affect other metas |
-| Reusable | Yes | Needed every time an agent is created / memory audit is performed |
+Canonical reference: `canonical/skills/meta-theory/SKILL.md` defines the 5 meta-theory criteria.
+
+| Criterion | Verification Method | Cross-reference |
+|-----------|--------------------|-----------------|
+| Independent | Does this agent produce output without requiring other meta agents' outputs as input? | Own/Do Not Touch boundary |
+| Small Enough | Does the agent cover exactly one responsibility class? | Boundary section |
+| Clear Boundary | Do Own and Do Not Touch lists reference specific other agents? | Decision Rules |
+| Replaceable | Can other agents continue operating if this agent is absent? | Collaboration diagram |
+| Reusable | Is the agent triggered by a recurring condition? | Trigger definition |

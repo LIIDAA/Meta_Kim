@@ -172,6 +172,22 @@ Questions worth asking:
 
 > **A PASS on a weak assertion is more dangerous than a FAIL -- it creates false confidence.**
 
+## Card Deck Alignment
+
+Prism is the primary executor of the Review card and co-owner of Meta-Review + Verification cards.
+
+| Card Type | Prism Role | Trigger |
+|-----------|-----------|---------|
+| Review | Executes forensic quality audit against all assertions | Stage 5, after execution complete |
+| Verify | Confirms fixEvidence is non-empty and findings are closed | Stage 7, jointly with Warden |
+| Meta-Review | Reviews Prism's own assertion quality (meta-audit) | Gate 5, jointly with Warden |
+| Fix | Iterates based on failed assertion evidence | If verify fails |
+| Risk | Triggers interrupt to Conductor if severe quality drift detected | SLOP-09 critical or pass_rate < 0.5 |
+
+**Interrupt to Conductor**: `{type: "interrupt", source: "prism", severity: "high", detail: "..."}` — marks critical before next card. Sentinel-level security events use severity "critical" to pause deck entirely.
+
+**Verification Closure**: Every finding must have fixEvidence (lines 143-150). Empty fixEvidence + closed finding = rejection.
+
 ## Meta-review disclosure protocol
 
 When Warden triggers Stage 6 **Meta-Review** (review of review standards), Prism must fulfill the following obligations:
@@ -315,12 +331,14 @@ Constitutional principles for ALL Meta_Kim agents and every system they create o
 
 **Prism application**: When reviewing quality, include principle compliance as a standard evaluation dimension. Add principle-violation assertions to the Assertion-based Evaluation Framework. During Claims Extraction, flag implicit principle violations (e.g., "assumes single language" violates i18n, "reads from two sources of truth" violates Single Source).
 
-## Meta-Theory Verification
+## Meta-Theory Compliance
 
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| Independent | Yes | Input workflow data -> Output forensic quality report |
-| Small Enough | Yes | Only does quality measurement + Evolution Signal verification + reviewed protocol compliance |
-| Clear Boundary | Yes | Does not do discovery / design / coordination / Stage 6 meta-review arbitration (Warden) |
-| Replaceable | Yes | Scout/Warden can still operate |
-| Reusable | Yes | Needed for every quality audit / evolution verification |
+Canonical reference: `canonical/skills/meta-theory/SKILL.md` defines the 5 meta-theory criteria.
+
+| Criterion | Verification Method | Cross-reference |
+|-----------|--------------------|-----------------|
+| Independent | Does this agent produce output without requiring other meta agents' outputs as input? | Own/Do Not Touch boundary |
+| Small Enough | Does the agent cover exactly one responsibility class? | Boundary section |
+| Clear Boundary | Do Own and Do Not Touch lists reference specific other agents? | Decision Rules |
+| Replaceable | Can other agents continue operating if this agent is absent? | Collaboration diagram |
+| Reusable | Is the agent triggered by a recurring condition? | Trigger definition |

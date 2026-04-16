@@ -538,12 +538,9 @@
       "noneRequiresReason": true,
       "writebackRequiresTargets": true
     },
-    "evolutionWritebackTargets": [
-      "canonical/agents/",
-      "canonical/skills/",
-      "contracts/workflow-contract.json",
-      "memory/scars/",
-      "memory/capability-gaps.md"
+"evolutionWritebackTargets": [
+      "canonical/agents/{agent}.md",
+      "canonical/skills/"
     ],
     "publicDisplayRequires": [
       "verifyPassed",

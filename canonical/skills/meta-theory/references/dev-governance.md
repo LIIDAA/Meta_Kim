@@ -770,6 +770,8 @@ Thinking must translate the plan into a **`cardDeck`** — the canonical Stage 3
 
 **⚠️ Core Rule: meta-theory does NOT write code directly.**
 
+**Orchestration**: Conductor's task board drives execution. Sub-tasks are mapped to execution agent capabilities discovered via Fetch-first pattern (capability index), not hardcoded by name. Conductor orchestrates; execution agents execute — meta-agents do NOT self-execute business logic.
+
 ### Step 1: Invoke selected agents from Stage 2
 
 For each sub-task from Stage 3, invoke the matched agent:
@@ -1120,12 +1122,12 @@ Evolution outputs must be persisted to specific locations — not left floating 
 
 | Artifact Type | Storage Location | Lifecycle |
 |--------------|-----------------|-----------|
-| **Reusable Patterns** | `memory/patterns/{pattern-name}.md` | Permanent; reviewed quarterly by Librarian |
-| **Scars** | `memory/scars/{scar-id}.yaml` | Permanent; prevention rules feed back into Critical stage checklists |
+| **Agent Boundary / CT / DR Adjustments** | `canonical/agents/{agent}.md` (direct edit) | Immediate; primary evolution target — triggers `npm run sync:runtimes` |
 | **New Skills** (extracted) | `.claude/skills/{skill-name}/SKILL.md` | Permanent; created via skill-creator, validated via Type D Review |
-| **Agent Boundary Adjustments** | `.claude/agents/{agent}.md` (direct edit) | Immediate; triggers `npm run sync:runtimes` |
 | **Rhythm Optimizations** | Recorded in `config/contracts/workflow-contract.json` or Conductor's card-deck defaults | Immediate; affects next run's dispatch board |
-| **Capability Gap Records** | `memory/capability-gaps.md` | Until resolved; Scout monitors and closes when filled |
+| **Capability Gap Records** | `canonical/capability-gaps.md` | Until resolved; Scout monitors and closes when filled |
+
+**Evolution Rule — Direct Over Indirect**: The agent definition IS the memory. When a gap is discovered, edit the specific agent's SOUL.md directly. Do NOT route through a middle abstraction layer. memory/ is Claude Code's session memory — not Meta_Kim's evolution mechanism.
 
 **Storage Rule**: If an evolution artifact has no defined storage location, it does not count as "captured". The 5+1 model's amplification actions are only complete when the artifact is written to disk and indexed.
 

@@ -127,6 +127,20 @@ Warden treats governance as a **hidden gate-state machine** layered on top of Co
 
 **Rule**: this skeleton is **not** a second front-end. It exists so Warden can enforce public-display discipline, verification closure, and risk carry-forward without improvising criteria from memory.
 
+## Gate-State to Card-Deck Mapping
+
+Maps Warden's internal gateState to Conductor's 10-card event deck for synchronized reporting.
+
+| gateState | Maps to Card Type | Priority | Owner |
+|-----------|-------------------|----------|-------|
+| planning-open | Critical | 10 | Conductor |
+| planning-passed | (silence / proceed) | -- | Conductor |
+| review-open | Review | 6 | Prism |
+| meta-review-open | Meta-Review | 6 | Warden |
+| verification-open | Verification | 5 | Warden |
+| verification-closed | (silence / proceed) | -- | Warden |
+| synthesis-ready | Evolution | low | Warden |
+
 ### Gate Principles
 
 1. **No execution without Conductor clearance**
@@ -269,6 +283,22 @@ Rule: another operator must be able to read these deliverables and understand wh
 | Replaceability | Swap product name with competitor's | Still holds = no depth |
 | Parallel Stacking | 5+ recommendations each <2 sentences | Detected = shallow |
 
+## Card Deck Alignment
+
+Warden is the **card recipient**, not the card dealer. Conductor designs the deck; Warden receives and acts on specific cards at governance gates.
+
+| Card Type | Owned / Received | Action |
+|-----------|-----------------|--------|
+| Review | **Received** | Trigger Meta-Review protocol after Conductor's execution phase |
+| Meta-Review | **Owner** | Execute Meta-Review protocol; gate synthesis before public output |
+| Verification | **Co-owner** (with execution agent) | Confirm fixes closed all findings before synthesis |
+| Fix | **Received** | Dispatch revision task back to Conductor for re-execution |
+| Risk | **Received** | Trigger escalation assessment; may interrupt current run |
+
+**Skip condition**: If the dispatch is a pure query (no modification, no execution), Warden may skip Meta-Review and directly synthesize the response.
+
+**Interrupt trigger**: If a governance violation is detected during execution (skip-level, self-execution, or circular evidence), Warden immediately interrupts and issues a corrective dispatch.
+
 ## Dependency Skill Invocations
 
 | Dependency | Invocation Timing | Specific Usage |
@@ -361,12 +391,14 @@ Constitutional principles for ALL Meta_Kim agents and every system they create o
 
 **Warden application**: When coordinating and arbitrating across agents, verify that every deliverable complies with these principles. During Quality Gate, add principle compliance as a mandatory check dimension. When synthesizing CEO reports, flag principle violations as governance findings.
 
-## Meta-Theory Verification
+## Meta-Theory Compliance
 
-| Criterion | Pass | Evidence |
-|-----------|------|----------|
-| Independent | ✅ | Input from source team data → Output synthesized quality report + Meta-Review judgment |
-| Small Enough | ✅ | Only does coordination + synthesis + standards + Meta-Review + shell adaptation, no specific analysis |
-| Clear Boundaries | ✅ | Does not touch the 7 specialist meta agents' specific work |
-| Replaceable | ✅ | Workers can still produce independently |
-| Reusable | ✅ | Needed every meta workflow cycle |
+Canonical reference: `canonical/skills/meta-theory/SKILL.md` defines the 5 meta-theory criteria.
+
+| Criterion | Verification Method | Cross-reference |
+|-----------|--------------------|-----------------|
+| Independent | Does this agent produce output without requiring other meta agents' outputs as input? | Own/Do Not Touch boundary |
+| Small Enough | Does the agent cover exactly one responsibility class? | Boundary section |
+| Clear Boundary | Do Own and Do Not Touch lists reference specific other agents? | Decision Rules |
+| Replaceable | Can other agents continue operating if this agent is absent? | Collaboration diagram |
+| Reusable | Is the agent triggered by a recurring condition? | Trigger definition |

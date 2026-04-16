@@ -261,12 +261,14 @@ describe("Part C: evolution writeback packet", async () => {
 
   test("writeback targets are defined", () => {
     const targets = contract.runDiscipline?.evolutionWritebackTargets ?? [];
-    assert.ok(targets.length >= 5);
+    assert.ok(targets.length >= 2);
     assert.ok(targets.some((t) => t.includes("canonical/agents/")));
     assert.ok(targets.some((t) => t.includes("canonical/skills/")));
-    assert.ok(targets.some((t) => t.includes("workflow-contract")));
-    assert.ok(targets.some((t) => t.includes("memory/scars/")));
-    assert.ok(targets.some((t) => t.includes("memory/capability-gaps")));
+    // Evolution writes back to agent definitions directly, NOT memory/
+    assert.ok(
+      !targets.some((t) => t.includes("memory/")),
+      "must NOT target memory/ (Claude Code session memory, not Meta_Kim evolution)",
+    );
   });
 
   test("evolutionDecision.requiresReasonWhen=none is enforced", () => {
