@@ -125,6 +125,19 @@ export function shouldSkipBundledRuntimePath(relPath) {
   );
 }
 
+/**
+ * Monorepos such as CLI-Anything place a markdown-only SKILL.md under each pip package:
+ * `{tool}/agent-harness/.../{tool}/skills/SKILL.md`. That file documents the CLI for agents
+ * that read the installed package; it is not a Claude Code skill root and often omits YAML
+ * frontmatter. Skipping quarantine preserves upstream layout without renaming to SKILL.invalid.md.
+ *
+ * Still subject to hook-path auto-fix when frontmatter is valid (rare for these files).
+ */
+export function shouldSkipHarnessPackageSkillDoc(relPath) {
+  const n = relPath.replace(/\\/g, "/");
+  return /\/agent-harness\/.+\/skills\/SKILL\.md$/i.test(n);
+}
+
 export async function listSkillFiles(rootDir) {
   const results = [];
 
@@ -207,6 +220,9 @@ export async function sanitizeInstalledSkillTree(
   const hookPathFixes = [];
 
   for (const filePath of files) {
+    const relToTarget = path.relative(targetDir, filePath).replace(/\\/g, "/");
+    const skipHarnessInvalidOnly = shouldSkipHarnessPackageSkillDoc(relToTarget);
+
     const raw = await fs.readFile(filePath, "utf8");
     const validation = validateSkillFrontmatter(raw);
     if (validation.ok) {
@@ -221,6 +237,10 @@ export async function sanitizeInstalledSkillTree(
           await fs.writeFile(filePath, patched, "utf8");
         }
       }
+      continue;
+    }
+
+    if (skipHarnessInvalidOnly) {
       continue;
     }
 

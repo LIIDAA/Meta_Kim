@@ -8,6 +8,7 @@ import {
   detectLegacySubdirInstall,
   sanitizeInstalledSkillTree,
   shouldSkipBundledRuntimePath,
+  shouldSkipHarnessPackageSkillDoc,
   validateSkillFrontmatter,
 } from "../../scripts/install-skill-sanitizer.mjs";
 
@@ -124,6 +125,28 @@ describe("bundled runtime path skip", () => {
   });
 });
 
+describe("harness package skill doc skip (CLI-Anything-style monorepos)", () => {
+  test("matches .../agent-harness/.../skills/SKILL.md only", () => {
+    assert.equal(
+      shouldSkipHarnessPackageSkillDoc(
+        "exa/agent-harness/cli_anything/exa/skills/SKILL.md",
+      ),
+      true,
+    );
+    assert.equal(
+      shouldSkipHarnessPackageSkillDoc(
+        "Exa/Agent-Harness/cli_anything/exa/skills/skill.md",
+      ),
+      true,
+    );
+    assert.equal(shouldSkipHarnessPackageSkillDoc("exa/skills/SKILL.md"), false);
+    assert.equal(
+      shouldSkipHarnessPackageSkillDoc("agent-harness/readme/SKILL.md"),
+      false,
+    );
+  });
+});
+
 describe("skill tree sanitization", () => {
   test("does not quarantine SKILL.md under bundled openclaw/ trees (e.g. gstack)", async () => {
     const root = await makeTempDir();
@@ -208,6 +231,40 @@ description: "Valid skill: DNS automation"
         .then(() => true)
         .catch(() => false),
       true,
+    );
+  });
+
+  test("does not quarantine markdown-only SKILL.md under agent-harness package paths", async () => {
+    const root = await makeTempDir();
+    const managed = path.join(root, "cli-anything");
+    const pkgSkill = path.join(
+      managed,
+      "exa",
+      "agent-harness",
+      "cli_anything",
+      "exa",
+      "skills",
+    );
+    await fs.mkdir(pkgSkill, { recursive: true });
+    await fs.writeFile(
+      path.join(pkgSkill, "SKILL.md"),
+      "# Exa CLI Skill\n\nNo YAML frontmatter.\n",
+      "utf8",
+    );
+
+    const result = await sanitizeInstalledSkillTree(managed);
+    assert.equal(result.scanned, 1);
+    assert.equal(result.quarantined, 0);
+    assert.equal(
+      await fs.readFile(path.join(pkgSkill, "SKILL.md"), "utf8"),
+      "# Exa CLI Skill\n\nNo YAML frontmatter.\n",
+    );
+    assert.equal(
+      await fs
+        .access(path.join(pkgSkill, "SKILL.invalid.md"))
+        .then(() => true)
+        .catch(() => false),
+      false,
     );
   });
 
