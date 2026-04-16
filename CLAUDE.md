@@ -40,22 +40,25 @@ A valid meta unit must:
 
 ## Claude Code’s Role In The Project
 
-Claude Code is a first-class projection with repo-local runtime assets:
+Claude Code is a first-class projection. Separate **what sync generates** from **what you edit long-term**:
+
+**Generated / runtime wiring (from `canonical/` + `canonical/runtime-assets/claude/` via `npm run sync:runtimes`):**
 
 - `.claude/agents/*.md`
-- `.claude/skills/meta-theory/SKILL.md`
-- `config/contracts/workflow-contract.json`
+- `.claude/skills/meta-theory/` (portable `meta-theory` + `references/`)
+- `.claude/hooks/*.mjs`
 - `.claude/settings.json`
 - `.mcp.json`
+- `.claude/capability-index/` (`npm run discover:global` writes `meta-kim-capabilities.json` and `global-capabilities.json` here)
 
-The neutral canonical sources live in:
+**Canonical sources you edit for behavior and contracts:**
 
 - `canonical/agents/*.md`
-- `canonical/skills/meta-theory/SKILL.md`
-- `canonical/skills/meta-theory/references/*.md`
+- `canonical/skills/meta-theory/SKILL.md` and `canonical/skills/meta-theory/references/*.md`
 - `canonical/runtime-assets/claude/*`
+- `config/contracts/workflow-contract.json` (run discipline and gates; not overwritten by agent/skill sync)
 
-The Claude files above are generated runtime assets. Other runtime assets are derived alongside them.
+Cursor, Codex, and OpenClaw get their own projections from the same neutral layer; see `config/sync.json` → `generatedTargets`.
 
 ## Capability-First Rule
 
@@ -247,12 +250,13 @@ Files that should usually remain derived or runtime-specific:
 - `.cursor/skills/meta-theory/`
 - `.cursor/mcp.json`
 
-`npm run sync:runtimes` writes the **same** portable `meta-theory` skill (main file + `references/`) into `.claude/`, `openclaw/skills/`, `.codex/skills/`, and `.agents/skills/meta-theory/`. If those trees disagree, re-run sync from `canonical/skills/meta-theory/` — do not hand-edit projections as a second source of truth.
+`npm run sync:runtimes` writes the **same** portable `meta-theory` skill (main file + `references/`) into `.claude/skills/meta-theory/`, `openclaw/skills/`, `.codex/skills/` (and related Codex paths), `.agents/skills/meta-theory/`, and **`.cursor/skills/meta-theory/`**. It also refreshes agents, hooks, settings, and MCP templates per target (including **`.cursor/agents/`** and **`.cursor/mcp.json`**). Default targets are `config/sync.json` → `supportedTargets`; machine overrides live in `.meta-kim/local.overrides.json` → `activeTargets`. If trees disagree, re-run sync from `canonical/` — do not hand-edit projections as a second source of truth.
 
 ### meta-theory reference language
 
 - **`SKILL.md` / `meta-theory.md` and all `references/*.md`**: English, model-facing (kept in sync across runtimes via `sync:runtimes`).
 - **`docs/meta.md`**: optional long-form narrative; may include Chinese historical sections. Not mirrored into the portable skill; cite it when depth matters.
+- **Evolution writeback:** when persistence is configured, gaps and patterns may be recorded under `memory/` per canonical `meta-theory` `SKILL.md`.
 
 ## Code Knowledge Graph Support (graphify)
 
@@ -295,13 +299,21 @@ npm run graphify:check
 - Total nodes < 10 → graph too sparse, fall back to Glob/Grep
 - God nodes (high in-degree) → flagged as serial bottlenecks for Conductor
 
+### Working inside this repository (graphify)
+
+This repo keeps a graph under `graphify-out/`. Before deep architecture questions, read `graphify-out/GRAPH_REPORT.md` (and prefer `graphify-out/wiki/index.md` when present). After you change code here, refresh the graph with:
+
+```bash
+python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
+```
+
 ## Required Maintenance Loop
 
 After changing canonical prompts, skills, hooks, or runtime-facing contracts:
 
 1. run `npm run sync:runtimes`
 2. run `npm run discover:global`
-3. run `npm run validate`
+3. run `npm run validate` (or `npm run check`, which runs `check:runtimes` then `validate`)
 4. run `npm run validate:run -- <artifact.json>` when you want to verify a recorded governed run
 5. run `npm run index:runs -- <artifact-dir-or-file>` when validated governed runs should become queryable from the local run index
 6. use `npm run query:runs -- --owner <agent>` when continuity should consult the local run index before memory/files
@@ -311,11 +323,16 @@ After changing canonical prompts, skills, hooks, or runtime-facing contracts:
 10. run `npm run eval:agents:live` only when you explicitly need slower prompt-backed runtime acceptance
 11. run `npm run verify:all` before release or after larger changes
 12. run `npm run verify:all:live` only before runtime-sensitive releases that need the live acceptance layer
-13. check `docs/runtime-capability-matrix.md` when changing behavior that must stay parity-aligned across Claude / Codex / OpenClaw
+13. check `docs/runtime-capability-matrix.md` when changing behavior that must stay parity-aligned across Claude / Codex / OpenClaw / Cursor
+
+`npm run verify:all` runs, in order: `check` (runtime mirror + project validate), `check:global:meta-theory`, `eval:agents --require-all-runtimes`, `test:setup`, and `test:meta-theory`.
 
 Useful supporting commands:
 
+- `npm run check` — `check:runtimes` + `validate`
 - `npm run check:runtimes`
+- `npm run check:global:meta-theory` — verify user-level Claude merge targets for `sync:global:meta-theory`
+- `npm run show:global:meta-theory-targets` — print where global sync will write
 - `npm run doctor:governance`
 - `npm run index:runs -- <artifact-dir-or-file>`
 - `npm run query:runs -- --owner <agent>`
@@ -323,12 +340,17 @@ Useful supporting commands:
 - `npm run migrate:meta-kim -- <source-dir> --apply`
 - `npm run probe:clis`
 - `npm run test:mcp`
+- `npm run graphify:install` / `npm run graphify:update` — helper wrappers around graphify setup
 - `node scripts/agent-health-report.mjs`
-- `npm run deps:install` or `npm run deps:install:all-runtimes` — install the nine third-party skill repos into global runtime skill dirs (all-runtimes also targets Codex/OpenClaw; see README)
+- `npm run deps:install` or `npm run deps:install:all-runtimes` — install third-party skill repos into global runtime skill dirs (`all-runtimes` includes Codex/OpenClaw/Cursor where applicable; see README)
+- `npm run deps:update` / `npm run deps:update:all-runtimes` — same with `--update`
 - `npm run deps:install:claude-plugins` — optional Claude Code marketplace plugins (e.g. full Superpowers bundle)
 - `npm run sync:global:meta-theory` — sync portable `meta-theory` + merge Meta_Kim hooks into user-level Claude settings
+- `npm run prompt:next-iteration` — maintainer helper for structured next-step prompts after a governed run
 
-`eval:agents` is now the lightweight runtime smoke layer: it checks CLI availability, runtime wiring, hooks, and registry/config scaffolding without opening live prompt sessions. Use the `:live` variants only when you actually need real Claude / Codex / OpenClaw prompt-backed acceptance.
+`eval:agents` is the lightweight runtime smoke layer: it checks CLI availability, runtime wiring, hooks, and registry/config scaffolding without opening live prompt sessions. Use the `:live` variants only when you actually need real Claude / Codex / OpenClaw prompt-backed acceptance.
+
+**Tooling:** Node `>=22.13.0` (see `package.json` `engines`). CLI entry: `npx --yes github:KimYx0207/Meta_Kim meta-kim` / `bin/meta-kim.mjs`.
 
 ## Reading Notes
 
@@ -336,19 +358,10 @@ For human readers:
 
 - start with `README.md` or `README.zh-CN.md`
 - read this file to understand Claude Code’s role
-- read `AGENTS.md` if you also care about Codex
+- read `AGENTS.md` if you also care about Codex (and Cursor-oriented mirrors)
 - use the repository tree section in `README.md` for the directory map
 - read `.claude/skills/meta-theory/references/` only when you want the long-form theory
 
 ## One-Line Summary
 
 Claude Code is not a separate product logic here. It is one runtime projection of the Meta_Kim governance system.
-
-## graphify
-
-This project has a graphify knowledge graph at graphify-out/.
-
-Rules:
-- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
-- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- After modifying code files in this session, run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` to keep the graph current
