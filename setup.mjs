@@ -78,8 +78,7 @@ const promptInstallScope =
   args.includes("--prompt-install-scope") ||
   process.env.META_KIM_PROMPT_INSTALL_SCOPE === "1";
 const promptProxy =
-  args.includes("--prompt-proxy") ||
-  process.env.META_KIM_PROMPT_PROXY === "1";
+  args.includes("--prompt-proxy") || process.env.META_KIM_PROMPT_PROXY === "1";
 
 /** Maps `node setup.mjs --lang zh` etc. to canonical language codes (defined before --lang handling). */
 const LANG_ARG_ALIASES = { zh: "zh-CN", ja: "ja-JP", ko: "ko-KR" };
@@ -403,7 +402,8 @@ const I18N = {
     updateHeading: "Update Mode",
     updateNpm: "Reinstalling npm dependencies...",
     updateSkills: "Updating all skills...",
-    updateSyncProjectFiles: "Syncing tool configs in this repo from canonical/...",
+    updateSyncProjectFiles:
+      "Syncing tool configs in this repo from canonical/...",
     updateSyncDone: "Sync complete",
     updateSyncProjectSkipped: "Project sync skipped (global update mode)",
     updateSyncSkip: "Sync skipped or failed",
@@ -622,7 +622,8 @@ const I18N = {
     installScopeHeading: "安装范围",
     installScopePrompt: "本仓库、用户目录技能、还是两者都要？",
     installScopeProject: "仅本仓库 — .claude / .codex / openclaw / .cursor",
-    installScopeGlobal: "仅用户目录 — 所选工具各自的 ~/.*/skills（非仅 Claude）",
+    installScopeGlobal:
+      "仅用户目录 — 所选工具各自的 ~/.*/skills（非仅 Claude）",
     installScopeBoth: "两者（推荐）— 先本仓库，再用户目录",
     installScopeProjectLabel: "仅本仓库",
     installScopeGlobalLabel: "仅用户目录",
@@ -929,7 +930,8 @@ const I18N = {
     installScopeProjectLabel: "リポのみ",
     installScopeGlobalLabel: "ホームのみ",
     installScopeBothLabel: "両方（推奨）",
-    installScopeProjectDesc: "このリポのツール設定のみ同期。ホーム skills は触らない。",
+    installScopeProjectDesc:
+      "このリポのツール設定のみ同期。ホーム skills は触らない。",
     installScopeGlobalDesc:
       "次に選ぶツール向けに skills + meta-theory。リポは更新しない。",
     installScopeBothDesc: "リポのあとホーム。",
@@ -1009,8 +1011,7 @@ const I18N = {
     updateHeading: "アップデートモード",
     updateNpm: "npm依存関係を再インストール中...",
     updateSkills: "すべてのスキルを更新中...",
-    updateSyncProjectFiles:
-      "canonical/ からリポ内のツール設定を同期中...",
+    updateSyncProjectFiles: "canonical/ からリポ内のツール設定を同期中...",
     updateSyncDone: "同期が完了しました",
     updateSyncProjectSkipped:
       "プロジェクト同期をスキップ（グローバル更新モード）",
@@ -1070,8 +1071,7 @@ const I18N = {
     labelOptional: "（オプション）",
     selectedScope: (name) => `選択済み：${name}`,
     npmVerOk: (v) => `npm v${v}`,
-    activeRuntimesSavedCli: (list) =>
-      `--targets から対象ツールを保存：${list}`,
+    activeRuntimesSavedCli: (list) => `--targets から対象ツールを保存：${list}`,
     savedActiveTargets: (list) => `対象ツールを保存：${list}`,
     okRepoSynced: "canonical/ からリポジトリプロジェクションを同期",
     failRepoSync:
@@ -2525,7 +2525,15 @@ function checkPython310() {
   return detectPython310();
 }
 
-async function installPythonTools() {
+// graphify platform name → graphify install command
+const GRAPHIFY_PLATFORM_MAP = {
+  claude: "claude",
+  codex: "codex",
+  openclaw: "claw",
+  cursor: "cursor",
+};
+
+async function installPythonTools(activeTargets) {
   heading(t.stepPythonTools);
   const python = checkPython310();
   if (!python) {
@@ -2563,22 +2571,8 @@ async function installPythonTools() {
   // Ensure networkx >= 3.4 for louvain_communities(max_level) compatibility
   ensureNetworkxCompatibility(python);
 
-  // Idempotent wiring: always (re)register Claude skill + repo git hooks when graphify is present.
-  // Earlier setup skipped these when graphify was already pip-installed, leaving graphify-out stale.
-  info(t.graphifySkillRegistering);
-  const skillResult = runPythonModule(
-    python,
-    ["-m", "graphify", "claude", "install"],
-    undefined,
-    { stdio: "pipe" },
-  );
-  if (skillResult.status === 0) {
-    ok(t.graphifySkillRegistered);
-  } else {
-    warn(t.graphifySkillFailed);
-  }
-
-  info(t.graphifyHookInstalling);
+  // Idempotent wiring: register graphify skill for each active target + git hooks once.
+  // git hooks are cross-platform (commit/checkout trigger), install once.
   const hookResult = runPythonModule(
     python,
     ["-m", "graphify", "hook", "install"],
@@ -2589,6 +2583,24 @@ async function installPythonTools() {
     ok(t.graphifyHookInstalled);
   } else {
     warn(t.graphifyHookFailed);
+  }
+
+  // Register graphify skill for each active platform
+  for (const target of activeTargets) {
+    const platform = GRAPHIFY_PLATFORM_MAP[target];
+    if (!platform) continue;
+    info(t.graphifySkillRegistering);
+    const skillResult = runPythonModule(
+      python,
+      ["-m", "graphify", platform, "install"],
+      undefined,
+      { stdio: "pipe" },
+    );
+    if (skillResult.status === 0) {
+      ok(t.graphifySkillRegistered);
+    } else {
+      warn(t.graphifySkillFailed);
+    }
   }
 }
 
@@ -3195,7 +3207,7 @@ async function runInstall() {
     async () => {
       const wantPython = await askYesNo(t.askPythonToolsUpdate, true);
       if (wantPython) {
-        await installPythonTools();
+        await installPythonTools(activeTargets);
       } else {
         skip(`${C.dim}${t.pythonToolsSkipped}${C.reset}`);
       }
@@ -3253,7 +3265,7 @@ async function runUpdate() {
   console.log("");
   const wantPython = await askYesNo(t.askPythonToolsUpdate, true);
   if (wantPython) {
-    await installPythonTools();
+    await installPythonTools(activeTargets);
   } else {
     skip(`${C.dim}${t.pythonToolsSkipped}${C.reset}`);
   }
