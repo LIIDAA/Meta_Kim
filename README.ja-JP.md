@@ -701,10 +701,25 @@ flowchart TB
 
 | コマンド | 役割 |
 | --- | --- |
-| `npm run deps:install` | 9 個のコミュニティ skill を全体へインストール |
-| `npm run deps:install:all-runtimes` | すべての runtime にインストール |
+| `npm run meta:deps:install` | 9 個のコミュニティ skill を全体へインストール |
+| `npm run meta:deps:install:all-runtimes` | すべての runtime にインストール |
+| `npm run meta:deps:install:claude-plugins` | Claude Code marketplace plugin のみインストール |
 | `npm run discover:global` | グローバル能力をスキャン |
 | `npm run sync:global:meta-theory` | meta-theory をユーザー級へ同期 |
+
+#### Plugin marketplace 系 skill（Superpowers、Everything Claude Code、cli-anything）
+
+ネイティブの plugin marketplace を持つのは Claude Code のみ。**Codex / OpenClaw / Cursor** 向けには、インストーラが upstream bundle から runtime 固有のサブツリーを sparse-checkout で抽出する：
+
+| Runtime | 優先チェーン |
+| --- | --- |
+| Claude Code | ネイティブ `claude plugin install <spec>@<marketplace>`（`claudePlugin` 未設定の skill は `skills/` にフォールバック） |
+| Codex | `.codex/` → `.codex-plugin/` → `skills/` |
+| Cursor | `.cursor/` → `.cursor-plugin/` → `skills/` |
+| OpenClaw | `skills/` |
+| opencode | `.opencode/` → `skills/` |
+
+抽出結果は `~/.<runtime>/skills/<id>/` に配置される。Claude marketplace plugin のみをインストールするには `npm run meta:deps:install:claude-plugins`、全 runtime を一括カバーするには `npm run meta:deps:install:all-runtimes`。**アップグレード時に手動クリーンアップは不要**：旧版の full-repo clone 残留はターゲットディレクトリ直下の `.claude-plugin/` マーカーで自動検出され、次回実行時に再抽出される。
 
 ### 上級運用
 

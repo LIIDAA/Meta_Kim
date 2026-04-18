@@ -321,6 +321,7 @@ function loadSkillsManifest() {
         ...(skill.claudePlugin ? { claudePlugin: skill.claudePlugin } : {}),
         ...(skill.installRoot ? { installRoot: skill.installRoot } : {}),
         ...(skill.pluginHookCompat ? { pluginHookCompat: true } : {}),
+        ...(skill.installMethod ? { installMethod: skill.installMethod } : {}),
       });
     }
 
@@ -1473,6 +1474,8 @@ async function installAllSkillsForRuntime(label, runtimeHome, runtimeId) {
   };
 
   for (const spec of SKILL_REPOS) {
+    if (spec.claudePlugin || spec.installMethod === "pluginMarketplace")
+      continue; // plugin bundles handled by installPluginBundlesForNonClaudeRuntimes
     if (spec.targets && !spec.targets.includes(runtimeId)) {
       continue;
     }
@@ -1503,6 +1506,146 @@ async function installAllSkillsForRuntime(label, runtimeHome, runtimeId) {
     console.log(
       `\n${C.green}✓${C.reset} ${C.dim}${t.allUpToDate(label)}${C.reset}`,
     );
+  }
+}
+
+// ── Plugin bundles for non-Claude runtimes ────────────────────────────────
+// Upstream pluginMarketplace packages (e.g. obra/superpowers,
+// affaan-m/everything-claude-code) ship runtime-specific subtrees such as
+// `.codex/`, `.cursor-plugin/`, `.opencode/`. For non-Claude runtimes we
+// sparse-checkout the preferred subdir into `~/.<runtime>/skills/<id>/`.
+// Claude runtime is still handled by installClaudePlugins() via the native
+// `claude plugin install ...` marketplace path.
+const PLUGIN_BUNDLE_SUBDIR_PREF = {
+  claude: ["skills"],
+  codex: [".codex", ".codex-plugin", "skills"],
+  cursor: [".cursor", ".cursor-plugin", "skills"],
+  opencode: [".opencode", "skills"],
+  openclaw: ["skills"],
+};
+
+async function installPluginBundlesForNonClaudeRuntimes(
+  runtimeHomes,
+  activeTargets,
+) {
+  if (skipPlugins) return;
+  const pluginBundleSpecs = SKILL_REPOS.filter(
+    (s) => s.claudePlugin || s.installMethod === "pluginMarketplace",
+  );
+  if (pluginBundleSpecs.length === 0) return;
+
+  const NON_CLAUDE = ["codex", "cursor", "opencode", "openclaw"];
+  // Extend with "claude" ONLY for specs lacking claudePlugin — those cannot be
+  // installed via `claude plugin install` and need the sparse-checkout fallback
+  // even on Claude runtime (e.g. cli-anything).
+  const allowsClaudeFallback = pluginBundleSpecs.some((s) => !s.claudePlugin);
+  const eligibleRuntimes = (
+    allowsClaudeFallback ? ["claude", ...NON_CLAUDE] : NON_CLAUDE
+  ).filter((r) => activeTargets?.includes(r) && runtimeHomes[r]);
+  if (eligibleRuntimes.length === 0) return;
+
+  let hasOutput = false;
+  const emitHeader = () => {
+    if (hasOutput) return;
+    hasOutput = true;
+    console.log(
+      `\n${C.bold}${AMBER}Plugin bundles (sparse-checkout fallback)${C.reset}`,
+    );
+  };
+
+  for (const spec of pluginBundleSpecs) {
+    const specTargets = spec.targets || [];
+    for (const runtimeId of eligibleRuntimes) {
+      if (!specTargets.includes(runtimeId)) continue;
+      // Claude runtime with a native claudePlugin spec: already handled by
+      // installClaudePlugins() via `claude plugin install`. Skip here to
+      // avoid double install. Claude runtime WITHOUT claudePlugin (e.g.
+      // cli-anything) still needs the sparse-checkout fallback.
+      if (runtimeId === "claude" && spec.claudePlugin) continue;
+      const runtimeHome = runtimeHomes[runtimeId];
+      const targetDir = path.join(runtimeHome, "skills", spec.id);
+
+      // Stale bundle residue detection: previous full-repo clones of plugin
+      // bundles (obra/superpowers etc.) dump .claude-plugin/ at targetDir root,
+      // which non-Claude runtimes cannot consume. Treat such dirs as stale
+      // and re-extract the runtime-specific subtree.
+      const staleResidue =
+        !updateMode &&
+        (await pathExists(path.join(targetDir, ".claude-plugin")));
+
+      if (
+        !updateMode &&
+        !staleResidue &&
+        (await pathExists(targetDir)) &&
+        !(await isEmptyDir(targetDir))
+      ) {
+        continue;
+      }
+
+      if (staleResidue) {
+        console.log(
+          `${C.cyan}↻${C.reset} ${C.dim}${spec.id}: migrating legacy bundle residue at ${targetDir}${C.reset}`,
+        );
+      }
+
+      emitHeader();
+      const preferredSubdirs = PLUGIN_BUNDLE_SUBDIR_PREF[runtimeId] || [
+        "skills",
+      ];
+      const triedSubdirs = [];
+      let ok = false;
+
+      for (const subdir of preferredSubdirs) {
+        triedSubdirs.push(subdir);
+        if (dryRun) {
+          console.log(
+            t.dryRun(
+              `git sparse-checkout ${spec.repo}:${subdir} -> ${targetDir}`,
+            ),
+          );
+          ok = true;
+          break;
+        }
+        const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "meta-kim-pb-"));
+        try {
+          await runGitAsync(
+            [
+              "clone",
+              "--depth",
+              "1",
+              "--filter=blob:none",
+              "--sparse",
+              spec.repo,
+              tmp,
+            ],
+            { skillLabel: `${spec.id} (${runtimeId})` },
+          );
+          await runGitAsync(["sparse-checkout", "set", subdir], { cwd: tmp });
+          const src = path.join(tmp, ...subdir.split("/").filter(Boolean));
+          if ((await pathExists(src)) && !(await isEmptyDir(src))) {
+            await fs.rm(targetDir, { recursive: true, force: true });
+            await fs.mkdir(path.dirname(targetDir), { recursive: true });
+            await fs.cp(src, targetDir, { recursive: true, force: true });
+            console.log(
+              `${C.green}✓${C.reset} ${spec.id} → ${targetDir} ${C.dim}(from ${subdir})${C.reset}`,
+            );
+            ok = true;
+            break;
+          }
+          // subdir absent in this repo — try the next preference
+        } catch {
+          // git error for this subdir — try the next preference
+        } finally {
+          await fs.rm(tmp, { recursive: true, force: true });
+        }
+      }
+
+      if (!ok) {
+        console.warn(
+          `${C.yellow}⚠${C.reset} ${spec.id}: no suitable subdir for ${runtimeId} (tried: ${triedSubdirs.join(", ")})`,
+        );
+      }
+    }
   }
 }
 
@@ -2192,6 +2335,8 @@ async function installSkillsToMultipleRuntimes(
     // functions can skip cloning and Phase 2 can copy from that location.
     const alreadyExists = new Map();
     for (const spec of SKILL_REPOS) {
+      if (spec.claudePlugin || spec.installMethod === "pluginMarketplace")
+        continue; // plugin bundles handled separately
       const applicableRuntimes = targetRuntimeIds.filter(
         (id) => !spec.targets || spec.targets.includes(id),
       );
@@ -2278,6 +2423,8 @@ async function installSkillsToMultipleRuntimes(
       };
 
       for (const spec of SKILL_REPOS) {
+        if (spec.claudePlugin || spec.installMethod === "pluginMarketplace")
+          continue; // plugin bundles handled separately
         if (spec.targets && !spec.targets.includes(runtimeId)) {
           continue;
         }
@@ -2383,6 +2530,7 @@ async function main() {
   if (activeTargets.includes("claude")) {
     await installClaudePlugins();
   }
+  await installPluginBundlesForNonClaudeRuntimes(homes, activeTargets);
 
   // Optional: graphify (code knowledge graph)
   if (!pluginsOnly) {

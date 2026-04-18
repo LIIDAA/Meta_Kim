@@ -703,10 +703,25 @@ flowchart TB
 
 | 명령 | 목적 |
 | --- | --- |
-| `npm run deps:install` | 9개 커뮤니티 스킬을 글로벌에 설치 |
-| `npm run deps:install:all-runtimes` | 모든 런타임에 설치 |
+| `npm run meta:deps:install` | 9개 커뮤니티 스킬을 글로벌에 설치 |
+| `npm run meta:deps:install:all-runtimes` | 모든 런타임에 설치 |
+| `npm run meta:deps:install:claude-plugins` | Claude Code marketplace plugin만 설치 |
 | `npm run discover:global` | 글로벌 역량 스캔 |
 | `npm run sync:global:meta-theory` | meta-theory를 사용자 수준에 동기화 |
+
+#### Plugin marketplace 스킬（Superpowers、Everything Claude Code、cli-anything）
+
+네이티브 plugin marketplace를 제공하는 것은 Claude Code뿐. **Codex / OpenClaw / Cursor**의 경우, 설치 스크립트는 upstream bundle에서 런타임별 서브트리를 sparse-checkout으로 추출함:
+
+| Runtime | 우선순위 체인 |
+| --- | --- |
+| Claude Code | 네이티브 `claude plugin install <spec>@<marketplace>` (`claudePlugin` 미설정 스킬은 `skills/`로 폴백) |
+| Codex | `.codex/` → `.codex-plugin/` → `skills/` |
+| Cursor | `.cursor/` → `.cursor-plugin/` → `skills/` |
+| OpenClaw | `skills/` |
+| opencode | `.opencode/` → `skills/` |
+
+추출 결과는 `~/.<runtime>/skills/<id>/`에 배치됨. Claude marketplace plugin만 설치하려면 `npm run meta:deps:install:claude-plugins`, 모든 런타임을 한 번에 커버하려면 `npm run meta:deps:install:all-runtimes`. **업그레이드 시 수동 정리 불필요**: 이전 버전의 full-repo clone 잔존물은 대상 디렉터리 루트의 `.claude-plugin/` 마커로 자동 감지되어 다음 실행 시 재추출됨.
 
 ### 고급 운용
 

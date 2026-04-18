@@ -704,10 +704,25 @@ The three memory layers work together toward two core goals:
 
 | Command | Purpose |
 | --- | --- |
-| `npm run deps:install` | Install the 9 community skills globally |
-| `npm run deps:install:all-runtimes` | Install them into all runtimes |
+| `npm run meta:deps:install` | Install the 9 community skills globally |
+| `npm run meta:deps:install:all-runtimes` | Install them into all runtimes |
+| `npm run meta:deps:install:claude-plugins` | Install Claude Code marketplace plugins only |
 | `npm run discover:global` | Scan global capabilities |
 | `npm run sync:global:meta-theory` | Sync meta-theory to the user-level runtime |
+
+#### Plugin-marketplace skills (Superpowers, Everything Claude Code, cli-anything)
+
+Only Claude Code ships a native plugin marketplace. For **Codex / OpenClaw / Cursor** the installer falls back to a sparse-checkout of the upstream bundle's runtime-specific subtree:
+
+| Runtime | Preferred subdir chain |
+| --- | --- |
+| Claude Code | native `claude plugin install <spec>@<marketplace>` (skills without `claudePlugin` fall back to `skills/`) |
+| Codex | `.codex/` → `.codex-plugin/` → `skills/` |
+| Cursor | `.cursor/` → `.cursor-plugin/` → `skills/` |
+| OpenClaw | `skills/` |
+| opencode | `.opencode/` → `skills/` |
+
+The extracted tree lands in `~/.<runtime>/skills/<id>/`. Run `npm run meta:deps:install:claude-plugins` for the Claude marketplace path only, or `npm run meta:deps:install:all-runtimes` to cover every runtime at once. Upgrading from an older install? Legacy full-repo clones are auto-detected by the `.claude-plugin/` marker at the target root and re-extracted on the next run — no manual cleanup needed.
 
 ### Advanced ops
 

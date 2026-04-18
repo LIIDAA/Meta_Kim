@@ -703,10 +703,25 @@ flowchart TB
 
 | 命令 | 作用 |
 | --- | --- |
-| `npm run deps:install` | 安装 9 个社区技能到全局 |
-| `npm run deps:install:all-runtimes` | 安装到所有 runtime |
+| `npm run meta:deps:install` | 安装 9 个社区技能到全局 |
+| `npm run meta:deps:install:all-runtimes` | 安装到所有 runtime |
+| `npm run meta:deps:install:claude-plugins` | 只安装 Claude Code marketplace plugin |
 | `npm run discover:global` | 扫描全局能力 |
 | `npm run sync:global:meta-theory` | 同步 meta-theory 到用户级 |
+
+#### Plugin 市场类 skill（Superpowers、Everything Claude Code、cli-anything）
+
+只有 Claude Code 自带原生 plugin 市场。对 **Codex / OpenClaw / Cursor**，安装脚本会从 upstream bundle 按 runtime 优先级抽取对应子目录（sparse-checkout）：
+
+| Runtime | 优先链 |
+| --- | --- |
+| Claude Code | 原生 `claude plugin install <spec>@<marketplace>`（无 `claudePlugin` 字段的 skill 走 `skills/` 回退） |
+| Codex | `.codex/` → `.codex-plugin/` → `skills/` |
+| Cursor | `.cursor/` → `.cursor-plugin/` → `skills/` |
+| OpenClaw | `skills/` |
+| opencode | `.opencode/` → `skills/` |
+
+抽取结果装到 `~/.<runtime>/skills/<id>/`。只装 Claude 市场 plugin：`npm run meta:deps:install:claude-plugins`；一次覆盖全 runtime：`npm run meta:deps:install:all-runtimes`。**升级用户无需手动清理**：老版本的整 repo clone 残留会通过目标目录下的 `.claude-plugin/` 标志自动识别，下次运行自动重抽。
 
 ### 高级运维
 
