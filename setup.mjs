@@ -3140,6 +3140,7 @@ async function installMcpMemoryServiceStep(inUpdateMode = false) {
       if (stderr) {
         console.log(`${C.dim}${t.pipErrorDetail(stderr)}${C.reset}`);
       }
+      return;
     } else {
       ok(t.mcpMemoryInstalled);
     }
