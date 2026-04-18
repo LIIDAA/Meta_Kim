@@ -1857,7 +1857,14 @@ async function installClaudePlugins() {
       "pyright-lsp": "claude-plugins-official/pyright-lsp",
     };
     const repoFull = pluginRepoMap[bareName] ?? `${bareName}/${bareName}`;
-    const localRecord = getInstalledRecord(bareName);
+    // Look up by full spec ("bareName@marketplace"), not bare name.
+    // installed_plugins.json can carry stale cross-marketplace entries for the
+    // same bare name (e.g. both "superpowers@claude-plugins-official" and
+    // "superpowers@superpowers-marketplace"); matching by bare name alone
+    // returns whichever record happens to be first, which caused every run
+    // to look like an "upgrade" (old marketplace version vs new marketplace
+    // latest never matched).
+    const localRecord = installedPluginsFile.plugins[spec]?.[0] ?? null;
     const localVersion = localRecord?.version ?? null;
 
     if (!updateMode) {
