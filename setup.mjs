@@ -2937,17 +2937,19 @@ async function downloadAndInstallPython() {
     });
     if (wingetCheck.status === 0) {
       info(t.pythonInstallWinget);
+      console.log(
+        `${C.dim}  winget is downloading and installing Python — this may take a few minutes, please wait...${C.reset}`,
+      );
       const result = spawnSync(
         "winget",
         [
           "install",
           "--id",
           "Python.Python.3.11",
-          "--silent",
           "--accept-package-agreements",
           "--accept-source-agreements",
         ],
-        { encoding: "utf8", shell: true },
+        { stdio: "inherit", shell: true },
       );
       if (result.status === 0) {
         ok(t.pythonInstallSuccess);
