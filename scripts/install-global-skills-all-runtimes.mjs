@@ -27,6 +27,7 @@ import process from "node:process";
 import {
   detectPython310,
   extractPipShowVersion,
+  parsePythonVersion,
   readProcessText,
   runPythonModule,
 } from "./graphify-runtime.mjs";
@@ -2386,7 +2387,50 @@ async function main() {
   // Optional: graphify (code knowledge graph)
   if (!pluginsOnly) {
     console.log(`\n${C.bold}${AMBER}${t.pythonToolsOptionalHeader}${C.reset}`);
-    const python = detectPython310();
+
+    // Detect Python: prefer already-activated venv (VIRTUAL_ENV), fall back to probe.
+    // This respects the user's venv without disturbing it — pip install goes to the
+    // active venv if one is present.
+    let python = detectPython310();
+    const venvPath = process.env.VIRTUAL_ENV;
+
+    if (venvPath) {
+      // A venv is already active. Resolve its python directly.
+      // Windows: <venv>/Scripts/python.exe | macOS/Linux: <venv>/bin/python
+      const pathSep = process.platform === "win32" ? "\\" : "/";
+      const venvBin =
+        venvPath + pathSep + (process.platform === "win32" ? "Scripts" : "bin");
+      const venvPython =
+        venvBin +
+        pathSep +
+        (process.platform === "win32" ? "python.exe" : "python");
+
+      const venvCheck = spawnSync(venvPython, ["--version"], {
+        encoding: "utf8",
+      });
+      if (venvCheck?.status === 0) {
+        const parsed = parsePythonVersion(
+          venvCheck.stdout || venvCheck.stderr || "",
+        );
+        if (
+          parsed &&
+          (parsed.major > 3 || (parsed.major === 3 && parsed.minor >= 10))
+        ) {
+          python = {
+            command: venvPython,
+            args: [],
+            version: parsed,
+            versionText:
+              venvCheck.stdout?.trim() || venvCheck.stderr?.trim() || "",
+          };
+          console.log(`${C.dim}  Using active venv: ${venvPath}${C.reset}`);
+        } else {
+          console.warn(
+            `${C.yellow}⚠${C.reset} ${C.dim}Venv at "${venvPath}" has ${parsed?.raw ?? "unknown"} (need 3.10+). Falling back to system Python.${C.reset}`,
+          );
+        }
+      }
+    }
 
     if (!python) {
       console.log(t.pythonNotFoundGraphify);

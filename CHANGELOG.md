@@ -32,6 +32,12 @@ When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the
 
 - **scripts/doctor-interactive.mjs**: Interactive doctor menu providing unified entry point for health checks.
 
+## [2.0.10] - 2026-04-18
+
+### Fixed
+
+- **graphifyy: respect active venv before pip install**: If `VIRTUAL_ENV` is set, resolve the venv's Python directly (`Scripts/python.exe` / `bin/python`) instead of probing the system PATH. This lets users who activate a venv manually before running `setup.mjs` have `graphifyy` installed into their venv instead of the system Python.
+
 ## [2.0.9] - 2026-04-18
 
 ### Fixed
