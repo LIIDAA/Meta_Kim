@@ -79,9 +79,13 @@ Feishu 지식 베이스:
 
 Meta_Kim이 도움이 되었다면 후원으로 응원해 주세요.
 
-| 위챗 결제 | 알리페이 |
-| --- | --- |
-| <img src="docs/images/wechat-pay.jpg" width="260" alt="위챗 수금 QR"> | <img src="docs/images/alipay.jpg" width="260" alt="알리페이 QR"> |
+<table align="center">
+<tr><th>위챗 결제</th><th>알리페이</th></tr>
+<tr>
+<td align="center"><img src="docs/images/wechat-pay.jpg" width="260" alt="위챗 수금 QR"></td>
+<td align="center"><img src="docs/images/alipay.jpg" width="260" alt="알리페이 QR"></td>
+</tr>
+</table>
 
 ### 방법론 근거
 

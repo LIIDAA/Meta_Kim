@@ -79,9 +79,13 @@ Feishu ナレッジベース：
 
 Meta_Kim が役に立ったなら、継続メンテの支援としてコーヒーをご馳走いただけるとうれしいです。
 
-| WeChat Pay | Alipay |
-| --- | --- |
-| <img src="docs/images/wechat-pay.jpg" width="260" alt="WeChat Pay QR"> | <img src="docs/images/alipay.jpg" width="260" alt="Alipay QR"> |
+<table align="center">
+<tr><th>WeChat Pay</th><th>Alipay</th></tr>
+<tr>
+<td align="center"><img src="docs/images/wechat-pay.jpg" width="260" alt="WeChat Pay QR"></td>
+<td align="center"><img src="docs/images/alipay.jpg" width="260" alt="Alipay QR"></td>
+</tr>
+</table>
 
 ### 方法の根拠
 

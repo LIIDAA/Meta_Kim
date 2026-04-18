@@ -79,9 +79,13 @@ X <a href="https://x.com/KimYx0207">@KimYx0207</a> |
 
 如果 Meta_Kim 帮到了你，欢迎请我喝杯咖啡，算是对持续维护的支持。
 
-| 微信支付 | 支付宝 |
-| --- | --- |
-| <img src="docs/images/wechat-pay.jpg" width="260" alt="微信收款码"> | <img src="docs/images/alipay.jpg" width="260" alt="支付宝收款码"> |
+<table align="center">
+<tr><th>微信支付</th><th>支付宝</th></tr>
+<tr>
+<td align="center"><img src="docs/images/wechat-pay.jpg" width="260" alt="微信收款码"></td>
+<td align="center"><img src="docs/images/alipay.jpg" width="260" alt="支付宝收款码"></td>
+</tr>
+</table>
 
 ### 方法依据
 

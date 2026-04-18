@@ -79,9 +79,13 @@ Feishu knowledge base:
 
 If Meta_Kim has been useful, support the project with a coffee.
 
-| WeChat Pay | Alipay |
-| --- | --- |
-| <img src="docs/images/wechat-pay.jpg" width="260" alt="WeChat Pay QR"> | <img src="docs/images/alipay.jpg" width="260" alt="Alipay QR"> |docs/images/wechat-pay.jpg) | ![Alipay QR](docs/images/alipay.jpg) |
+<table align="center">
+<tr><th>WeChat Pay</th><th>Alipay</th></tr>
+<tr>
+<td align="center"><img src="docs/images/wechat-pay.jpg" width="260" alt="WeChat Pay QR"></td>
+<td align="center"><img src="docs/images/alipay.jpg" width="260" alt="Alipay QR"></td>
+</tr>
+</table>
 
 ### Method basis
 
