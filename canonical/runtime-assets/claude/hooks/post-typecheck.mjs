@@ -9,16 +9,11 @@
 
 import { execSync } from "node:child_process";
 import process from "node:process";
+import { readJsonFromStdin, extractFilePath } from "./utils.mjs";
 
-const input = await readStdinJson();
+const input = await readJsonFromStdin();
 const toolName = input.tool_name || "";
-const ti = input.tool_input || {};
-const filePath =
-  ti.file_path ||
-  ti.path ||
-  input.tool_response?.filePath ||
-  input.tool_response?.file_path ||
-  "";
+const filePath = extractFilePath(input.tool_input || input);
 
 if (!["Edit", "Write"].includes(toolName)) process.exit(0);
 if (!filePath.match(/\.(ts|tsx)$/)) process.exit(0);
@@ -32,18 +27,8 @@ try {
 } catch (err) {
   const output = err.stdout?.toString() || "";
   if (output.includes("error TS")) {
-    process.stderr.write(`[tsc] Type errors detected after editing ${filePath}\n`);
-  }
-}
-
-async function readStdinJson() {
-  let raw = "";
-  for await (const chunk of process.stdin) {
-    raw += chunk;
-  }
-  try {
-    return raw.trim() ? JSON.parse(raw) : {};
-  } catch {
-    return {};
+    process.stderr.write(
+      `[tsc] Type errors detected after editing ${filePath}\n`,
+    );
   }
 }

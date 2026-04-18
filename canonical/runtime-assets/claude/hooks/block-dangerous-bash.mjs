@@ -1,4 +1,5 @@
 import process from "node:process";
+import { readJsonFromStdin } from "./utils.mjs";
 
 const payload = await readJsonFromStdin();
 const command = payload?.tool_input?.command ?? "";
@@ -20,17 +21,9 @@ if (blockedPatterns.some((pattern) => pattern.test(command))) {
         permissionDecisionReason:
           "Meta_Kim blocked a destructive shell command. Use a safer alternative or get explicit human approval.",
       },
-    })
+    }),
   );
   process.exit(0);
 }
 
 process.exit(0);
-
-async function readJsonFromStdin() {
-  let input = "";
-  for await (const chunk of process.stdin) {
-    input += chunk;
-  }
-  return input ? JSON.parse(input) : {};
-}

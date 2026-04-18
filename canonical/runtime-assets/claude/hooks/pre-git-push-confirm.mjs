@@ -8,8 +8,9 @@
  */
 
 import process from "node:process";
+import { readJsonFromStdin } from "./utils.mjs";
 
-const input = await readStdinJson();
+const input = await readJsonFromStdin();
 const toolName = input.tool_name || "";
 const command = input.tool_input?.command ?? "";
 
@@ -24,17 +25,5 @@ process.stdout.write(
       additionalContext:
         "⚠️ About to git push — have you reviewed the diff and run validate?",
     },
-  })
+  }),
 );
-
-async function readStdinJson() {
-  let raw = "";
-  for await (const chunk of process.stdin) {
-    raw += chunk;
-  }
-  try {
-    return raw.trim() ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}

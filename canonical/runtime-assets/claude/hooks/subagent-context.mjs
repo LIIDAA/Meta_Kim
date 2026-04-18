@@ -1,4 +1,5 @@
 import process from "node:process";
+import { readJsonFromStdin } from "./utils.mjs";
 
 await readJsonFromStdin();
 
@@ -20,9 +21,3 @@ process.stdout.write(
     },
   }),
 );
-
-async function readJsonFromStdin() {
-  for await (const _chunk of process.stdin) {
-    // The hook only needs to consume stdin so Claude Code can continue.
-  }
-}

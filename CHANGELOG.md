@@ -4,6 +4,16 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.0.11] - 2026-04-18
+
+### Changed
+
+- **hooks DRY refactor**: Created `canonical/runtime-assets/claude/hooks/utils.mjs` — shared module exporting `readJsonFromStdin`, `readJsonFromStdinSync`, and `extractFilePath`. 6 hooks (`block-dangerous-bash`, `post-console-log-warn`, `post-format`, `post-typecheck`, `pre-git-push-confirm`, `subagent-context`) now import from `./utils.mjs` instead of duplicating the function inline. Eliminates 63 lines of duplicate code across the hooks layer.
+
+### Fixed
+
+- **graphify DRY gap**: `scripts/hooks-utils.mjs` removed — shared utilities correctly placed inside the hooks directory so sync can propagate them. All hooks now use `./utils.mjs` (canonical: `canonical/runtime-assets/claude/hooks/utils.mjs`).
+
 ## [2.0.8] - 2026-04-18
 
 ### Changed
