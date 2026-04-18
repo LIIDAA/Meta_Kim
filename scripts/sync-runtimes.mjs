@@ -24,6 +24,21 @@ import { t } from "./meta-kim-i18n.mjs";
 const cliArgs = process.argv.slice(2);
 const checkOnly = process.argv.includes("--check");
 
+/**
+ * Safely read a canonical source file. Returns null if the file is missing
+ * (e.g. when running via npx with a stale or incomplete cached package).
+ */
+async function tryReadCanonical(filePath) {
+  try {
+    return await fs.readFile(filePath, "utf8");
+  } catch {
+    console.warn(
+      `[sync-runtimes] Skipping missing canonical file: ${filePath}`,
+    );
+    return null;
+  }
+}
+
 // ── Scope-aware projection directories ───────────────────────────────
 
 /**
@@ -815,7 +830,8 @@ Examples:
   const dirs = resolveProjectionDirs(scope);
   const agents = await loadAgents();
   const teamDirectory = buildWorkspaceDirectory(agents);
-  const portableSkill = await fs.readFile(canonicalSkillPath, "utf8");
+  const portableSkill = await tryReadCanonical(canonicalSkillPath);
+  if (!portableSkill) return [];
   const skillReferences = await loadSkillReferences();
   const changedFiles = [];
 
@@ -883,13 +899,9 @@ Examples:
     // Gracefully handle missing openclaw.template.json (can happen when running
     // via npx with an older cached package version that doesn't include it)
     let templateConfig = null;
-    try {
-      await fs.access(canonicalOpenClawTemplatePath);
-      templateConfig = JSON.parse(
-        await fs.readFile(canonicalOpenClawTemplatePath, "utf8"),
-      );
-    } catch {
-      // File missing from npm cache package — skip this projection step
+    const templateRaw = await tryReadCanonical(canonicalOpenClawTemplatePath);
+    if (templateRaw) {
+      templateConfig = JSON.parse(templateRaw);
     }
 
     if (
@@ -1006,11 +1018,11 @@ Examples:
         }
       }
     }
-    const codexConfigExample = await fs.readFile(
+    const codexConfigExample = await tryReadCanonical(
       canonicalCodexConfigExamplePath,
-      "utf8",
     );
     if (
+      codexConfigExample &&
       (
         await writeGeneratedFile(
           dirs.codexConfigExamplePath,
@@ -1079,8 +1091,11 @@ Examples:
 
     // MCP config (.cursor/mcp.json) — reuse Claude's MCP template
     if (dirs.cursorMcpPath) {
-      const mcpContent = await fs.readFile(canonicalClaudeMcpPath, "utf8");
-      if ((await writeGeneratedFile(dirs.cursorMcpPath, mcpContent)).changed) {
+      const mcpContent = await tryReadCanonical(canonicalClaudeMcpPath);
+      if (
+        mcpContent &&
+        (await writeGeneratedFile(dirs.cursorMcpPath, mcpContent)).changed
+      ) {
         changedFiles.push(dp.cursorMcp);
       }
     }

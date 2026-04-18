@@ -2924,7 +2924,7 @@ async function downloadAndInstallPython() {
   const p = platform();
   if (silentMode) return null;
 
-  const answer = await askYesNo(t.pythonNotFoundOfferInstall, false);
+  const answer = await askYesNo(t.pythonNotFoundOfferInstall, true);
   if (!answer) {
     info(t.pythonHint);
     return null;
