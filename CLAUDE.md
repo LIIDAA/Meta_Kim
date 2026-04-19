@@ -374,6 +374,13 @@ Useful supporting commands:
 
 **Tooling:** Node `>=22.13.0` (see `package.json` `engines`). CLI entry: `npx --yes github:KimYx0207/Meta_Kim meta-kim` / `bin/meta-kim.mjs`.
 
+**Packaging & runtime notes (post-2.0.12 Unreleased):**
+
+- `package.json` now has an explicit `files` whitelist so every `npx` tarball contains the full `canonical/` tree (older publications relied on default npm ignore rules and occasionally dropped `canonical/runtime-assets/openclaw/openclaw.template.json` / `canonical/runtime-assets/codex/config.toml.example`). If `npx` reports `[sync-runtimes] Skipping missing canonical file: …`, clear the local npx cache (`npm cache clean --force`) and re-run — the current tarball ships everything.
+- All installer user-facing strings are localized through `scripts/meta-kim-i18n.mjs` (en / zh-CN / ja-JP / ko-KR). `sync-runtimes.mjs` `tryReadCanonical` warnings and `setup.mjs` `runMcpMemoryHookInstaller` progress / success / warning messages now respect `META_KIM_LANG` / `--lang`.
+- `runMcpMemoryHookInstaller` uses `withProgress` + `stdio: pipe` so child-process output is captured silently and only surfaces (as dimmed `stderr`) on non-zero exit, restoring the consistent step-label UX on slow hook installs.
+- MCP Memory Service default port is **8000** (upstream `MCP_HTTP_PORT=8000`). Override via `MCP_MEMORY_URL` env var or by editing `~/.claude/hooks/config.json`. Legacy installs that wrote `:8888` into `~/.claude/hooks/config.json` need a one-line edit — see `CHANGELOG.md` `Migration Notes`.
+
 ## Reading Notes
 
 For human readers:
