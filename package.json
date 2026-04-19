@@ -59,6 +59,23 @@
     "agents",
     "prompt-pack"
   ],
+  "files": [
+    "canonical/",
+    "scripts/",
+    "bin/",
+    "config/",
+    "docs/",
+    "setup.mjs",
+    "install-deps.sh",
+    "CHANGELOG.md",
+    "README.md",
+    "README.zh-CN.md",
+    "README.ja-JP.md",
+    "README.ko-KR.md",
+    "LICENSE",
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
   "author": "KimYx0207",
   "license": "MIT",
   "bin": {
