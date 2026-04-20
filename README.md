@@ -821,6 +821,41 @@ Meta_Kim uses MCP (Model Context Protocol) to expand the capability boundary of 
 
 ---
 
+## Third-party Dependencies
+
+Meta_Kim is MIT licensed. The following optional skill repositories are installed separately via `node setup.mjs` — each repo's license applies independently.
+
+### npm Dependencies
+
+| Package | License |
+|---------|---------|
+| [`@inquirer/prompts`](https://github.com/SBoudrias/Inquirer.js) | MIT |
+| [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk) | MIT |
+| [`zod`](https://github.com/colinhacks/zod) | MIT |
+
+### Optional Skill Repositories
+
+| Repository | License |
+|-----------|---------|
+| [KimYx0207/agent-teams-playbook](https://github.com/KimYx0207/agent-teams-playbook) | MIT |
+| [KimYx0207/findskill](https://github.com/KimYx0207/findskill) | MIT |
+| [KimYx0207/HookPrompt](https://github.com/KimYx0207/HookPrompt) | MIT |
+| [obra/superpowers](https://github.com/obra/superpowers) | MIT |
+| [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | MIT |
+| [OthmanAdi/planning-with-files](https://github.com/OthmanAdi/planning-with-files) | MIT |
+| [HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything) | Apache 2.0 |
+| [garrytan/gstack](https://github.com/garrytan/gstack) | MIT |
+| [anthropics/skills](https://github.com/anthropics/skills) | No license declared (© Anthropic, PBC) |
+
+### Optional pip Packages
+
+| Package | License |
+|---------|---------|
+| [`graphifyy`](https://github.com/safishamsi/graphify) | MIT |
+| [`mcp-memory-service`](https://pypi.org/project/mcp-memory-service/) | Apache 2.0 |
+
+---
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
