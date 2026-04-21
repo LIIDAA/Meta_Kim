@@ -8,6 +8,12 @@
 
 ## [未发布]
 
+### 新增
+
+- **stop-memory-save hook**: 新增 Stop hook (`stop-memory-save.mjs`)，在会话结束时将摘要写入 MCP Memory Service，实现跨会话连续性，无需手动干预。现在共有 10 个 hook 接入 `doctor:governance` 和 `validate:run`。
+- **tests/setup/check-sync.test.mjs**: 预期 hook 数量从 9 更新为 10（新增 stop-memory-save）。
+- **scripts/runtime-sync-check.mjs、doctor-governance.mjs、footprint.mjs、claude-settings-merge.mjs**: 在 hook 文件/命令列表中添加了 `stop-memory-save.mjs`。
+
 ### 修复
 
 - **四端 hooks 纠正** — 四个平台（Claude Code、Codex、OpenClaw、Cursor）均有原生 hooks 系统。此前文档错误标注仅 Claude Code 有 hooks。Codex 支持 `hooks.json`（5 个事件，v0.117.0+），OpenClaw 支持 Plugin SDK hooks（28 个），Cursor 支持 `hooks.json`（4 个事件）。已更新 `runtime-capability-matrix.md`、`runtime-coverage-audit.md`、`distribution-matrix.md` 及四语言 README。

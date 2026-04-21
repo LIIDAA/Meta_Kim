@@ -8,6 +8,12 @@ When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the
 
 ## [Unreleased]
 
+### Added
+
+- **stop-memory-save hook**: New Stop hook (`stop-memory-save.mjs`) writes session summaries to MCP Memory Service on session end. Enables cross-session continuity without manual intervention. All 10 hooks now wired in `doctor:governance` and `validate:run` expectations.
+- **tests/setup/check-sync.test.mjs**: Updated expected hook count from 9 to 10 (stop-memory-save added).
+- **scripts/runtime-sync-check.mjs, doctor-governance.mjs, footprint.mjs, claude-settings-merge.mjs**: Added `stop-memory-save.mjs` to hook file/command lists.
+
 ### Fixed
 
 - **4-runtime hooks correction** — All four platforms (Claude Code, Codex, OpenClaw, Cursor) have native hooks systems. Previous docs incorrectly stated only Claude Code had hooks. Codex has `hooks.json` (5 events since v0.117.0), OpenClaw has Plugin SDK hooks (28 hooks), and Cursor has `hooks.json` (4 events). Updated `runtime-capability-matrix.md`, `runtime-coverage-audit.md`, `distribution-matrix.md`, and all 4 README language variants.

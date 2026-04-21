@@ -455,6 +455,7 @@ In Claude Code, Meta_Kim uses **hooks** for automation:
 - **Type checking**: run TypeScript checks after edits
 - **console.log warning**: remind you to remove `console.log`
 - **Session-end audit**: check for leftover issues before the session ends
+- **Session-end memory save**: write session summaries to MCP Memory Service on session end
 - **Subagent context injection**: automatically inject project context into subagents
 
 These hooks are not optional polish. They are the execution-layer guardrails of the governance system.
@@ -568,7 +569,7 @@ Meta_Kim's gates and protocols work on three enforcement layers. After global in
 | Enforcement layer | Global install | Needs Meta_Kim repo |
 | --- | --- | --- |
 | **Prompt layer** (agents + skills enforce gates/protocols) | Works — installed to `~/.claude/skills/` and `~/.claude/agents/` | — |
-| **Hook layer** (session-end gate checks, dangerous command blocking) | Works — configured in `.claude/settings.json` | — |
+| **Hook layer** (session-end gate checks, memory save to MCP Memory Service, dangerous command blocking) | Works — configured in `.claude/settings.json` | — |
 | **Config layer** (contract definitions are referenced in skill prompts) | Works — AI reads the rules from the installed skill | — |
 | **Code validation** (`npm run validate:run` hard-checks packet chains) | — | Required — script lives in `scripts/validate-run-artifact.mjs` |
 
@@ -635,11 +636,11 @@ For multi-platform setups, run `node setup.mjs` — it loops through all selecte
   - Vector-level retrieval - semantic understanding instead of keyword matching
   - Precise recall - find the most relevant context from historical sessions
 - **Activation**: `node setup.mjs` installs and configures the MCP Memory Service (Layer 3); the server must be started manually after installation.
-  - For **Claude Code**: SessionStart hooks are auto-registered during `node setup.mjs`
+  - For **Claude Code**: SessionStart and Stop memory-save hooks are auto-registered during `node setup.mjs`; session-start writes project state via `mcp_memory_global.py --mode session`
   - For **other tools** (Codex, OpenClaw, Cursor): check `mcp-memory-service/claude-hooks/` for manual hook setup
 - **Start server**: `npm start` in the mcp-memory-service directory (or `python -m mcp_memory_service`), then access at `http://localhost:8000`
 - **Port override**: the server honors `MCP_HTTP_PORT` (default `8000`, matching upstream); Meta_Kim reads `MCP_MEMORY_URL` in the SessionStart hook so point it at any reachable endpoint. If you are upgrading from an older Meta_Kim install that hard-coded `8888`, see the CHANGELOG's `Migration Notes` for the one-line `~/.claude/hooks/config.json` fix.
-- **Hooks**: auto-registered for Claude Code; for other tools see the mcp-memory-service documentation
+- **Hooks**: auto-registered for Claude Code (SessionStart writes project context, Stop saves session summary to MCP Memory); for other tools see the mcp-memory-service documentation
 - **Query**: `npm run query:runs -- --owner <agent>` — find past runs by agent, or `npm run index:runs -- <artifact>` for manual indexing of validated run artifacts
 
 ### How the three layers work together
