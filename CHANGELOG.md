@@ -6,13 +6,15 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
-## [Unreleased]
+## [2.0.15] - 2026-04-21
 
 ### Added
 
 - **stop-memory-save hook**: New Stop hook (`stop-memory-save.mjs`) writes session summaries to MCP Memory Service on session end. Enables cross-session continuity without manual intervention. All 10 hooks now wired in `doctor:governance` and `validate:run` expectations.
 - **tests/setup/check-sync.test.mjs**: Updated expected hook count from 9 to 10 (stop-memory-save added).
 - **scripts/runtime-sync-check.mjs, doctor-governance.mjs, footprint.mjs, claude-settings-merge.mjs**: Added `stop-memory-save.mjs` to hook file/command lists.
+
+## [Unreleased]
 
 ### Fixed
 
