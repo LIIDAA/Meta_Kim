@@ -171,6 +171,13 @@ If you are about to produce **>3 sentences** of execution-layer analysis, review
 5. The task is described as "difficult", "complex", or "I don't know where to start" by the user
 6. You are about to invoke Read on more than 3 files for a single sub-task
 
+**Measurable dispatch triggers (count — do not estimate):**
+- Reading more than 3 files for a single sub-task → dispatch
+- Producing more than 20 lines of code or config → dispatch
+- Task spans more than 1 module or directory → dispatch
+- Any file modification (even a single-line edit) → dispatch
+- You catch yourself mid-execution without a prior dispatch → STOP → back up → dispatch
+
 **If you are unsure whether to dispatch — DISPATCH.** The cost of unnecessary dispatch is lower than the cost of bypassing the dispatcher pattern.
 
 **🚫 FORBIDDEN PATHS (No "simple task" exception)**:

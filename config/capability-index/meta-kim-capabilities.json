@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-10T18:01:56.818Z",
+  "generatedAt": "2026-05-14T09:02:34.705Z",
   "registryName": "meta-kim-capabilities",
   "scope": "repo-canonical",
   "canonicalProjection": "config/capability-index/meta-kim-capabilities.json",
@@ -97,8 +97,8 @@
         "type": "skills",
         "namespace": "canonical",
         "path": "canonical/skills/meta-theory/SKILL.md",
-        "size": 36861,
-        "modified": "2026-04-30T07:40:36.405Z"
+        "size": 37271,
+        "modified": "2026-05-14T08:57:33.771Z"
       },
       "repo:canonical-reference:create-agent": {
         "id": "create-agent",
@@ -243,8 +243,8 @@
         "namespace": "canonical-runtime-assets",
         "path": "canonical/runtime-assets/claude/hooks/stop-memory-save.mjs",
         "relativePath": "stop-memory-save.mjs",
-        "size": 7529,
-        "modified": "2026-04-30T16:29:51.613Z"
+        "size": 7696,
+        "modified": "2026-05-14T08:56:34.380Z"
       },
       "repo:canonical-runtime-assets:stop-save-progress.mjs": {
         "id": "stop-save-progress.mjs",
@@ -261,8 +261,8 @@
         "namespace": "canonical-runtime-assets",
         "path": "canonical/runtime-assets/claude/hooks/subagent-context.mjs",
         "relativePath": "subagent-context.mjs",
-        "size": 1199,
-        "modified": "2026-04-30T05:38:52.531Z"
+        "size": 1446,
+        "modified": "2026-05-14T08:58:09.294Z"
       },
       "repo:canonical-runtime-assets:utils.mjs": {
         "id": "utils.mjs",

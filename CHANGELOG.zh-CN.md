@@ -6,6 +6,25 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.0.26] - 2026-05-14
+
+### 新增
+
+- **meta-theory SKILL.md 可测量分发阈值** — HARD DISPATCH RULE 区域增加了可计数的触发标准（读取 3+ 文件、产出 20+ 行代码、跨模块范围、任何文件修改），让分发决策基于客观指标而非主观的"看着简单"判断。语言平台中立，适用于所有运行时（Claude Code、Codex、OpenClaw、Cursor）。
+- **subagent-context hook 子 agent 边界执行** — SubagentStart hook 现在注入一条治理规则：如果被派发的子 agent 发现任务范围超出其分配边界，必须上报而不是自行扩展。Claude Code 专属；其他运行时有各自的等价机制。
+- **README 使用路径表** — 中英文 README 新增清晰的使用路径对照表，显示各运行时上下文下（仓库内 vs. 其他项目、Claude Code vs. Codex vs. OpenClaw vs. Cursor）哪些能力自动生效、哪些需要显式触发。
+- **Stop hook 记忆保存反馈** — `stop-memory-save.mjs` 现在在成功保存时写一行 stderr 确认信息（`[meta-kim] Session memory saved (N chars, N tags)`），让用户可以看到治理闭环已执行。
+
+### 修复
+
+- **全局 skill 目录结构缺失** — 运行 `meta:sync:global` 现在能正确同步完整的 `meta-theory/` 目录结构（不再仅同步旧版扁平 `meta-theory.md`）到所有四个运行时主目录，修复了在 Meta_Kim 仓库外 `/meta-theory` 只能加载部分 skill 的问题。
+
+### 测试
+
+- 全部 207 项 setup 测试通过（包括之前失败的 `install-plugin-bundles` 测试）。
+- 全部 782 项 meta-theory 测试通过。
+- `meta:validate` 18/18 通过。`meta:check:global` 10/10 全绿。
+
 ## [2.0.25] - 2026-05-11
 
 ### 修复

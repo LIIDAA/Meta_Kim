@@ -6,6 +6,25 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.0.26] - 2026-05-14
+
+### Added
+
+- **Measurable dispatch triggers in meta-theory SKILL.md** — The HARD DISPATCH RULE section now includes countable thresholds (3+ files read, 20+ lines of code, multi-module scope, any file modification) so the dispatcher decision is based on objective criteria instead of subjective "this looks simple" judgment. Platform-neutral wording applies to all runtimes (Claude Code, Codex, OpenClaw, Cursor).
+- **Subagent boundary enforcement in subagent-context hook** — SubagentStart hook now injects a governance rule: if a dispatched subagent detects scope growth beyond its assigned boundary, it must report back instead of self-expanding. Claude Code specific; other runtimes have equivalent mechanisms.
+- **Usage Paths table in README** — Both English and Chinese READMEs now include a clear table showing what works automatically vs. what needs explicit trigger in each runtime context (inside repo vs. other projects, Claude Code vs. Codex vs. OpenClaw vs. Cursor).
+- **Stop hook memory-save feedback** — `stop-memory-save.mjs` now writes a one-line stderr confirmation on successful save (`[meta-kim] Session memory saved (N chars, N tags)`), giving users visible evidence that the governance loop completed.
+
+### Fixed
+
+- **Global skill directory structure missing** — Running `meta:sync:global` now correctly syncs the full `meta-theory/` skill directory (not just the legacy flat `meta-theory.md`) to all four runtime homes, fixing the issue where `/meta-theory` only loaded a partial skill outside the Meta_Kim repo.
+
+### Tests
+
+- All 207 setup tests pass (including previously failing `install-plugin-bundles` test).
+- All 782 meta-theory tests pass.
+- `meta:validate` 18/18 checks pass. `meta:check:global` 10/10 all green.
+
 ## [2.0.25] - 2026-05-11
 
 ### Fixed
