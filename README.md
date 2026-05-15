@@ -653,7 +653,7 @@ For multi-platform setups, run `node setup.mjs` — it loops through all selecte
   - For **OpenClaw**: `~/.openclaw/hooks/mcp-memory-service` receives a managed hook for `command:new`, `command:reset`, `session:compact:after`, and `command:stop`.
   - For **Cursor**: `~/.cursor/hooks.json` receives `beforeSubmitPrompt` and `stop` bridges to the shared memory hook.
 - **Start server**: `npm start` in the mcp-memory-service directory (or `python -m mcp_memory_service`), then access at `http://localhost:8000`
-- **Port override**: the server honors `MCP_HTTP_PORT` (default `8000`, matching upstream); Meta_Kim reads `MCP_MEMORY_URL` in the SessionStart hook so point it at any reachable endpoint. If you are upgrading from an older Meta_Kim install that hard-coded `8888`, see the CHANGELOG's `Migration Notes` for the one-line `~/.claude/hooks/config.json` fix.
+- **Port**: the server and Meta_Kim hooks use `http://localhost:8000`.
 - **Hooks**: auto-registered for Claude Code, Codex, OpenClaw, and Cursor; each runtime uses its native hook format while sharing the same MCP Memory HTTP endpoint.
 - **Query**: `npm run meta:query:runs -- --owner <agent>` — find past runs by agent, or `npm run meta:index:runs -- <artifact>` for manual indexing of validated run artifacts
 
