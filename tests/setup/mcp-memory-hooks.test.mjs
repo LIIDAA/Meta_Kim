@@ -51,6 +51,33 @@ describe("MCP memory cross-runtime hooks", () => {
     assert.doesNotMatch(source, /memory_type:\s*"session-summary"/);
   });
 
+  test("Claude mjs hooks use ESM imports instead of CommonJS require", () => {
+    for (const hookName of [
+      "block-dangerous-bash.mjs",
+      "enforce-agent-dispatch.mjs",
+      "post-console-log-warn.mjs",
+      "post-format.mjs",
+      "post-typecheck.mjs",
+      "pre-git-push-confirm.mjs",
+      "stop-compaction.mjs",
+      "stop-completion-guard.mjs",
+      "stop-console-log-audit.mjs",
+      "stop-memory-save.mjs",
+      "stop-spine-cleanup.mjs",
+      "subagent-context.mjs",
+      "utils.mjs",
+    ]) {
+      const source = readRepoFile(
+        "canonical",
+        "runtime-assets",
+        "claude",
+        "hooks",
+        hookName,
+      );
+      assert.doesNotMatch(source, /require\(/, `${hookName} must not use require()`);
+    }
+  });
+
   test("installer registers Codex and Cursor lifecycle events", () => {
     const source = readRepoFile("scripts", "install-mcp-memory-hooks.mjs");
 
