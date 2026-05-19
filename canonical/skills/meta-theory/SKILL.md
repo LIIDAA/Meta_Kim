@@ -54,48 +54,43 @@ Distinguish early: **Meta Architecture** (agent governance, collaboration relati
 - Fetch stage (capability discovery and research)
 - Thinking stage (planning, option exploration, decomposition)
 
-**Confirmation format** — minimum 4 questions, each with 3-4 options:
+**Confirmation format** — minimum 4 questions, each with 3-4 options. Do not ask the user to choose between Type A/B/C/D/E directly; the system classifies the Type and shows it as context, then asks product-facing execution questions:
 
 ```
 After Thinking completes, BEFORE any Execution:
   → Invoke native question tool with 4-6 questions:
 
-1. Task Type Confirmation (Type A/B/C/D/E)
-   - Option A: Meta-theory analysis, agent audits, Five Criteria review
-   - Option B: Agent creation/split, capability gap filling
-   - Option C: Development, feature implementation, debugging
-   - Option D: Review proposals/articles, external claims
-   - Option E: Rhythm/card-deck orchestration
+Context shown before the questions:
+   - AI understanding: what the user wants and what result will be delivered
+   - AI additions: missing details the system inferred or still needs
+   - Capability route: which agent/skill owner appears best after Fetch
+   - Candidate paths: at least 2 viable ways to proceed
+
+1. Outcome Confirmation
+   - Option A: Keep the fix narrow — change only the part that blocks the requested result. Result: fastest delivery. Advantage: low disruption. Disadvantage: related rough edges may remain.
+   - Option B: Fix the full user journey — include directly connected files so the experience works end to end. Result: more complete release. Advantage: fewer follow-up surprises. Disadvantage: more files need review.
+   - Option C: Audit before changing — produce a written issue list first, then change only approved items. Result: strongest control. Advantage: safest for sensitive repos. Disadvantage: slower.
 
 2. Scope Confirmation
-   - Option 1: Minimal scope — only explicitly mentioned files/modules
-   - Option 2: Balanced scope — includes direct dependencies
-   - Option 3: Comprehensive scope — includes all related components
-   - Option 4: Custom scope — user specifies exact boundaries
+   - Option A: Mentioned items only — touch only files or behavior named by the user. Result: small patch. Advantage: easiest rollback. Disadvantage: hidden dependencies may stay broken.
+   - Option B: Direct dependencies — include files that the named items immediately rely on. Result: practical working fix. Advantage: best balance for most work. Disadvantage: moderate test effort.
+   - Option C: Full connected flow — include install, sync, docs, tests, and runtime projections. Result: release-ready change. Advantage: stronger confidence. Disadvantage: larger review surface.
+   - Option D: Custom boundary — user names exact inclusions and exclusions. Result: precise control. Advantage: fits special constraints. Disadvantage: may omit necessary support files.
 
-3. Approach/Method Confirmation
-   - Option 1: Direct implementation — code first, review later
-   - Option 2: Iterative approach — small increments with reviews
-   - Option 3: Research-first — analyze then implement
-   - Option 4: Delegate to specialist — dispatch to execution agent
+3. Execution Style Confirmation
+   - Option A: One clean pass — apply the planned change once, then verify. Result: quick completion. Advantage: simple timeline. Disadvantage: less mid-course feedback.
+   - Option B: Small reviewed steps — change one slice, test it, then continue. Result: visible progress checkpoints. Advantage: easier to catch mistakes. Disadvantage: takes longer.
+   - Option C: Specialist handoff — route each slice to the best matching agent/skill owner. Result: clearer ownership. Advantage: better for cross-platform or multi-domain work. Disadvantage: coordination overhead.
 
-4. Risk/Rollback Plan Confirmation
-   - Option 1: Low risk — easy rollback, no side effects
-   - Option 2: Medium risk — needs testing before deployment
-   - Option 3: High risk — needs staging environment and validation
-   - Option 4: Unknown risk — needs spike/research first
+4. Risk And Rollback Confirmation
+   - Option A: Low-risk patch — make reversible text/config changes with focused tests. Result: simple rollback. Advantage: safe for routine fixes. Disadvantage: may not cover systemic drift.
+   - Option B: Release-safe patch — include generated mirrors, install checks, and packaging checks. Result: safer for public users. Advantage: catches platform drift. Disadvantage: more validation time.
+   - Option C: Staged rollout — keep risky changes behind a clear follow-up or manual release step. Result: avoids surprise breakage. Advantage: safest when behavior is uncertain. Disadvantage: leaves some work deferred.
 
-5. [OPTIONAL] Tech Stack/Tool Selection (if multiple viable options)
-   - Option 1: Use existing stack/tools
-   - Option 2: Introduce new tool/library
-   - Option 3: Refactor existing approach
-   - Option 4: Hybrid/gradual migration
-
-6. [OPTIONAL] Priority/Trade-off (if time/resource constraints)
-   - Option 1: Quality first — take time, do it right
-   - Option 2: Speed first — accept technical debt
-   - Option 3: Balance — MVP approach, iterate later
-   - Option 4: Defer — postpone to next iteration
+5. Priority Confirmation
+   - Option A: User experience first — optimize prompts, explanations, and choice quality. Result: clearer decisions for non-technical users. Advantage: better adoption. Disadvantage: implementation may wait.
+   - Option B: Runtime correctness first — fix hooks, sync, tests, and package health. Result: fewer broken installs. Advantage: stronger reliability. Disadvantage: less visible product polish.
+   - Option C: Balanced release — do enough UX and runtime work to ship one coherent update. Result: complete practical release. Advantage: best all-around path. Disadvantage: broader patch.
 
 Wait for user response before proceeding to Execution.
 ```
@@ -105,8 +100,10 @@ Wait for user response before proceeding to Execution.
 - Each option must specify:
   - What changes (specific scope)
   - What problem it solves (requirement/pain point)
+  - Expected result (what the user gets)
   - Advantages (why choose this)
   - Disadvantages (costs/risks)
+- Wording must be understandable to non-technical users. Put implementation names, file paths, and protocol terms in internal notes or short parenthetical context, not as the main option text.
 - Options must be meaningfully different (not cosmetic variations)
 
 **Proceed WITHOUT confirmation ONLY when**:
@@ -140,9 +137,9 @@ For `clarify`, `option_select`, and `confirm_execution` cards, prefer the curren
 **Claude Code Implementation (PRIMARY)**:
 ```
 When meta-theory is activated on Claude Code:
-  → IMMEDIATELY invoke the native question tool with:
-    - questions: [Task Type, Scope, Approach]
-    - Wait for user response before any other action
+  → Use native question tool for Critical clarification only when the request is too unclear or risky to Fetch.
+  → After Fetch + Thinking, invoke one execution confirmation with 4-6 questions.
+  → Wait for user response before Execution dispatch or file modification.
 ```
 
 **Fallback Implementation (Other Platforms)**:
@@ -186,7 +183,7 @@ See `references/dev-governance.md` Step 3.7 for full specification.
 
 ## Gates
 
-**Gate 1**: Clarity Check — run Clarity Gate before committing to a dispatch plan.
+**Gate 1**: Clarity Check — ask blocking Critical clarifications only when Fetch cannot proceed; run the full Clarity Gate before executing a dispatch plan.
 
 **Gate 2**: Dispatch-Not-Execute — analysis, review, and code changes belong to execution agents via `Agent` tool, not to this thread.
 
@@ -354,7 +351,7 @@ After completing Fetch Steps 1–3, update the spine state with a `fetchRecord` 
 
 ## Available Agents
 
-### Governance Meta Agents (8)
+### Governance Meta Agents (9)
 
 | Agent | Capability | When to dispatch |
 |---|---|---|
@@ -366,6 +363,7 @@ After completing Fetch Steps 1–3, update the spine state with a `fetchRecord` 
 | `meta-librarian` | Memory, continuity | Cross-session context |
 | `meta-prism` | Quality review, anti-slop | Review and audit tasks |
 | `meta-scout` | External capability discovery | Need to search outside |
+| `meta-chrysalis` | Evolution signal aggregation, writeback coordination | Evolution writeback planning through Warden's gate |
 
 ### Execution Agents
 
@@ -393,7 +391,7 @@ Agent(
 
 **Factory Station pipeline** (see `references/create-agent.md` for full spec):
 1. Discovery → data collection → coupling grouping → user confirmation
-2. Pre-design → check if global agent covers the need
+2. Pre-design → check if a global agent, execution agent, skill, or loadout already covers the need
 3. Design → Warden gap approval → Genesis (SOUL.md) → Artisan (loadout) → optional Scout/Sentinel/Librarian → `meta-prism` review → `meta-warden` approval
 4. Review → capability-matched quality reviewer
 5. Integration → write `canonical/agents/{name}.md`

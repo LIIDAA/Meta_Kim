@@ -142,7 +142,7 @@ describe("Agent Dispatch — Part A: Dispatch Mapping", async () => {
 
   // --- 3 global tests ---
 
-  test("All 8 agents appear in at least one type dispatch map", async () => {
+  test("All expected agents appear in at least one type dispatch map", async () => {
     await ensureLoaded();
 
     const referencedAgents = new Set();

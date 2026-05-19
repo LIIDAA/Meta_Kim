@@ -1,5 +1,6 @@
 export const META_AGENTS = [
   "meta-artisan",
+  "meta-chrysalis",
   "meta-conductor",
   "meta-genesis",
   "meta-librarian",
@@ -22,6 +23,8 @@ export const OPENCLAW_WORKSPACE_MD = [
 ];
 
 export const SHARED_HOOK_FILES = [
+  "hook-i18n.mjs",
+  "skip-reminder.mjs",
   "block-dangerous-bash.mjs",
   "activate-meta-theory-spine.mjs",
   "pre-git-push-confirm.mjs",

@@ -1451,6 +1451,24 @@ async function syncClaudeProjection(
     }
   }
 
+  const sharedClaudeHookDependencies = ["hook-i18n.mjs", "skip-reminder.mjs"];
+  for (const hookName of sharedClaudeHookDependencies) {
+    const hookContent = await tryReadCanonical(
+      path.join(canonicalRuntimeAssetsDir, "shared", "hooks", hookName),
+    );
+    if (
+      hookContent &&
+      (
+        await writeGeneratedFile(
+          path.join(claudeHooksProjectionDir, hookName),
+          hookContent,
+        )
+      ).changed
+    ) {
+      changedFiles.push(`${displayPaths.claudeHooks}/${hookName}`);
+    }
+  }
+
   const [settingsContent, mcpContent] = await Promise.all([
     fs.readFile(canonicalClaudeSettingsPath, "utf8"),
     fs.readFile(canonicalClaudeMcpPath, "utf8"),
@@ -1854,7 +1872,7 @@ Examples:
       ) {
         changedFiles.push(`${dp.codexHooks}/activate-meta-theory-spine.mjs`);
       }
-      // Sync shared hook dependencies (utils.mjs, spine-state.mjs, skip-reminder.mjs)
+      // Sync shared hook dependencies (utils.mjs, spine-state.mjs, hook-i18n.mjs, skip-reminder.mjs)
       const utilsHookContent = await tryReadCanonical(
         path.join(canonicalRuntimeAssetsDir, "shared", "hooks", "utils.mjs"),
       );
@@ -1896,6 +1914,20 @@ Examples:
         ).changed
       ) {
         changedFiles.push(`${dp.codexHooks}/skip-reminder.mjs`);
+      }
+      const hookI18nContent = await tryReadCanonical(
+        path.join(canonicalRuntimeAssetsDir, "shared", "hooks", "hook-i18n.mjs"),
+      );
+      if (
+        hookI18nContent &&
+        (
+          await writeGeneratedFile(
+            path.join(dirs.codexHooksDir, "hook-i18n.mjs"),
+            hookI18nContent,
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.codexHooks}/hook-i18n.mjs`);
       }
       if (
         (

@@ -35,7 +35,7 @@
     },
     "scarDetected": {
       "target": "critical-checklist",
-      "storage": "canonical/scar-protocol.md",
+      "storage": "config/contracts/scar-protocol.md",
       "trigger": "update-prevention-rule",
       "evidence": "impact: recovered or critical"
     }

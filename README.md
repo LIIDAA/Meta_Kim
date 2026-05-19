@@ -412,7 +412,7 @@ flowchart TD
 
 ### Agent boundaries + skill integration
 
-The 8 meta roles each own a different domain:
+The 9 meta roles each own a different domain:
 
 | Role | Responsibility | What it does not own |
 | --- | --- | --- |
@@ -424,6 +424,7 @@ The 8 meta roles each own a different domain:
 | **meta-librarian** | Memory and continuity | Does not execute code |
 | **meta-prism** | Quality review and anti-slop | Does not search for capabilities |
 | **meta-scout** | External capability discovery | Does not coordinate internally |
+| **meta-chrysalis** | Evolution writeback, scar capture, recursive-safety gatekeeping | Does not evolve itself or bypass Warden gates |
 
 Each agent can load powerful **skills** and **commands** as needed. Meta_Kim ships with 9 community skills and supports custom extension.
 
@@ -436,6 +437,7 @@ flowchart TD
     WARDEN --> LIBRARIAN[meta-librarian<br/>Memory / continuity]
     WARDEN --> PRISM[meta-prism<br/>Quality review]
     WARDEN --> SCOUT[meta-scout<br/>External capability discovery]
+    WARDEN --> CHRYSALIS[meta-chrysalis<br/>Evolution writeback]
 
     GENESIS -.-> |SOUL.md| ARTISAN
     ARTISAN -.-> |Skill loadout| GENESIS
@@ -444,6 +446,7 @@ flowchart TD
     PRISM -.-> |Review report| WARDEN
     SCOUT -.-> |Capability candidates| ARTISAN
     LIBRARIAN -.-> |Context memory| WARDEN
+    CHRYSALIS -.-> |Scar / writeback proposal| WARDEN
 
     SKILLS[9 community skills<br/>+ custom extensions] --> ARTISAN
     HOOKS[Hook automation<br/>intercept / format / check] --> SENTINEL
@@ -456,6 +459,7 @@ flowchart TD
     style LIBRARIAN fill:#a78bfa,color:#fff
     style PRISM fill:#fb923c,color:#000
     style SCOUT fill:#2dd4bf,color:#000
+    style CHRYSALIS fill:#84cc16,color:#000
 ```
 
 ### Hook automation

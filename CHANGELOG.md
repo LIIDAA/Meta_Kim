@@ -6,6 +6,21 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.0.35] - 2026-05-20
+
+### Changed
+
+- **Meta-theory confirmation flow** — Clarified that blocking Critical questions only happen when Fetch cannot proceed, while the main user choice happens once after Fetch + Thinking and before Execution.
+- **Product-readable decision cards** — Expanded decision templates so every pre-execution choice includes 3-4 options with expected result, advantages, and disadvantages in non-technical language.
+- **9-agent documentation parity** — Updated Codex/README/test wording to include `meta-chrysalis` alongside the existing meta agents.
+
+### Fixed
+
+- **Hook layering** — Removed the duplicated Claude-only `skip-reminder.mjs` source and made Claude sync consume the shared hook plus its shared i18n dependency.
+- **Install package contents** — Narrowed the npm `files` whitelist so local `scripts/.meta-kim` state is not packed, and ignored the removed `package-lock.json`.
+- **Evolution contract path** — Pointed scar writeback storage to the existing `config/contracts/scar-protocol.md`.
+- **Setup counts** — Replaced hardcoded 8-agent setup labels with the canonical agent count.
+
 ## [2.0.34] - 2026-05-20
 
 ### Added

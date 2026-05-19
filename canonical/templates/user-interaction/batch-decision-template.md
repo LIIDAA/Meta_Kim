@@ -2,6 +2,8 @@
 
 Use this template when multiple independent questions can be decided together.
 
+Every question must offer 3-4 options. Each option must state what changes, what problem it solves, the expected result, advantages, and disadvantages in product language a non-technical user can understand.
+
 ## Dependency Detection
 
 ```python
@@ -45,11 +47,11 @@ The following questions are independent. Please select one option for each:
 
 {Context: Why this decision is needed}
 
-| Option | What Changes | Problem Solved | Advantages | Disadvantages |
-|--------|--------------|----------------|------------|---------------|
-| **A** | {description} | {description} | {description} | {description} |
-| **B** | {description} | {description} | {description} | {description} |
-| **C** | {description} | {description} | {description} | {description} |
+| Option | What Changes | Problem Solved | Expected Result | Advantages | Disadvantages |
+|--------|--------------|----------------|-----------------|------------|---------------|
+| **A** | {description} | {description} | {description} | {description} | {description} |
+| **B** | {description} | {description} | {description} | {description} | {description} |
+| **C** | {description} | {description} | {description} | {description} | {description} |
 
 **Your choice:** [ ] A [ ] B [ ] C
 
@@ -59,12 +61,13 @@ The following questions are independent. Please select one option for each:
 
 {Context: Why this decision is needed}
 
-| Option | What Changes | Problem Solved | Advantages | Disadvantages |
-|--------|--------------|----------------|------------|---------------|
-| **A** | {description} | {description} | {description} | {description} |
-| **B** | {description} | {description} | {description} | {description} |
+| Option | What Changes | Problem Solved | Expected Result | Advantages | Disadvantages |
+|--------|--------------|----------------|-----------------|------------|---------------|
+| **A** | {description} | {description} | {description} | {description} | {description} |
+| **B** | {description} | {description} | {description} | {description} | {description} |
+| **C** | {description} | {description} | {description} | {description} | {description} |
 
-**Your choice:** [ ] A [ ] B
+**Your choice:** [ ] A [ ] B [ ] C
 
 ---
 
@@ -83,7 +86,8 @@ For platforms that support multi-question AskUserQuestion:
       "header": "{Q1 Tag}",
       "options": [
         {"label": "A", "description": "{4-dimension format}"},
-        {"label": "B", "description": "{4-dimension format}"}
+        {"label": "B", "description": "{4-dimension format}"},
+        {"label": "C", "description": "{4-dimension format}"}
       ],
       "multiSelect": false
     },
@@ -92,7 +96,8 @@ For platforms that support multi-question AskUserQuestion:
       "header": "{Q2 Tag}",
       "options": [
         {"label": "A", "description": "{4-dimension format}"},
-        {"label": "B", "description": "{4-dimension format}"}
+        {"label": "B", "description": "{4-dimension format}"},
+        {"label": "C", "description": "{4-dimension format}"}
       ],
       "multiSelect": false
     }

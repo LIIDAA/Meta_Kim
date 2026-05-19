@@ -328,7 +328,7 @@
       "claude": {
         "primarySurface": "AskUserQuestion_tool",
         "fallbackSurfaces": ["conversation_fallback"],
-        "triggerDescription": "Use AskUserQuestion tool directly - this is the GUARANTEED path for Critical/Fetch/Thinking/Review confirmation.",
+        "triggerDescription": "Use AskUserQuestion for blocking Critical clarification when Fetch cannot proceed, then use it once for Execution confirmation after Fetch and Thinking.",
         "implementation": "Invoke AskUserQuestion with questions array; platform natively supports modal popup."
       },
       "codex": {

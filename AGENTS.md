@@ -38,7 +38,7 @@ A valid meta unit should:
 When this repository is opened in Codex:
 
 - `AGENTS.md` is the project guide you are reading now
-- `.codex/agents/*.toml` contains the 8 Codex custom-agent mirrors
+- `.codex/agents/*.toml` contains the 9 Codex custom-agent mirrors
 - `.codex/skills/meta-theory/` is the Codex project skill mirror (directory layout)
 - `codex/config.toml.example` is generated from `canonical/runtime-assets/codex/config.toml.example` and shows how user-global Codex can wire MCP and skills
 
@@ -246,7 +246,7 @@ You:
 - Evolution: keep the reusable pattern
 ```
 
-## The Eight Meta Agents
+## The Nine Meta Agents
 
 - `meta-warden`: coordination, arbitration, final synthesis
 - `meta-conductor`: workflow, sequencing, rhythm control
@@ -256,6 +256,7 @@ You:
 - `meta-librarian`: memory, continuity, context policy
 - `meta-prism`: quality review, drift detection, anti-slop review
 - `meta-scout`: external capability discovery and evaluation
+- `meta-chrysalis`: evolution writeback, scar capture, recursive-safety gatekeeping
 
 ## Canonical vs Derived Files
 

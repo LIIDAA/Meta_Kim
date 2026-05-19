@@ -1,6 +1,6 @@
 # Decision Template (4-Dimension Options)
 
-Use this template when multiple viable solutions exist with distinct trade-offs.
+Use this template when multiple viable solutions exist with distinct trade-offs. Each question must have 3-4 options, and each option must be understandable to non-technical users.
 
 ## Format
 
@@ -8,6 +8,7 @@ Use this template when multiple viable solutions exist with distinct trade-offs.
 |-----------|-------------|----------|
 | **What changes** | Specific scope of modification | ✅ |
 | **What problem it solves** | Corresponding requirement or pain point | ✅ |
+| **Expected result** | What the user will get after choosing this option | ✅ |
 | **Advantages** | Why choose this approach | ✅ |
 | **Disadvantages** | Costs or risks | ✅ |
 
@@ -26,6 +27,10 @@ Use this template when multiple viable solutions exist with distinct trade-offs.
       {
         "label": "{Option B}",
         "description": "{Same 4-dimension format}"
+      },
+      {
+        "label": "{Option C}",
+        "description": "{Same 4-dimension format}"
       }
     ],
     "multiSelect": false
@@ -38,20 +43,20 @@ Use this template when multiple viable solutions exist with distinct trade-offs.
 ```json
 {
   "questions": [{
-    "question": "How should AskUserQuestion confirmations be adjusted?",
-    "header": "Confirm Mode",
+    "question": "How should Meta_Kim ask for decisions before work begins?",
+    "header": "Decision",
     "options": [
       {
-        "label": "Keep current 4-point confirmation",
-        "description": "What changes: None. Problem solved: Ensures full user control. Advantages: Safe, no missed confirmations. Disadvantages: 4 interruptions, poor UX."
+        "label": "Ask once before action",
+        "description": "What changes: The assistant gathers facts first, then asks one clear set of questions before changing anything. Problem solved: Avoids repeated interruptions. Expected result: The user sees the plan, choices, likely outcome, benefits, and trade-offs in one place. Advantages: Clear and efficient. Disadvantages: Some early assumptions may need correction."
       },
       {
-        "label": "Confirm only at key decision points",
-        "description": "What changes: Modify confirmation trigger rules in SKILL.md. Problem solved: Reduces unnecessary interruptions. Advantages: Better UX, only decide at key nodes. Disadvantages: May miss edge case confirmations."
+        "label": "Ask early if blocked",
+        "description": "What changes: The assistant asks immediately only when it cannot understand the goal or risk. Problem solved: Prevents work from starting on a wrong target. Expected result: Unclear requests are clarified before planning. Advantages: Safer for ambiguous work. Disadvantages: Can interrupt more often."
       },
       {
-        "label": "Batch collect all questions",
-        "description": "What changes: Add batch collection mechanism to SKILL.md. Problem solved: Handle multiple decisions in one interaction. Advantages: Efficient, focused attention. Disadvantages: Higher implementation complexity."
+        "label": "Ask in milestones",
+        "description": "What changes: The assistant pauses at major checkpoints for user choice. Problem solved: Gives more control during risky work. Expected result: The user can redirect before each large step. Advantages: Strong oversight. Disadvantages: Slower completion."
       }
     ],
     "multiSelect": false
@@ -61,6 +66,6 @@ Use this template when multiple viable solutions exist with distinct trade-offs.
 
 ## When to Use
 
-- ≥2 viable solutions exist with clear trade-offs
+- 2+ viable solutions exist with clear trade-offs
 - Product/Business direction must be clarified
 - Security or rollback risk requires explicit acknowledgment

@@ -6,6 +6,21 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.0.35] - 2026-05-20
+
+### 变更
+
+- **meta-theory 确认流程** — 明确 Critical 阶段只处理阻断 Fetch 的早期澄清；主要用户选择统一发生在 Fetch + Thinking 之后、Execution 之前。
+- **产品化决策卡** — 扩展 decision 模板，要求每个执行前问题都有 3-4 个选项，并用非技术语言说明预期结果、优势和劣势。
+- **9-agent 文档一致性** — 更新 Codex、README 和测试文案，把 `meta-chrysalis` 纳入完整 meta agent 阵列。
+
+### 修复
+
+- **Hook 分层** — 删除重复的 Claude 专用 `skip-reminder.mjs` 源文件，让 Claude 同步使用 shared hook 与 shared i18n 依赖。
+- **安装包内容** — 收紧 npm `files` 白名单，避免打包本地 `scripts/.meta-kim` 状态，并忽略已移除的 `package-lock.json`。
+- **Evolution contract 路径** — 将 scar 写回目标指向实际存在的 `config/contracts/scar-protocol.md`。
+- **Setup 计数** — 将硬编码 8-agent 安装提示改为使用 canonical agent 数量。
+
 ## [2.0.34] - 2026-05-20
 
 ### 新增

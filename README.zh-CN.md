@@ -73,7 +73,7 @@ npm run meta:validate
 |---|---|---|
 | Meta_Kim 仓库 + Claude Code | 完整治理（CLAUDE.md 提供 8-stage spine、门、分发规则） | — |
 | 任意其他项目 + Claude Code | Hooks（安全拦截、格式化、记忆保存）+ `/meta-theory` skill | 说"run meta theory"或输入 `/meta-theory` |
-| Codex | AGENTS.md 规则 + 8 个自定义 agent + `/meta-theory` 命令 | 输入"run meta theory"或 `/meta-theory` |
+| Codex | AGENTS.md 规则 + 9 个自定义 agent + `/meta-theory` 命令 | 输入"run meta theory"或 `/meta-theory` |
 | OpenClaw | Workspace agent + Plugin SDK hooks（28 个事件） | 需要配置 `auth.json` |
 | Cursor | Agent 投影 + skill 镜像 + hooks + MCP | 最轻量；适合阅读和轻量操作 |
 
@@ -411,7 +411,7 @@ flowchart TD
 
 ### Agent 边界 + 技能集成
 
-8 个元角色各管一摊，边界清晰：
+9 个元角色各管一摊，边界清晰：
 
 | 角色 | 职责 | 不管什么 |
 | --- | --- | --- |
@@ -423,6 +423,7 @@ flowchart TD
 | **meta-librarian** | 记忆、连续性 | 不管代码执行 |
 | **meta-prism** | 质量审查、反糊弄 | 不管能力搜索 |
 | **meta-scout** | 外部能力发现 | 不管内部协调 |
+| **meta-chrysalis** | 演化写回、scar 记录、递归安全门 | 不演化自己，也不绕过 Warden gate |
 
 每个 agent 可以集成各种强大的 **skill**（技能）和 **command**（命令），按需加载。Meta_Kim 预装了 9 个社区技能，也支持自定义扩展。
 
@@ -435,6 +436,7 @@ flowchart TD
     WARDEN --> LIBRARIAN[meta-librarian<br/>记忆/连续性]
     WARDEN --> PRISM[meta-prism<br/>质量审查]
     WARDEN --> SCOUT[meta-scout<br/>外部能力发现]
+    WARDEN --> CHRYSALIS[meta-chrysalis<br/>演化写回]
 
     GENESIS -.-> |SOUL.md| ARTISAN
     ARTISAN -.-> |技能负载| GENESIS
@@ -443,6 +445,7 @@ flowchart TD
     PRISM -.-> |审查报告| WARDEN
     SCOUT -.-> |能力候选| ARTISAN
     LIBRARIAN -.-> |上下文记忆| WARDEN
+    CHRYSALIS -.-> |scar / 写回建议| WARDEN
 
     SKILLS[9 个社区技能<br/>+ 自定义扩展] --> ARTISAN
     HOOKS[Hook 自动化<br/>拦截/格式化/检查] --> SENTINEL
@@ -455,6 +458,7 @@ flowchart TD
     style LIBRARIAN fill:#a78bfa,color:#fff
     style PRISM fill:#fb923c,color:#000
     style SCOUT fill:#2dd4bf,color:#000
+    style CHRYSALIS fill:#84cc16,color:#000
 ```
 
 ### Hook 自动化

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-19T17:58:15.206Z",
+  "generatedAt": "2026-05-19T19:15:52.121Z",
   "registryName": "meta-kim-capabilities",
   "scope": "repo-canonical",
   "canonicalProjection": "config/capability-index/meta-kim-capabilities.json",
@@ -20,7 +20,7 @@
   "summary": {
     "totalAgents": 9,
     "totalSkills": 7,
-    "totalHooks": 22,
+    "totalHooks": 21,
     "totalPlugins": 0,
     "totalCommands": 0
   },
@@ -123,8 +123,8 @@
         "type": "skills",
         "namespace": "canonical",
         "path": "canonical/skills/meta-theory/SKILL.md",
-        "size": 32085,
-        "modified": "2026-05-19T17:23:13.360Z"
+        "size": 36827,
+        "modified": "2026-05-19T19:03:41.593Z"
       },
       "repo:canonical-reference:create-agent": {
         "id": "create-agent",
@@ -213,10 +213,10 @@
         "id": "skip-reminder.mjs",
         "type": "hooks",
         "namespace": "canonical-runtime-assets",
-        "path": "canonical/runtime-assets/claude/hooks/skip-reminder.mjs",
+        "path": "canonical/runtime-assets/shared/hooks/skip-reminder.mjs",
         "relativePath": "skip-reminder.mjs",
-        "size": 5926,
-        "modified": "2026-05-19T17:32:50.618Z"
+        "size": 6453,
+        "modified": "2026-05-19T17:38:02.754Z"
       },
       "repo:canonical-runtime-assets:spine-state.mjs": {
         "id": "spine-state.mjs",
