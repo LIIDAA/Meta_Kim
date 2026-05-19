@@ -6,6 +6,26 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.0.32] - 2026-05-19
+
+### Added
+
+- **Shared hooks source files** — New `canonical/runtime-assets/shared/hooks/` directory with portable source files:
+  - `activate-meta-theory-spine.mjs`: spine auto-trigger implementation
+  - `spine-state.mjs`: spine state management utilities
+  - `utils.mjs`: shared hook utilities
+- **Codex Skill hook support** — Updated `scripts/sync-runtimes.mjs` to configure Skill hook for Codex runtime, enabling spine auto-trigger across platforms.
+- **SHARED_HOOK_FILES alias** — Added `SHARED_HOOK_FILES` export in `scripts/runtime-sync-check.mjs` with alias `CLAUDE_HOOK_FILES` for backwards compatibility.
+
+### Changed
+
+- **settings.json Skill hook** — PreToolUse matcher now routes to shared `activate-meta-theory-spine.mjs` for automatic spine state initialization.
+- **Capability index update** — Added spine-related capabilities to `config/capability-index/meta-kim-capabilities.json`.
+
+### Removed
+
+- **package-lock.json** — Deleted (project uses pnpm with `pnpm-lock.yaml`).
+
 ## [2.0.30] - 2026-05-15
 
 ### Changed

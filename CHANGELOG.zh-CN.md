@@ -6,6 +6,26 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.0.32] - 2026-05-19
+
+### 新增
+
+- **共享 hooks 源文件** — 新增 `canonical/runtime-assets/shared/hooks/` 目录，包含可移植源文件：
+  - `activate-meta-theory-spine.mjs`: spine 自动触发实现
+  - `spine-state.mjs`: spine 状态管理工具
+  - `utils.mjs`: 共享 hooks 工具函数
+- **Codex Skill hook 支持** — 更新 `scripts/sync-runtimes.mjs`，为 Codex 运行时配置 Skill hook，实现跨平台 spine 自动触发。
+- **SHARED_HOOK_FILES 别名** — 在 `scripts/runtime-sync-check.mjs` 新增 `SHARED_HOOK_FILES` 导出，`CLAUDE_HOOK_FILES` 作为向后兼容别名。
+
+### 变更
+
+- **settings.json Skill hook** — PreToolUse matcher 现在指向共享的 `activate-meta-theory-spine.mjs`，实现 meta-theory skill 激活时自动初始化 spine state。
+- **能力索引更新** — 在 `config/capability-index/meta-kim-capabilities.json` 添加 spine 相关能力。
+
+### 移除
+
+- **package-lock.json** — 删除（项目使用 pnpm，依赖 `pnpm-lock.yaml`）。
+
 ## [2.0.30] - 2026-05-15
 
 ### 变更
