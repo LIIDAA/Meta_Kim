@@ -96,6 +96,10 @@ describe("capability index inheritance chain", () => {
         true,
         `${runtimeId} projection skillsDir must point at the runtime skills root`,
       );
+      assert.ok(
+        projection.capabilityIndexDir,
+        `${runtimeId} projection must expose a capability index mirror directory`,
+      );
     }
   });
 

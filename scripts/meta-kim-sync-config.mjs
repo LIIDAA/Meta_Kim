@@ -76,7 +76,15 @@ const runtimeProfileCatalog = {
     projection: {
       supportsRepoProjection: true,
       supportsLocalActivation: true,
-      assetTypes: ["agents", "skills", "hooks", "commands", "config", "mcp"],
+      assetTypes: [
+        "agents",
+        "skills",
+        "hooks",
+        "commands",
+        "config",
+        "mcp",
+        "capabilityIndex",
+      ],
       outputPaths: {
         agentsDir: ".codex/agents",
         skillsDir: ".codex/skills",
@@ -85,6 +93,7 @@ const runtimeProfileCatalog = {
         hooksFile: ".codex/hooks.json",
         commandsDir: ".codex/commands",
         configExampleFile: "codex/config.toml.example",
+        capabilityIndexDir: ".codex/capability-index",
       },
     },
     activation: {
@@ -102,12 +111,20 @@ const runtimeProfileCatalog = {
     projection: {
       supportsRepoProjection: true,
       supportsLocalActivation: true,
-      assetTypes: ["workspaces", "skills", "hooks", "config", "mcp"],
+      assetTypes: [
+        "workspaces",
+        "skills",
+        "hooks",
+        "config",
+        "mcp",
+        "capabilityIndex",
+      ],
       outputPaths: {
         workspacesDir: "openclaw/workspaces",
         skillsDir: "openclaw/skills",
         skillRoot: "openclaw/skills/meta-theory",
         templateConfigFile: "openclaw/openclaw.template.json",
+        capabilityIndexDir: "openclaw/capability-index",
       },
     },
     activation: {
@@ -125,7 +142,7 @@ const runtimeProfileCatalog = {
     projection: {
       supportsRepoProjection: true,
       supportsLocalActivation: true,
-      assetTypes: ["agents", "skills", "hooks", "mcp"],
+      assetTypes: ["agents", "skills", "hooks", "mcp", "capabilityIndex"],
       outputPaths: {
         agentsDir: ".cursor/agents",
         skillsDir: ".cursor/skills",
@@ -133,6 +150,7 @@ const runtimeProfileCatalog = {
         hooksDir: ".cursor/hooks",
         hooksFile: ".cursor/hooks.json",
         mcpFile: ".cursor/mcp.json",
+        capabilityIndexDir: ".cursor/capability-index",
       },
     },
     activation: {
@@ -372,6 +390,7 @@ const runtimeProjectionLayouts = {
       hooksDir: [".claude", "hooks"],
       settingsFile: [".claude", "settings.json"],
       mcpFile: [".mcp.json"],
+      capabilityIndexDir: [".claude", "capability-index"],
     },
     global: {
       agentsDir: ["agents"],
@@ -380,6 +399,7 @@ const runtimeProjectionLayouts = {
       hooksDir: ["hooks", "meta-kim"],
       settingsFile: ["settings.json"],
       mcpFile: null,
+      capabilityIndexDir: ["capability-index"],
     },
   },
   codex: {
@@ -393,6 +413,7 @@ const runtimeProjectionLayouts = {
       hooksFile: [".codex", "hooks.json"],
       commandsDir: [".codex", "commands"],
       configExampleFile: ["codex", "config.toml.example"],
+      capabilityIndexDir: [".codex", "capability-index"],
     },
     global: {
       agentsDir: ["agents"],
@@ -402,6 +423,7 @@ const runtimeProjectionLayouts = {
       hooksFile: ["hooks.json"],
       commandsDir: ["commands"],
       configExampleFile: ["config.toml.example"],
+      capabilityIndexDir: ["capability-index"],
     },
   },
   openclaw: {
@@ -413,6 +435,7 @@ const runtimeProjectionLayouts = {
       legacySkillReferencesDir: ["openclaw", "skills", "references"],
       hooksDir: ["openclaw", "hooks"],
       templateConfigFile: ["openclaw", "openclaw.template.json"],
+      capabilityIndexDir: ["openclaw", "capability-index"],
     },
     global: {
       workspacesRoot: [],
@@ -420,6 +443,7 @@ const runtimeProjectionLayouts = {
       skillRoot: ["skills", "meta-theory"],
       hooksDir: ["hooks"],
       templateConfigFile: ["openclaw.template.json"],
+      capabilityIndexDir: ["capability-index"],
     },
   },
   cursor: {
@@ -430,6 +454,7 @@ const runtimeProjectionLayouts = {
       hooksDir: [".cursor", "hooks"],
       hooksFile: [".cursor", "hooks.json"],
       mcpFile: [".cursor", "mcp.json"],
+      capabilityIndexDir: [".cursor", "capability-index"],
     },
     global: {
       agentsDir: ["agents"],
@@ -438,6 +463,7 @@ const runtimeProjectionLayouts = {
       hooksDir: ["hooks"],
       hooksFile: ["hooks.json"],
       mcpFile: ["mcp.json"],
+      capabilityIndexDir: ["capability-index"],
     },
   },
 };
