@@ -37,6 +37,19 @@ When running inside Codex, this skill is an execution protocol, not just a discu
 - Keep main Codex thread limited to clarification, routing, verification, and synthesis
 - If `agent-teams-playbook` cannot load or `spawn_agent` is unavailable, record the blocked reason and follow the degraded path — do not silently continue as main-thread analysis
 
+### Codex Honest Subagent Contract
+
+In Codex, only claim that subagents were dispatched when a real callable subagent mechanism is present and was invoked successfully.
+
+If `spawn_agent` / Agent-equivalent tooling is not available:
+- Do not pretend parallel agents ran.
+- Record `subagentStatus = "unavailable"` with the exact blocked reason.
+- Use degraded mode: the main thread may perform read-only inspection, routing analysis, and synthesis, but must label it as degraded single-thread execution.
+- For executable multi-file work, ask for permission to continue degraded or stop with a dispatch-blocked plan.
+- For read-only review, continue if useful, but state that recommendations are conductor/editor analysis, not independent subagent findings.
+
+Never cite imaginary agent outputs, reviews, or consensus.
+
 ### Codex Multi-Option Choice Surface Rule
 
 Every user-visible Codex confirmation or decision surface produced under this skill must contain multi-option choice content. This is a Codex delivery rule, not a replacement for the Thinking-stage `preDecisionOptionFrame` or the formal confirmation gate.
@@ -90,7 +103,7 @@ Default: A because [specific reason].
 
 This Codex rule does not alter Claude Code behavior. Claude Code native question tool remains unchanged: when available, it remains the primary surface for blocking clarification and execution confirmation.
 
-**Read-only is still delegable.** Phrases like `仅分析`, `只读`, `analysis only` restrict writes but do not revoke `/meta-theory` authorization for agent dispatch. Only skip subagents when the user explicitly says `不要调用 agent`, `no subagents`, or equivalent.
+**Read-only is still delegable when real subagent tooling exists.** Phrases like `仅分析`, `只读`, `analysis only` restrict writes but do not revoke `/meta-theory` authorization for agent dispatch. If the user explicitly asks for read-only output and the runtime lacks real subagent tooling, proceed in honest degraded mode and do not fabricate delegation.
 
 ## Architecture Type Pre-judgment
 
@@ -242,9 +255,61 @@ All Types share a **Universal Entry Chain**: `trigger → classify → capabilit
 
 See `references/dev-governance.md` Step 3.7 for full specification.
 
+## Problem-First Gate
+
+Meta-theory exists to clarify and solve the user's core problem. Protocol artifacts, stages, agents, and confirmations are supporting machinery, not the deliverable.
+
+Before expanding workflow, write a one-sentence `coreProblem` internally:
+- What decision, defect, design gap, or deliverable is the user actually asking for?
+- What evidence is needed to answer it responsibly?
+- What is the smallest useful output that would move the user forward?
+
+If a protocol step does not improve `coreProblem` resolution, evidence quality, safety, or writeback quality, compress it into an internal note. Do not expose process unless the user asks for governance/debug trace.
+
+For read-only analysis, prefer a direct answer with evidence and patchable recommendations over full orchestration ceremony.
+
+## Complexity Path Selection
+
+Choose the smallest path that can responsibly close `coreProblem`:
+
+| Path | Use when | Required shape |
+|---|---|---|
+| `fast_path` | Read-only/local analysis, single narrow decision, no writes, no external current facts | Minimal evidence notes, direct answer, optional `writebackSuggestion` |
+| `standard_path` | Small or medium executable work, limited files, clear owner, moderate risk | Critical -> Fetch -> Thinking -> Execution -> Review -> Verification, compressed artifacts |
+| `regulated_path` | Multi-agent, cross-module, security-sensitive, release/public-facing, durable policy, or high uncertainty | Full 8-stage spine, complete packets, confirmation gate, Review + Meta-Review + Evolution |
+
+Escalate path level when evidence shows more risk. De-escalate only with a recorded skip reason. Do not force `regulated_path` just because the skill is active.
+
+## Deadlock Breaker
+
+When Warden, Conductor, Prism, or Chrysalis bounce the same run more than twice without new evidence, stop the loop:
+
+1. Record `deadlockBreaker.triggered = true`, the repeated blockers, and the last new evidence.
+2. Warden owns the final arbitration format: `proceed_with_assumption | narrow_scope | ask_user | stop_blocked`.
+3. Conductor may revise the board once after arbitration; Prism may mark findings `not_closable` but does not keep re-opening the same standard without new evidence; Chrysalis sets `writebackDecision: none` when permanence cannot be justified.
+4. If user input is needed, ask one focused question that would break the loop.
+
+## Fetch Ownership Boundary
+
+All meta agents may declare a `fetchNeed`, but ownership is split:
+
+- Conductor decides whether evidence is needed and where it belongs in the run.
+- Scout performs external broad discovery and current/source-backed capability research.
+- Artisan maps named tools/skills to one agent after evidence exists.
+- Prism reviews evidence sufficiency and claim quality, but does not perform broad discovery.
+- Warden arbitrates whether the evidence is enough to pass a gate.
+
 ## Gates
 
 **Gate 1**: Clarity Check — ask blocking Critical clarifications only when Fetch cannot proceed; run the full Clarity Gate before executing a dispatch plan.
+
+**Clarification Ladder**:
+1. If missing information blocks safe progress, ask one focused blocking question before Fetch.
+2. If missing information can be reasonably inferred, proceed with explicit assumptions and mark them as assumptions.
+3. If multiple interpretations are viable and lead to different outputs, present 2-3 concrete interpretations and recommend a default.
+4. If the request is read-only and evidence can be gathered locally, do not interrupt; inspect first, then ask only if the evidence still leaves a material fork.
+
+A clarification is blocking only when proceeding could modify the wrong files, violate user constraints, choose the wrong deliverable, or create misleading advice.
 
 **Gate 2**: Dispatch-Not-Execute — analysis, review, and code changes belong to execution agents via `Agent` tool, not to this thread.
 
@@ -273,7 +338,7 @@ Gate 3 FAIL override is a **governance violation**. If the task genuinely needs 
 - "Write code first, review later" / "Skip protocol artifacts"
 - "Warden said FAIL but proceeding anyway"
 
-**If unsure → DISPATCH.** Cost of unnecessary dispatch < cost of bypassing the dispatcher.
+**If unsure on executable or high-risk work → DISPATCH.** For read-only analysis, first preserve answer quality: gather enough evidence, state assumptions, and use degraded single-thread review if real subagents are unavailable.
 
 **Self-check before every output** — if any answer is YES, STOP and dispatch instead:
 1. Skip-level? Writing analysis/code/reviews myself?
@@ -451,7 +516,20 @@ After completing Fetch Steps 1–3, update the spine state with a `fetchRecord` 
 }
 ```
 
-**Research Validation** — required when the task involves external claims, library behavior, best practices, or factual analysis requiring verification:
+**Research Validation / Web Search Boundary** — use local evidence first for repo-internal facts, but external research is mandatory when the answer depends on facts that may have changed, are outside the local workspace, or require source-backed verification.
+
+Mandatory external research triggers:
+- Current or recent facts: versions, APIs, docs, regulations, prices, schedules, security advisories, release status, company/person/project state.
+- External technical behavior: third-party library semantics, framework best practices, platform limits, plugin/tool capabilities, protocol standards.
+- Claims that will be quoted, cited, compared, or used to justify a durable design decision.
+- User explicitly asks to search, browse, verify, cite sources, or find the latest information.
+
+Skip external research only when:
+- The task is entirely about local files already inspected.
+- The user explicitly says local-only / no internet / skip research.
+- The claim is stable background knowledge and not central to the answer.
+
+When skipping, record `researchSkipReason` in `contentEvidencePacket` and state any uncertainty in the final answer when it matters.
 
 1. Identify the capability needed (e.g., "web search", "content retrieval", "documentation lookup")
 2. Produce `contentEvidencePacket.researchCapabilityDiscovery` by discovering current-runtime retrieval capabilities from actual tool inventory sources (`active_tools`, `deferred_tools`, MCP, plugins, skills, commands, capability indexes, or explicit user instruction). Record descriptor, provider kind, status, proof, limitations, selected research path, gaps, and Conductor validation. Do not use host-form-factor guesses such as `platformSurface`.
@@ -635,6 +713,21 @@ Stage 2 is the gate — do not skip to Stage 3/4. Stage 4 requires protocol arti
 **Exit**: synthesize into actionable orchestration plan.
 
 ## Evolution Rules
+
+**Project Writeback Root**: Durable Meta_Kim improvements live under `D:/KimProject/Meta_Kim` unless the user names another repo. Do not write evolution learnings into the current incidental working directory merely because the run started there.
+
+Before any writeback:
+1. Classify the finding: agent boundary, reusable skill, capability index, contract/gate, scar/process violation, or documentation.
+2. Map it to the canonical target under `D:/KimProject/Meta_Kim`:
+   - agent boundary or SOUL issue → `canonical/agents/`
+   - reusable operating pattern → `canonical/skills/`
+   - capability coverage → `config/capability-index/`
+   - protocol/gate rule → `config/contracts/` or the relevant skill source
+   - process violation/scar → the project's scar/process log location
+3. Ask for write permission unless the user already authorized modifications.
+4. After canonical changes, run the project sync command only when available and appropriate.
+
+If the current task is read-only, output a `writebackSuggestion` with target path and rationale instead of editing.
 
 **Direct over indirect**: directly edit the specific agent definition that revealed the gap — NOT a memory file, NOT a pattern directory. The agent definition IS the memory.
 
