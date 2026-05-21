@@ -160,7 +160,7 @@ Conductor owns evidence-lane validation and may not finalize dispatch until the 
 
 Protocol stage labels stay canonical English: `Critical`, `Fetch`, `Thinking`, `Execution`, `Review`, `Meta-Review`, `Verification`, `Evolution`.
 
-User-facing text must follow this language priority: first the user's explicit output-language choice, then the user's latest input language when no explicit choice exists. Do not hardcode Chinese, English, or any single human language for clarification prompts, option labels, confirmation text, or explanations. If the user changes language mid-run without an explicit output-language override, subsequent user-visible cards and summaries follow the newer input language while preserving canonical stage labels.
+User-facing text must follow this language priority: first the runtime/tool selected output language when the host has already chosen one, then the user's explicit output-language choice, then the user's latest input language when no stronger language source exists. Do not hardcode Chinese, English, or any single human language for clarification prompts, option labels, confirmation text, or explanations. If the user changes language mid-run without a runtime/tool or explicit output-language override, subsequent user-visible cards and summaries follow the newer input language while preserving canonical stage labels.
 
 For `clarify`, `option_select`, and `confirm_execution` cards, prefer the current platform's native choice surface when it exists:
 
@@ -314,17 +314,17 @@ Every option presented must include:
 At each stage transition, output a notice (not a popup):
 
 ```markdown
-Meta governance active: {Current Stage} ({stageIndex}/{stageTotal}, {percent}%)
+{localizedActiveLabel}: {Current Stage} ({stageIndex}/{stageTotal}, {percent}%)
 
-Completed: {completed stages or "none"}
-Current: {plain-language work happening now}
-Next: {next stage name or "none"}
-Blocked: {blocker or "none"}
+{localizedCompletedLabel}: {completed stages or localized none}
+{localizedCurrentLabel}: {plain-language work happening now}
+{localizedNextLabel}: {next stage name or localized none}
+{localizedBlockedLabel}: {blocker or localized none}
 ```
 
-This notice is the public view of the `runStatusEnvelope`, not the internal protocol trace. It must answer: whether meta-theory governance is active, where it is now, how far it has progressed, what is next, and whether it is blocked. Keep the language aligned with the user's explicit output-language choice first, then latest input language. Keep only protocol stage labels canonical.
+This notice is the public view of the `runStatusEnvelope`, not the internal protocol trace. It must answer: whether meta-theory governance is active, where it is now, how far it has progressed, what is next, and whether it is blocked. Keep the language aligned with the runtime/tool selected output language first, then explicit output-language choice, then latest input language. Keep only protocol stage labels canonical.
 
-The envelope stores localized `stagePurposeByLocale` text. Runtime adapters must render labels such as "Completed / Current / Next / Blocked" in the user's chosen or inferred language; only protocol stage names such as `Critical` and `Fetch` stay in canonical English.
+The envelope may carry runtime-provided `publicLabels` and a resolved `stagePurpose`. Runtime adapters must render status labels using the already-selected output language when available; the user's latest input language is only the fallback. Do not hardcode Chinese, English, or any single human language as the default notice shell.
 
 The runtime must also maintain a cross-platform public status file:
 
@@ -334,17 +334,6 @@ The runtime must also maintain a cross-platform public status file:
 ```
 
 These files use the shared `runStatusEnvelope` contract so Claude Code, Codex, Cursor, and OpenClaw can all answer "where is meta now?" without exposing `Preflight`, `nativeChoiceSurface`, `conversation_fallback`, packet ids, or protocol traces to normal users.
-
-Example user-facing notice:
-
-```text
-Meta governance active: Fetch (2/8, 25%)
-
-Completed: Critical
-Current: gathering capability, evidence, and constraint context
-Next: Thinking
-Blocked: none
-```
 
 Do not use this Notice as a Decision surface. If the user must choose among multiple viable paths, use the normal native choice tool or clean conversation choice card after Fetch and Thinking.
 

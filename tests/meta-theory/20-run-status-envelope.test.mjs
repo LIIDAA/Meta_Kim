@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -41,10 +41,12 @@ describe("meta-theory run status envelope", () => {
       "next",
       "blockedOn",
       "surfaceMode",
-      "locale",
-      "languageSource",
+      "resolvedOutputLanguage",
+      "languageResolution",
       "publicSurface",
-      "stagePurposeByLocale",
+      "publicLabels",
+      "stagePurpose",
+      "stagePurposeKey",
     ]) {
       assert.ok(
         envelope.requiredFields.includes(field),
@@ -87,8 +89,9 @@ describe("meta-theory run status envelope", () => {
       assert.equal(active.stageIndex, 1);
       assert.equal(active.stageTotal, 8);
       assert.equal(active.percent, 12);
-      assert.equal(active.locale, "en-US");
-      assert.equal(active.stagePurposeByLocale["zh-CN"], "判断元治理是否已触发，以及是否需要先澄清");
+      assert.equal(active.resolvedOutputLanguage, "undetermined");
+      assert.equal(active.languageResolution.source, "not_resolved");
+      assert.equal(active.stagePurposeKey, "critical");
       assert.equal(active.publicSurface.primaryDisplay, "conversation_notice");
       assert.equal(active.publicSurface.popupRequired, false);
       assert.ok(active.runId.startsWith("meta-"));
@@ -114,7 +117,7 @@ describe("meta-theory run status envelope", () => {
       assert.equal(active.percent, 25);
       assert.deepEqual(active.completed, ["Critical"]);
       assert.equal(active.next, "Thinking");
-      assert.equal(active.stagePurposeByLocale["zh-CN"], "正在收集能力、证据和约束");
+      assert.equal(active.stagePurposeKey, "fetch");
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -129,25 +132,104 @@ describe("meta-theory run status envelope", () => {
 
     assert.match(combined, /runStatusEnvelope/);
     assert.match(combined, /\.meta-kim\/state\/\{profile\}\/active-run\.json/);
-    assert.match(combined, /Meta governance active: \{Current Stage\}/);
-    assert.match(combined, /stagePurposeByLocale/);
+    assert.match(combined, /\{localizedActiveLabel\}: \{Current Stage\}/);
+    assert.match(combined, /runtime\/tool selected output language first/);
+    assert.match(combined, /publicLabels/);
     assert.match(combined, /latest input language/);
+    assert.match(combined, /Do not hardcode|hardcode/i);
     assert.match(combined, /must not expose internal protocol fields/i);
     assert.match(combined, /Preflight/);
     assert.match(combined, /conversation_fallback/);
   });
 
-  test("status CLI localizes inactive output", () => {
-    const result = spawnSync(
-      process.execPath,
-      ["scripts/meta-run-status.mjs", "--locale=zh-CN"],
-      {
-        cwd: path.resolve(__dirname, "..", ".."),
-        encoding: "utf8",
-      },
+  test("public notice template does not make English labels the default", async () => {
+    const notice = await readRepoFile(
+      "canonical/templates/user-interaction/notice-template.md",
     );
 
-    assert.equal(result.status, 0);
-    assert.match(result.stdout, /元治理状态：未运行/);
+    assert.doesNotMatch(
+      notice,
+      /```markdown\s*Meta governance active: \{Current Stage\}/,
+      "notice template must start from localized labels, not fixed English labels",
+    );
+    assert.match(notice, /Do not hardcode any single human language/);
+  });
+
+  test("status CLI returns neutral inactive output without hardcoded language", async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), "meta-kim-status-cli-"));
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [path.join(__dirname, "..", "..", "scripts", "meta-run-status.mjs")],
+        {
+          cwd: tempDir,
+          encoding: "utf8",
+        },
+      );
+
+      assert.equal(result.status, 0);
+      assert.match(result.stdout, /meta_governance_status=inactive/);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test("status CLI uses runtime-provided active output labels", async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), "meta-kim-status-cli-"));
+    try {
+      const statusDir = path.join(tempDir, ".meta-kim", "state", "default");
+      await mkdir(statusDir, { recursive: true });
+      await writeFile(
+        path.join(statusDir, "active-run.json"),
+        JSON.stringify(
+          {
+            active: true,
+            currentStage: "Fetch",
+            stageIndex: 2,
+            stageTotal: 8,
+            percent: 25,
+            completed: ["Critical"],
+            next: "Thinking",
+            blockedOn: null,
+            stagePurpose: "P_FETCH",
+            publicLabels: {
+              active: "L_ACTIVE",
+              completed: "L_DONE",
+              current: "L_CURRENT",
+              next: "L_NEXT",
+              blocked: "L_BLOCKED",
+              none: "L_NONE",
+              separator: "=>",
+              listSeparator: "|",
+            },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+
+      const result = spawnSync(
+        process.execPath,
+        [path.join(__dirname, "..", "..", "scripts", "meta-run-status.mjs")],
+        {
+          cwd: tempDir,
+          encoding: "utf8",
+        },
+      );
+
+      assert.equal(result.status, 0);
+      assert.match(result.stdout, /L_ACTIVE=>Fetch/);
+      assert.match(result.stdout, /L_DONE=>Critical/);
+      assert.match(result.stdout, /L_CURRENT=>P_FETCH/);
+      assert.match(result.stdout, /L_NEXT=>Thinking/);
+      assert.match(result.stdout, /L_BLOCKED=>L_NONE/);
+      assert.doesNotMatch(result.stdout, /^Completed:/m);
+      assert.doesNotMatch(result.stdout, /^Current:/m);
+      assert.doesNotMatch(result.stdout, /^Next:/m);
+      assert.doesNotMatch(result.stdout, /^Blocked:/m);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 });

@@ -172,7 +172,7 @@ The 8-stage spine is the **human-readable orchestration surface**. Underneath it
 
 ### User Language Rule
 
-Stage names remain canonical English protocol labels (`Critical`, `Fetch`, `Thinking`, `Review`, etc.). All user-facing text around those labels follows this priority: first the user's explicit output-language choice, then the user's latest input language when no explicit choice exists. Do not hardcode Chinese, English, or any single language into option labels, clarifying questions, confirmation cards, or summaries. Record the language decision in `intentGatePacket.userLanguage`, `intentGatePacket.languageSource`, `cardDecision.userLanguage`, and `deliveryShell.languageSource`.
+Stage names remain canonical English protocol labels (`Critical`, `Fetch`, `Thinking`, `Review`, etc.). All user-facing text around those labels follows this priority: first the runtime/tool selected output language when the host has already chosen one, then the user's explicit output-language choice, then the user's latest input language when no stronger language source exists. Do not hardcode Chinese, English, or any single language into option labels, clarifying questions, confirmation cards, or summaries. Record the language decision in `intentGatePacket.userLanguage`, `intentGatePacket.languageSource`, `cardDecision.userLanguage`, and `deliveryShell.languageSource`.
 
 ### User Interaction Policy
 
@@ -183,17 +183,17 @@ Stage names remain canonical English protocol labels (`Critical`, `Fetch`, `Thin
 
 **Run status envelope**: every governed run must maintain a public status envelope in `.meta-kim/state/{profile}/active-run.json` and `.meta-kim/state/{profile}/runs/{runId}/status.json`. This envelope is the cross-runtime answer to "has meta started, how far is it, which stage is current, what is next, and is it blocked?" It is written by the runtime spine-state adapter using Node path APIs so Windows, macOS, Linux, Claude Code, Codex, Cursor, and OpenClaw all share the same state shape. The public notice reads from this envelope and must not expose `Preflight`, `nativeChoiceSurface`, `conversation_fallback`, packet ids, or protocol traces unless the user explicitly asks for debug/audit/protocol output.
 
-The public status renderer follows the same language rule as all other user-facing meta-theory text: explicit output-language choice first, then latest user input language when inferable. The envelope stores localized `stagePurposeByLocale` text so labels and stage purpose can be shown in the user language while canonical stage names remain English.
+The public status renderer follows the same language rule as all other user-facing meta-theory text: runtime/tool selected output language first, explicit output-language choice second, and latest user input language only as fallback. The envelope may carry runtime-provided `publicLabels` and a resolved `stagePurpose`; canonical stage names remain English. Fixed labels in any single human language are forbidden as the default public notice shell.
 
 Default public notice shape:
 
 ```text
-Meta governance active: {Current Stage} ({stageIndex}/{stageTotal}, {percent}%)
+{localizedActiveLabel}: {Current Stage} ({stageIndex}/{stageTotal}, {percent}%)
 
-Completed: {completed stages or none}
-Current: {plain-language stage purpose}
-Next: {next stage or none}
-Blocked: {blocker or none}
+{localizedCompletedLabel}: {completed stages or localized none}
+{localizedCurrentLabel}: {plain-language stage purpose}
+{localizedNextLabel}: {next stage or localized none}
+{localizedBlockedLabel}: {blocker or localized none}
 ```
 
 **Non-trivial execution rule**: For non-trivial executable work, Decision is the default after Fetch and pre-decision Thinking unless the user explicitly chose auto-proceed, the task is trivial, or `queryBypass: true` applies. Skips must be recorded as `choiceGateSkip`; silent skips fail Review.

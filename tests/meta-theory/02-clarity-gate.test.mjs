@@ -250,7 +250,7 @@ describe("Clarity Gate unified execution confirmation", async () => {
     assert.equal(codexPolicy.debugVisibilityRequiresExplicitUserRequest, true);
     assert.equal(
       codexPolicy.languagePolicy,
-      "explicit_output_language_choice_else_latest_user_input_language",
+      "runtime_tool_selected_output_language_else_explicit_output_language_choice_else_latest_user_input_language",
     );
     assert.equal(codexPolicy.protocolIdentifiersRemainCanonical, true);
     assert.equal(codexPolicy.fallbackMustDeclareNotPopup, true);

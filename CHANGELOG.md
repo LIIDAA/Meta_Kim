@@ -6,6 +6,13 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.0.41] - 2026-05-21
+
+### Fixed
+
+- **Language-source status notices** — Run status notices now resolve language from the runtime/tool selected output language first, then explicit output-language choice, then latest user input language as fallback.
+- **No fixed-language notice shell** — Removed fixed Chinese/English examples from the default notice template and added tests that reject any single-language default status shell.
+
 ## [2.0.40] - 2026-05-21
 
 ### Added

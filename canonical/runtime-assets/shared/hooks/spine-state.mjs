@@ -40,30 +40,6 @@ const STAGE_PROGRESS_PERCENT = {
   evolution: 100,
 };
 
-const STAGE_PUBLIC_PURPOSES = {
-  "en-US": {
-    critical:
-      "checking whether governance is active and whether clarification is needed",
-    fetch: "gathering capability, evidence, and constraint context",
-    thinking: "comparing viable paths and shaping the execution plan",
-    execution: "dispatching or applying the approved work",
-    review: "checking output quality, risk, and boundary fit",
-    meta_review: "checking whether the review standard itself was sufficient",
-    verification: "confirming findings are closed and the result is usable",
-    evolution: "deciding whether durable writeback is needed",
-  },
-  "zh-CN": {
-    critical: "判断元治理是否已触发，以及是否需要先澄清",
-    fetch: "正在收集能力、证据和约束",
-    thinking: "正在比较可行方案并形成执行计划",
-    execution: "正在派发或执行已确认的工作",
-    review: "正在检查产出质量、风险和边界匹配",
-    meta_review: "正在检查 Review 阶段本身是否足够可靠",
-    verification: "正在确认问题是否闭环、结果是否可用",
-    evolution: "正在判断是否需要写回长期规则或能力",
-  },
-};
-
 export const STAGE_META_AGENT_MAP = {
   critical: {
     required: ["meta-warden"],
@@ -189,20 +165,27 @@ function profileFromState(state) {
   );
 }
 
-function normalizeLocale(input) {
-  const raw = typeof input === "string" ? input.trim().toLowerCase() : "";
-  if (raw.startsWith("zh")) return "zh-CN";
-  return "en-US";
+function cleanLanguageTag(input) {
+  return typeof input === "string" && input.trim() ? input.trim() : null;
 }
 
-function localeFromState(state) {
-  return normalizeLocale(
-    state?.userLanguage ||
-      state?.intentGatePacket?.userLanguage ||
-      state?.locale ||
-      process.env.META_KIM_LOCALE ||
-      process.env.LANG,
-  );
+function resolveOutputLanguage(state, options = {}) {
+  const candidates = [
+    ["tool_selected", options.toolSelectedLanguage || state?.toolSelectedLanguage],
+    ["explicit_output_choice", options.outputLanguage || state?.outputLanguage],
+    ["intent_gate", state?.intentGatePacket?.userLanguage],
+    ["card_decision", state?.cardDecision?.userLanguage],
+    ["delivery_shell", state?.deliveryShell?.userLanguage],
+    ["latest_user_input", state?.latestUserInputLanguage],
+    ["environment", process.env.META_KIM_OUTPUT_LANGUAGE || process.env.LANG],
+  ];
+
+  for (const [source, value] of candidates) {
+    const language = cleanLanguageTag(value);
+    if (language) return { language, source };
+  }
+
+  return { language: "undetermined", source: "not_resolved" };
 }
 
 function runStatusPaths(cwd, profile, runId) {
@@ -277,15 +260,11 @@ export function createMetaRunStatusEnvelope(state, options = {}) {
     state?.triggeredAt || state?.startedAt || new Date().toISOString();
   const updatedAt = new Date().toISOString();
   const runId = state?.runId || createRunId(startedAt);
-  const locale = options.locale
-    ? normalizeLocale(options.locale)
-    : localeFromState(state);
-  const stagePurposeByLocale = Object.fromEntries(
-    Object.entries(STAGE_PUBLIC_PURPOSES).map(([localeKey, table]) => [
-      localeKey,
-      table[currentStage],
-    ]),
-  );
+  const languageResolution = resolveOutputLanguage(state, options);
+  const stagePurpose =
+    state?.stagePurpose ||
+    state?.stagePurposes?.[languageResolution.language] ||
+    null;
 
   return {
     schemaVersion: 1,
@@ -305,11 +284,8 @@ export function createMetaRunStatusEnvelope(state, options = {}) {
     updatedAt,
     lastUserVisibleNotice: state?.lastUserVisibleNotice || null,
     surfaceMode: "public",
-    locale,
-    languageSource:
-      state?.userLanguage || state?.intentGatePacket?.userLanguage
-        ? "state"
-        : "environment_or_default",
+    resolvedOutputLanguage: languageResolution.language,
+    languageResolution,
     publicSurface: {
       primaryDisplay: "conversation_notice",
       nativeEnhancementAllowed: true,
@@ -322,8 +298,9 @@ export function createMetaRunStatusEnvelope(state, options = {}) {
         "protocol_trace",
       ],
     },
-    stagePurpose: stagePurposeByLocale[locale] || stagePurposeByLocale["en-US"],
-    stagePurposeByLocale,
+    publicLabels: state?.publicLabels || null,
+    stagePurpose,
+    stagePurposeKey: currentStage,
   };
 }
 
