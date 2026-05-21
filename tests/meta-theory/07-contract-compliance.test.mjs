@@ -277,6 +277,7 @@ describe("workflow-contract.json — schema compliance", async () => {
 
     const cardGovernance = contract.runDiscipline?.cardGovernance ?? {};
     for (const surface of [
+      "request_user_input",
       "native_choice",
       "native_mode_picker",
       "native_hook_prompt",

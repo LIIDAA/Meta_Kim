@@ -294,6 +294,7 @@
         "silent_hold"
       ],
       "choiceSurfaceEnum": [
+        "request_user_input",
         "native_choice",
         "native_mode_picker",
         "native_hook_prompt",
@@ -332,10 +333,12 @@
         "implementation": "Invoke AskUserQuestion with questions array; platform natively supports modal popup."
       },
       "codex": {
-        "primarySurface": "native_choice",
+        "primarySurface": "request_user_input",
         "fallbackSurfaces": ["conversation_fallback"],
-        "triggerDescription": "Use Codex native choice only when a real host-provided choice tool is exposed to the agent; otherwise pause with a localized confirmation card. Codex CLI/exec and repository hook adapters must not claim a popup.",
-        "implementation": "Invoke the host-provided choice tool only when available; otherwise emit a localized markdown confirmation card, record conversation_fallback, and state that it is a chat card rather than a popup."
+        "featureFlag": "default_mode_request_user_input",
+        "recommendedConfig": "[features].default_mode_request_user_input = true",
+        "triggerDescription": "Use Codex request_user_input only when it is listed in the active tool set. The official default_mode_request_user_input feature flag enables this tool in Default mode when the host supports it; otherwise pause with a localized confirmation card. Codex exec and repository hook adapters must not claim a popup.",
+        "implementation": "Invoke request_user_input when available; otherwise emit a localized markdown confirmation card, record conversation_fallback, and state that it is a chat card rather than a popup."
       },
       "openclaw": {
         "primarySurface": "workspace_agent",

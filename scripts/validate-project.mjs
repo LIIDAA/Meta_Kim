@@ -2312,6 +2312,8 @@ async function validateCodexArtifacts() {
   for (const expected of [
     "approval_policy",
     "sandbox_mode",
+    "[features]",
+    "default_mode_request_user_input = true",
     "[agents]",
     "[mcp_servers.meta_kim_runtime]",
     ".codex/skills/",

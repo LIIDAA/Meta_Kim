@@ -198,11 +198,11 @@ Default public notice shape:
 
 **Non-trivial execution rule**: For non-trivial executable work, Decision is the default after Fetch and pre-decision Thinking unless the user explicitly chose auto-proceed, the task is trivial, or `queryBypass: true` applies. Skips must be recorded as `choiceGateSkip`; silent skips fail Review.
 
-**Codex visible multi-option choice rule**: In Codex, every user-visible `meta-theory` confirmation or decision surface must include a short multi-option choice card with at least two options and a recommended default. This applies to user-facing Decisions; Notices and summaries may stay concise unless they ask the user to choose. It is a presentation rule only: it does not turn every Notice into a popup, does not override `queryBypass`, and does not replace `preDecisionOptionFrame` or the formal Decision gate. The choice card must follow the user's explicit output-language choice first, then the user's latest input language when no explicit choice exists, while required protocol identifiers such as `Critical` and `Fetch` stay canonical. If only one practical path exists, include the rejected alternative and the reason it was rejected. Claude Code native question tool behavior remains unchanged.
+**Codex visible multi-option choice rule**: In Codex, every user-visible `meta-theory` confirmation or decision surface must include a short multi-option choice card with at least two options and a recommended default. This applies to user-facing Decisions; Notices and summaries may stay concise unless they ask the user to choose. It is a presentation rule only: it does not turn every Notice into a popup, does not override `queryBypass`, and does not replace `preDecisionOptionFrame` or the formal Decision gate. The choice card must follow the runtime/tool selected output language first, then the user's explicit output-language choice, then the user's latest input language when no stronger language source exists, while required protocol identifiers such as `Critical` and `Fetch` stay canonical. If only one practical path exists, include the rejected alternative and the reason it was rejected. Claude Code native question tool behavior remains unchanged.
 
 **Public/debug surface boundary**: Normal users should see the clean choice card, not the audit packet. Hide `Preflight`, `nativeChoiceSurface`, `conversation_fallback`, `Multi-Option Snapshot`, packet ids, and runtime plumbing by default. Show those fields only when the user explicitly asks for debug, audit, protocol, or governance trace output. If fallback behavior is relevant to expectation setting, explain it in plain language, for example: "当前以聊天确认卡展示，不是弹窗。"
 
-**Codex native surface boundary**: Do not claim Codex produced a popup unless a real Codex host-provided choice tool was available and actually invoked. Codex CLI/exec and repository hook adapters cannot create native UI by themselves; they must use a localized `conversation_fallback` chat card and label it as a chat card, not a popup.
+**Codex native surface boundary**: Codex's official `default_mode_request_user_input` feature flag enables `request_user_input` in Default mode; Meta_Kim's Codex config should set `[features] default_mode_request_user_input = true` so Codex can expose the native interaction surface when the active host supports it. Do not claim Codex produced a popup unless `request_user_input` was available and actually invoked. Codex exec and repository hook adapters cannot create native UI by themselves; they must use a localized `conversation_fallback` chat card and label it as a chat card, not a popup.
 
 **Decision Triggers** (from `config/contracts/workflow-contract.json` → `userInteractionPolicy`):
 
@@ -1011,7 +1011,7 @@ Before invoking a runtime question tool, native choice, or conversation fallback
     ],
     "recommendedDefault": "A",
     "requiresUserChoice": true,
-    "nativeChoiceSurface": "runtime_question_tool | native_choice | conversation_fallback",
+    "nativeChoiceSurface": "runtime_question_tool | request_user_input | native_choice | conversation_fallback",
     "choiceGateSkip": null,
     "reviewOwner": "meta-prism"
   }

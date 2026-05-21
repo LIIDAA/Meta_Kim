@@ -198,11 +198,16 @@ describe("Clarity Gate unified execution confirmation", async () => {
     );
   });
 
-  test("Codex fallback pauses with localized confirmation card when native choice is unavailable", () => {
+  test("Codex uses request_user_input when available and falls back to localized card", () => {
     const codexSurface =
       workflowContractJson.runDiscipline?.runtimeNativeChoiceSurfaces?.codex;
     assert.ok(codexSurface, "Codex native choice surface policy must exist");
-    assert.equal(codexSurface.primarySurface, "native_choice");
+    assert.equal(codexSurface.primarySurface, "request_user_input");
+    assert.equal(codexSurface.featureFlag, "default_mode_request_user_input");
+    assert.equal(
+      codexSurface.recommendedConfig,
+      "[features].default_mode_request_user_input = true",
+    );
     assert.ok(
       codexSurface.fallbackSurfaces?.includes("conversation_fallback"),
       "Codex must allow conversation_fallback",
@@ -211,13 +216,16 @@ describe("Clarity Gate unified execution confirmation", async () => {
     const codexPolicyText = `${codexSurface.triggerDescription} ${codexSurface.implementation}`;
     assert.match(codexPolicyText, /pause/i);
     assert.match(codexPolicyText, /localized confirmation card/i);
-    assert.match(codexPolicyText, /host-provided choice tool/i);
-    assert.match(codexPolicyText, /CLI\/exec|hook adapters/i);
+    assert.match(codexPolicyText, /request_user_input/i);
+    assert.match(codexPolicyText, /default_mode_request_user_input/i);
+    assert.match(codexPolicyText, /exec|hook adapters/i);
     assert.match(codexPolicyText, /chat card.*popup|popup.*chat card/i);
   });
 
   test("Codex meta-theory choice surfaces embed options without exposing protocol logs", () => {
     assert.match(skillContent, /Codex Multi-Option Choice Surface Rule/);
+    assert.match(skillContent, /default_mode_request_user_input/);
+    assert.match(skillContent, /request_user_input/);
     assert.match(skillContent, /confirmation or decision surface/s);
     assert.match(skillContent, /clean choice card/i);
     assert.match(skillContent, /Do not show a `Preflight` block/i);

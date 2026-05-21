@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-21T11:37:59.747Z",
+  "generatedAt": "2026-05-21T11:57:49.041Z",
   "registryName": "meta-kim-capabilities",
   "scope": "repo-canonical",
   "canonicalProjection": "config/capability-index/meta-kim-capabilities.json",
@@ -193,8 +193,8 @@
         "type": "skills",
         "namespace": "canonical",
         "path": "canonical/skills/meta-theory/SKILL.md",
-        "size": 51129,
-        "modified": "2026-05-21T11:36:38.720Z"
+        "size": 51596,
+        "modified": "2026-05-21T11:50:18.876Z"
       },
       "repo:canonical-reference:create-agent": {
         "id": "create-agent",
@@ -211,8 +211,8 @@
         "namespace": "canonical-reference",
         "path": "canonical/skills/meta-theory/references/dev-governance.md",
         "relativePath": "dev-governance.md",
-        "size": 100316,
-        "modified": "2026-05-21T11:36:38.723Z"
+        "size": 100654,
+        "modified": "2026-05-21T11:50:18.880Z"
       },
       "repo:canonical-reference:intent-amplification": {
         "id": "intent-amplification",

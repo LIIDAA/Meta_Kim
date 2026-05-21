@@ -41,11 +41,13 @@ When running inside Codex, this skill is an execution protocol, not just a discu
 
 Every user-visible Codex confirmation or decision surface produced under this skill must contain multi-option choice content. This is a Codex delivery rule, not a replacement for the Thinking-stage `preDecisionOptionFrame` or the formal confirmation gate.
 
+When Codex exposes the `request_user_input` tool, use it for Decision surfaces. In Default mode, Meta_Kim's Codex config should enable Codex's official `[features] default_mode_request_user_input = true` flag so that this native interaction path is available when the active host supports it.
+
 Normal user-facing output must be a clean choice card, not a protocol dump. Do not show a `Preflight` block, `nativeChoiceSurface`, `conversation_fallback`, `Multi-Option Snapshot`, or other internal packet fields unless the user explicitly asks for debug, audit, protocol, or governance trace output. If a fallback matters to the user's expectation, say it in plain language, for example: "当前以聊天确认卡展示，不是弹窗。"
 
-The choice card must be short and must show at least two viable options for the current decision. It must first follow the user's explicit output-language choice when one exists; if no explicit choice exists, infer the language from the user's latest input. Keep only protocol identifiers such as `Critical`, `Fetch`, `Thinking`, and `Execution` in their canonical form when they are truly needed. Example labels such as `Option A` are placeholders; localize them in the actual response, for example `方案 A` when the selected or inferred language is Chinese.
+The choice card must be short and must show at least two viable options for the current decision. It must follow the runtime/tool selected output language first, then the user's explicit output-language choice, then the user's latest input language when no stronger language source exists. Keep only protocol identifiers such as `Critical`, `Fetch`, `Thinking`, and `Execution` in their canonical form when they are truly needed. Example labels such as `Option A` are placeholders; localize them in the actual response, for example `方案 A` when the selected or inferred language is Chinese.
 
-Do not describe a Codex fallback card as a popup. In Codex, `conversation_fallback` means a chat card in the conversation. Call it a native popup only when a real Codex host-provided choice tool is available and has actually been invoked.
+Do not describe a Codex fallback card as a popup. In Codex, `conversation_fallback` means a chat card in the conversation. Call it a native popup only when `request_user_input` is available and has actually been invoked.
 
 Normal public shape:
 
@@ -167,14 +169,15 @@ For `clarify`, `option_select`, and `confirm_execution` cards, prefer the curren
 | Runtime | Primary native surface | Fallback | Implementation |
 |---------|----------------------|----------|----------------|
 | Claude Code | native question tool | conversation_fallback | **✅ FULLY SUPPORTED** - Use native question tool directly |
-| Codex | host-provided native choice tool when exposed | conversation_fallback | ⚠️ Only native when the active Codex host exposes a real choice tool; Codex CLI/exec and hook adapters use a conversation card |
+| Codex | `request_user_input` when exposed by the active host | conversation_fallback | ✅ Enable `[features] default_mode_request_user_input = true` for Default mode; use native only when the tool is actually listed |
 | OpenClaw | workspace agent mechanism | conversation_fallback | ⚠️ Requires proper workspace config; use conversation card |
 | Cursor | Custom Modes / mode picker | conversation_fallback | ⚠️ Runtime-dependent; use conversation card as fallback |
 
 **Platform-Specific Implementation**:
 
 1. **Claude Code**: Use the native question tool directly - this is the guaranteed path
-2. **Codex/OpenClaw/Cursor**: Use a real native surface only when the active host exposes one; otherwise emit a formatted conversation card and wait for user response
+2. **Codex**: Use `request_user_input` when it is listed in the active tool set. If unavailable, emit a formatted conversation card and wait for user response
+3. **OpenClaw/Cursor**: Use a real native surface only when the active host exposes one; otherwise emit a formatted conversation card and wait for user response
 
 **Claude Code Implementation (PRIMARY)**:
 ```
