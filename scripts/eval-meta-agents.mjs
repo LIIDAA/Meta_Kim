@@ -1453,6 +1453,9 @@ async function runCodexSmoke() {
     mcp_supported: configExample.includes("[mcp_servers.meta_kim_runtime]"),
     sandbox_configurable: configExample.includes("sandbox_mode"),
     approvals_configurable: configExample.includes("approval_policy"),
+    suppresses_unstable_feature_warning: configExample.includes(
+      "suppress_unstable_features_warning = true",
+    ),
     request_user_input_default_mode:
       configExample.includes("[features]") &&
       configExample.includes("default_mode_request_user_input = true"),
@@ -1467,6 +1470,7 @@ async function runCodexSmoke() {
     payload.mcp_supported === true &&
     payload.sandbox_configurable === true &&
     payload.approvals_configurable === true &&
+    payload.suppresses_unstable_feature_warning === true &&
     payload.request_user_input_default_mode === true;
 
   return {
@@ -1521,6 +1525,9 @@ async function runCodexLive() {
     mcp_supported: configExample.includes("[mcp_servers.meta_kim_runtime]"),
     sandbox_configurable: configExample.includes("sandbox_mode"),
     approvals_configurable: configExample.includes("approval_policy"),
+    suppresses_unstable_feature_warning: configExample.includes(
+      "suppress_unstable_features_warning = true",
+    ),
     request_user_input_default_mode:
       configExample.includes("[features]") &&
       configExample.includes("default_mode_request_user_input = true"),
@@ -1535,6 +1542,7 @@ async function runCodexLive() {
     payload.mcp_supported === true &&
     payload.sandbox_configurable === true &&
     payload.approvals_configurable === true &&
+    payload.suppresses_unstable_feature_warning === true &&
     payload.request_user_input_default_mode === true;
 
   const schemaDir = await fs.mkdtemp(path.join(os.tmpdir(), "meta-kim-codex-"));

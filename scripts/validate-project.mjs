@@ -2312,6 +2312,7 @@ async function validateCodexArtifacts() {
   for (const expected of [
     "approval_policy",
     "sandbox_mode",
+    "suppress_unstable_features_warning = true",
     "[features]",
     "default_mode_request_user_input = true",
     "[agents]",
