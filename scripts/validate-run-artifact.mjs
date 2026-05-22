@@ -25,6 +25,7 @@ export const PACKET_LOCATIONS = {
   dispatchEnvelopePacket: "dispatchEnvelopePacket",
   orchestrationTaskBoardPacket: "orchestrationTaskBoardPacket",
   businessFlowBlueprintPacket: "businessFlowBlueprintPacket",
+  interfaceIntegrationContractPacket: "interfaceIntegrationContractPacket",
   agentBlueprintPacket: "agentBlueprintPacket",
   capabilityGapPacket: "capabilityGapPacket",
   executionAgentCard: "executionAgentCard",
@@ -171,6 +172,29 @@ function ensureObjectArray(value, context) {
 
 function ensureObject(value, context) {
   ensure(value && typeof value === "object" && !Array.isArray(value), `${context} must be an object.`);
+}
+
+function ensureForbiddenSecretValueKeysAbsent(value, context) {
+  const forbiddenKeys = new Set([
+    "secretValue",
+    "tokenValue",
+    "apiKeyValue",
+    "passwordValue",
+  ]);
+  if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    for (const [index, item] of value.entries()) {
+      ensureForbiddenSecretValueKeysAbsent(item, `${context}[${index}]`);
+    }
+    return;
+  }
+  for (const [key, item] of Object.entries(value)) {
+    ensure(
+      !forbiddenKeys.has(key),
+      `${context}.${key} must not store secret values; use a secretRef or authPolicyRef instead.`,
+    );
+    ensureForbiddenSecretValueKeysAbsent(item, `${context}.${key}`);
+  }
 }
 
 function ensureNonEmptyValue(value, context) {
@@ -1130,6 +1154,178 @@ function validateBusinessFlowBlueprint(contract, artifact) {
   }
 
   return { requiredLaneIds, optionalLaneIds, omittedLaneIds };
+}
+
+function validateInterfaceIntegrationContractWhenRequired(contract, artifact) {
+  const policy = contract.runDiscipline?.integrationContractPolicy ?? {};
+  const deliverableType = artifact.businessFlowBlueprintPacket?.deliverableType;
+  const requiredDeliverableTypes = policy.requiredWhenDeliverableTypes ?? [];
+  const triggerReasons = artifact.taskClassification?.triggerReasons ?? [];
+  const requiredTriggerReasons =
+    contract.runDiscipline?.protocolFirst
+      ?.interfaceIntegrationContractPacketRequiredWhenTriggerReasons ?? [];
+  const shouldRequire =
+    requiredDeliverableTypes.includes(deliverableType) ||
+    triggerReasons.some((reason) => requiredTriggerReasons.includes(reason));
+
+  if (!shouldRequire) return;
+
+  const packet = artifact.interfaceIntegrationContractPacket;
+  ensure(
+    packet !== undefined,
+    "interfaceIntegrationContractPacket is required when taskClassification.triggerReasons or businessFlowBlueprintPacket.deliverableType indicate internal or third-party interface integration.",
+  );
+
+  const protocol = contract.protocols.interfaceIntegrationContractPacket;
+  ensureForbiddenSecretValueKeysAbsent(
+    packet,
+    "interfaceIntegrationContractPacket",
+  );
+  ensureFields(
+    packet,
+    protocol.requiredFields,
+    "interfaceIntegrationContractPacket",
+  );
+  ensureEnum(
+    packet.integrationKind,
+    protocol.integrationKindEnum,
+    "interfaceIntegrationContractPacket.integrationKind",
+  );
+
+  ensureObjectArray(
+    packet.interfaceInventory,
+    "interfaceIntegrationContractPacket.interfaceInventory",
+  );
+  ensureObjectArray(
+    packet.fieldLedger,
+    "interfaceIntegrationContractPacket.fieldLedger",
+  );
+  ensureObjectArray(packet.unknowns, "interfaceIntegrationContractPacket.unknowns");
+  ensureObjectArray(packet.evidence, "interfaceIntegrationContractPacket.evidence");
+  ensureArray(packet.reviewGates, "interfaceIntegrationContractPacket.reviewGates");
+  ensureObjectArray(
+    packet.testMatrix,
+    "interfaceIntegrationContractPacket.testMatrix",
+  );
+  ensureObjectArray(
+    packet.ownerApprovals,
+    "interfaceIntegrationContractPacket.ownerApprovals",
+  );
+
+  const evidenceIds = new Set();
+  for (const [index, evidence] of packet.evidence.entries()) {
+    ensureFields(
+      evidence,
+      protocol.evidenceRequiredFields,
+      `interfaceIntegrationContractPacket.evidence[${index}]`,
+    );
+    ensureString(
+      evidence.evidenceId,
+      `interfaceIntegrationContractPacket.evidence[${index}].evidenceId`,
+    );
+    ensureEnum(
+      evidence.sourceType,
+      policy.evidenceSourceEnum,
+      `interfaceIntegrationContractPacket.evidence[${index}].sourceType`,
+    );
+    ensureString(
+      evidence.sourceRef,
+      `interfaceIntegrationContractPacket.evidence[${index}].sourceRef`,
+    );
+    ensureString(
+      evidence.summary,
+      `interfaceIntegrationContractPacket.evidence[${index}].summary`,
+    );
+    evidenceIds.add(evidence.evidenceId);
+  }
+
+  const blockingStatuses = new Set(policy.blockingUnknownStatuses ?? []);
+  const isPublicReady = artifact.summaryPacket?.publicReady === true;
+
+  for (const [index, field] of packet.fieldLedger.entries()) {
+    ensureFields(
+      field,
+      protocol.fieldLedgerRequiredFields,
+      `interfaceIntegrationContractPacket.fieldLedger[${index}]`,
+    );
+    ensureString(
+      field.fieldName,
+      `interfaceIntegrationContractPacket.fieldLedger[${index}].fieldName`,
+    );
+    ensureEnum(
+      field.fieldClass,
+      policy.fieldClassEnum,
+      `interfaceIntegrationContractPacket.fieldLedger[${index}].fieldClass`,
+    );
+    ensureString(
+      field.sourceOfTruth,
+      `interfaceIntegrationContractPacket.fieldLedger[${index}].sourceOfTruth`,
+    );
+    ensure(
+      evidenceIds.has(field.evidenceRef),
+      `interfaceIntegrationContractPacket.fieldLedger[${index}].evidenceRef must reference interfaceIntegrationContractPacket.evidence[].evidenceId.`,
+    );
+    ensureString(
+      field.owner,
+      `interfaceIntegrationContractPacket.fieldLedger[${index}].owner`,
+    );
+    ensureString(
+      field.transformationRule,
+      `interfaceIntegrationContractPacket.fieldLedger[${index}].transformationRule`,
+    );
+    ensureEnum(
+      field.unknownStatus,
+      policy.unknownStatusEnum,
+      `interfaceIntegrationContractPacket.fieldLedger[${index}].unknownStatus`,
+    );
+    ensure(
+      !(isPublicReady && blockingStatuses.has(field.unknownStatus)),
+      `interfaceIntegrationContractPacket.fieldLedger[${index}] cannot remain ${field.unknownStatus} when summaryPacket.publicReady=true.`,
+    );
+  }
+
+  for (const [index, unknown] of packet.unknowns.entries()) {
+    ensureFields(
+      unknown,
+      protocol.unknownRequiredFields,
+      `interfaceIntegrationContractPacket.unknowns[${index}]`,
+    );
+    ensureEnum(
+      unknown.status,
+      policy.unknownStatusEnum,
+      `interfaceIntegrationContractPacket.unknowns[${index}].status`,
+    );
+    ensure(
+      !(isPublicReady && blockingStatuses.has(unknown.status)),
+      `interfaceIntegrationContractPacket.unknowns[${index}] cannot remain ${unknown.status} when summaryPacket.publicReady=true.`,
+    );
+  }
+
+  const reviewGates = new Set(packet.reviewGates);
+  for (const [index, gate] of packet.reviewGates.entries()) {
+    ensureEnum(
+      gate,
+      protocol.reviewGateEnum,
+      `interfaceIntegrationContractPacket.reviewGates[${index}]`,
+    );
+  }
+
+  const requiredGates =
+    policy.requiredReviewGatesByIntegrationKind?.[packet.integrationKind] ?? [];
+  for (const gate of requiredGates) {
+    ensure(
+      reviewGates.has(gate),
+      `interfaceIntegrationContractPacket.reviewGates must include ${gate} for integrationKind=${packet.integrationKind}.`,
+    );
+  }
+
+  const testScenarios = new Set(packet.testMatrix.map((item) => item.scenario));
+  for (const scenario of protocol.testMatrixRequiredScenarios) {
+    ensure(
+      testScenarios.has(scenario),
+      `interfaceIntegrationContractPacket.testMatrix must include scenario ${scenario}.`,
+    );
+  }
 }
 
 function validateAgentBlueprint(contract, artifact) {
@@ -2263,6 +2459,7 @@ export function validateArtifact(contract, artifact) {
   );
   validateOrchestrationTaskBoard(contract, artifact);
   validateBusinessFlowBlueprint(contract, artifact);
+  validateInterfaceIntegrationContractWhenRequired(contract, artifact);
   validateAgentBlueprint(contract, artifact);
   validateCapabilityGapPacketWhenRequired(contract, artifact);
   validateExecutionAgentCardWhenRequired(contract, artifact);

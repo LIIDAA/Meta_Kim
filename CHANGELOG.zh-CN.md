@@ -6,6 +6,24 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.0.44] - 2026-05-23
+
+### 新增
+
+- **接口接入契约层** — 新增 `interfaceIntegrationContractPacket`，覆盖内部 API 边界和第三方供应商接入，包含接口清单、字段账本、未知项分类、证据引用、Review 门禁、契约测试矩阵和 owner 批准。
+- **接入 Review 门禁** — 新增事实来源、契约 diff、签名/鉴权、幂等、回调/webhook、错误模型、状态机、sandbox/契约测试、安全/密钥、人工 owner 批准等门禁。
+- **Run 校验覆盖** — 新增 validator 和测试，拒绝缺少接口契约包的接入 run，拒绝缺少第三方门禁的包，拒绝写入真实密钥值，并接受最小合法第三方接入包。
+
+### 变更
+
+- **业务流路由** — 新增 `internal_api_integration` 和 `third_party_integration` 交付类型，并加入接口契约、供应商 adapter、权限、契约测试、观测、上线/回滚等接入 lane。
+- **能力发现** — 新增抽象 `interface-integration-contract` 能力位，同时保持具体 provider 工具和 skill 只在当前 run 内选择。
+- **版本元数据** — 将 package 版本提升到 `2.0.44`。
+
+### 修复
+
+- **接口猜测缺口** — 当接口字段或第三方接入事实仍为 `blocking_unknown` 时，meta-theory 现在会阻断 public-ready 完成，避免实现从未证实的假设继续推进。
+
 ## [2.0.43] - 2026-05-22
 
 ### 新增

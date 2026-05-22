@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-22T07:58:28.422Z",
+  "generatedAt": "2026-05-22T17:40:17.361Z",
   "registryName": "meta-kim-capabilities",
   "scope": "repo-canonical",
   "canonicalProjection": "config/capability-index/meta-kim-capabilities.json",
@@ -28,6 +28,18 @@
     {
       "slotId": "run-scoped-meta-skill-selection",
       "description": "Abstract slot for selecting concrete child skills at runtime Fetch without binding them into long-term meta-agent identity.",
+      "allowedProviderIds": [
+        "meta-theory",
+        "agent-teams-playbook",
+        "superpowers",
+        "ecc",
+        "findskill"
+      ],
+      "selectedSkillScope": "run_only"
+    },
+    {
+      "slotId": "interface-integration-contract",
+      "description": "Abstract slot for internal API and third-party provider integration work: evidence-backed field ledger, provider adapter boundary, auth/signature, idempotency, callback, error model, contract tests, observability, and rollback gates.",
       "allowedProviderIds": [
         "meta-theory",
         "agent-teams-playbook",
@@ -193,8 +205,8 @@
         "type": "skills",
         "namespace": "canonical",
         "path": "canonical/skills/meta-theory/SKILL.md",
-        "size": 65710,
-        "modified": "2026-05-22T07:24:29.662Z"
+        "size": 68279,
+        "modified": "2026-05-22T17:35:13.355Z"
       },
       "repo:canonical-reference:create-agent": {
         "id": "create-agent",
@@ -211,8 +223,8 @@
         "namespace": "canonical-reference",
         "path": "canonical/skills/meta-theory/references/dev-governance.md",
         "relativePath": "dev-governance.md",
-        "size": 105657,
-        "modified": "2026-05-22T07:24:53.733Z"
+        "size": 110856,
+        "modified": "2026-05-22T17:35:48.424Z"
       },
       "repo:canonical-reference:intent-amplification": {
         "id": "intent-amplification",

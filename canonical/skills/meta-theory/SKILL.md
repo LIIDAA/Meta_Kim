@@ -71,6 +71,19 @@ Before any visible choice surface, set or infer `choiceSurfaceState`:
 
 **Human check**: no candidate paths means no execution confirmation; no Fetch evidence means Thinking is not complete; no Thinking result means no pre-Execution confirmation.
 
+### Respect user choices (after questioning)
+
+After collecting user answers through a native question tool, `request_user_input`, native choice surface, or `conversation_fallback`, the analysis and final dispatch MUST respect their choices:
+
+- Base the analysis on the user's actual selections, not on what the model "thinks is better".
+- If a user choice carries significant risk, identify it in the `Thinking` section with clear reasoning.
+- When proposing an alternative direction after the user answered, the next action MUST provide two options:
+  - **Option A**: Execute based on the user's original choice.
+  - **Option B**: Execute based on the suggested adjustment.
+- Let the user decide which path to take. Do not unilaterally override their selection.
+
+The goal is to inform, not to override. Users may have reasons for their choices that the model cannot see.
+
 Normal user-facing output must be a clean choice card, not a protocol dump. Do not show a `Preflight` block, `nativeChoiceSurface`, `conversation_fallback`, `Multi-Option Snapshot`, or other internal packet fields unless the user explicitly asks for debug, audit, protocol, or governance trace output. If a fallback matters to the user's expectation, say it in plain language, for example: "This is a chat confirmation card, not a popup."
 
 The choice card must be short and must show at least two viable options for the current decision. It must follow the runtime/tool selected output language first, then the user's explicit output-language choice, then the user's latest input language when no stronger language source exists. Keep only protocol identifiers such as `Critical`, `Fetch`, `Thinking`, and `Execution` in their canonical form when they are truly needed. Example labels such as `Option A` are placeholders; localize them in the actual response, for example `方案 A` when the selected or inferred language is Chinese.
@@ -298,6 +311,19 @@ All meta agents may declare a `fetchNeed`, but ownership is split:
 - Artisan maps named tools/skills to one agent after evidence exists.
 - Prism reviews evidence sufficiency and claim quality, but does not perform broad discovery.
 - Warden arbitrates whether the evidence is enough to pass a gate.
+
+## Interface Integration Contract Layer
+
+When a run touches an internal service boundary or a third-party provider, treat the interface contract as a first-class deliverable before implementation:
+
+- Critical must identify the business action and whether the boundary is `internal`, `third_party`, or `hybrid`.
+- Fetch must collect source-backed evidence: source code, OpenAPI / schema, database schema, official provider docs, SDK docs, Postman / curl samples, sandbox responses, production logs, or human owner confirmation.
+- Thinking must produce `interfaceIntegrationContractPacket` before Execution when `taskClassification.triggerReasons` includes `internal_interface_boundary` or `third_party_integration`.
+- The packet must separate internal canonical fields, outbound provider fields, inbound provider fields, view binding fields, transformations, error codes, state transitions, and auth/signature parameters.
+- Unknowns must be classified as `confirmed`, `needs_verification`, `blocking_unknown`, or `assumption_with_rollback`; `blocking_unknown` cannot pass public-ready completion.
+- Review must check source-of-truth, contract diff, signature/auth, idempotency, callback/webhook, error model, state machine, sandbox/contract test, security/secrets, and human owner approval gates as applicable.
+
+This layer is not an SDK registry, OpenAPI parser, or license to guess provider behavior. Real secrets, token values, API keys, passwords, and provider account credentials must never be stored in the packet; use references such as `authPolicyRef` or `secretRef` only. Concrete tools and provider skills remain run-scoped `matchedSkills` / `selectedSkill`, not durable agent identity.
 
 ## Gates
 

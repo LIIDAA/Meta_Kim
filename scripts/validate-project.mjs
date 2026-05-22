@@ -940,6 +940,64 @@ async function validateWorkflowContract() {
     ) === JSON.stringify(["pass", "fail"]),
     "workflow-contract.json reviewPacket crossProjectContaminationCheckEnum must be [pass, fail].",
   );
+
+  const integrationPolicy =
+    contract.runDiscipline?.integrationContractPolicy ?? {};
+  assert(
+    integrationPolicy.enabled === true,
+    "workflow-contract.json integrationContractPolicy must be enabled.",
+  );
+  for (const deliverableType of [
+    "internal_api_integration",
+    "third_party_integration",
+  ]) {
+    assert(
+      integrationPolicy.requiredWhenDeliverableTypes?.includes(deliverableType),
+      `workflow-contract.json integrationContractPolicy.requiredWhenDeliverableTypes must include ${deliverableType}.`,
+    );
+  }
+  for (const gate of [
+    "source_of_truth",
+    "contract_diff",
+    "signature_auth",
+    "idempotency",
+    "callback_webhook",
+    "error_model",
+    "state_machine",
+    "sandbox_contract_test",
+    "security_secrets",
+    "human_owner_approval",
+  ]) {
+    assert(
+      integrationPolicy.requiredReviewGates?.includes(gate),
+      `workflow-contract.json integrationContractPolicy.requiredReviewGates must include ${gate}.`,
+    );
+  }
+  assert(
+    integrationPolicy.unknownStatusEnum?.includes("blocking_unknown"),
+    "workflow-contract.json integrationContractPolicy.unknownStatusEnum must include blocking_unknown.",
+  );
+  assert(
+    integrationPolicy.blockingUnknownStatuses?.includes("blocking_unknown"),
+    "workflow-contract.json integrationContractPolicy.blockingUnknownStatuses must include blocking_unknown.",
+  );
+  for (const triggerReason of [
+    "internal_interface_boundary",
+    "third_party_integration",
+  ]) {
+    assert(
+      contract.runDiscipline?.taskClassification?.triggerReasonEnum?.includes(
+        triggerReason,
+      ),
+      `workflow-contract.json taskClassification.triggerReasonEnum must include ${triggerReason}.`,
+    );
+    assert(
+      contract.runDiscipline?.protocolFirst?.interfaceIntegrationContractPacketRequiredWhenTriggerReasons?.includes(
+        triggerReason,
+      ),
+      `workflow-contract.json interfaceIntegrationContractPacketRequiredWhenTriggerReasons must include ${triggerReason}.`,
+    );
+  }
   for (const [protocolName, expectedFields] of [
     [
       "taskClassification",
@@ -1259,10 +1317,70 @@ async function validateWorkflowContract() {
       `workflow-contract.json businessFlowBlueprintPacket.deliverableTypeEnum must include ${deliverableType}.`,
     );
   }
+  for (const deliverableType of [
+    "internal_api_integration",
+    "third_party_integration",
+  ]) {
+    assert(
+      businessFlowProtocol.deliverableTypeEnum?.includes(deliverableType),
+      `workflow-contract.json businessFlowBlueprintPacket.deliverableTypeEnum must include ${deliverableType}.`,
+    );
+  }
   for (const laneId of ["release", "install", "runtime_package"]) {
     assert(
       businessFlowProtocol.releaseInstallLaneIds?.includes(laneId),
       `workflow-contract.json businessFlowBlueprintPacket.releaseInstallLaneIds must include ${laneId}.`,
+    );
+  }
+  for (const laneId of [
+    "interface_contract",
+    "provider_adapter",
+    "permission",
+    "contract_test",
+    "observability",
+    "rollout_rollback",
+  ]) {
+    assert(
+      businessFlowProtocol.interfaceIntegrationLaneIds?.includes(laneId),
+      `workflow-contract.json businessFlowBlueprintPacket.interfaceIntegrationLaneIds must include ${laneId}.`,
+    );
+  }
+
+  const integrationProtocol =
+    contract.protocols?.interfaceIntegrationContractPacket ?? {};
+  for (const field of [
+    "integrationKind",
+    "interfaceInventory",
+    "fieldLedger",
+    "unknowns",
+    "evidence",
+    "reviewGates",
+    "testMatrix",
+    "ownerApprovals",
+  ]) {
+    assert(
+      integrationProtocol.requiredFields?.includes(field),
+      `workflow-contract.json interfaceIntegrationContractPacket.requiredFields must include ${field}.`,
+    );
+  }
+  for (const kind of ["internal", "third_party", "hybrid"]) {
+    assert(
+      integrationProtocol.integrationKindEnum?.includes(kind),
+      `workflow-contract.json interfaceIntegrationContractPacket.integrationKindEnum must include ${kind}.`,
+    );
+  }
+  for (const scenario of [
+    "success",
+    "auth_failure",
+    "rate_limited",
+    "timeout",
+    "missing_field",
+    "provider_5xx",
+    "duplicate_request_or_callback",
+  ]) {
+    assert(
+      integrationProtocol.testMatrixRequiredScenarios?.includes(scenario),
+      `workflow-contract.json interfaceIntegrationContractPacket.testMatrixRequiredScenarios must include ${scenario}.`,
     );
   }
 

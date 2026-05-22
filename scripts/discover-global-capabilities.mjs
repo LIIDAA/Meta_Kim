@@ -53,6 +53,13 @@ function buildMetaSkillProviderContract() {
         allowedProviderIds: LONG_TERM_META_SKILL_PROVIDER_IDS,
         selectedSkillScope: "run_only",
       },
+      {
+        slotId: "interface-integration-contract",
+        description:
+          "Abstract slot for internal API and third-party provider integration work: evidence-backed field ledger, provider adapter boundary, auth/signature, idempotency, callback, error model, contract tests, observability, and rollback gates.",
+        allowedProviderIds: LONG_TERM_META_SKILL_PROVIDER_IDS,
+        selectedSkillScope: "run_only",
+      },
     ],
     metaSkillProviders,
     runtimeSelectedSkills: {

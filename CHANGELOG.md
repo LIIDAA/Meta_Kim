@@ -6,6 +6,24 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.0.44] - 2026-05-23
+
+### Added
+
+- **Interface integration contract layer** — Added `interfaceIntegrationContractPacket` for internal API boundary work and third-party provider integrations, including interface inventory, field ledger, unknown classification, evidence references, review gates, contract test matrix, and owner approvals.
+- **Integration review gates** — Added explicit gates for source-of-truth evidence, contract diffs, signature/auth, idempotency, callbacks/webhooks, error models, state machines, sandbox/contract tests, security/secrets, and human owner approval.
+- **Run validation coverage** — Added validator checks and tests that reject interface integration runs without the contract packet, reject missing third-party gates, reject raw secret values, and accept a minimal valid third-party integration packet.
+
+### Changed
+
+- **Business-flow routing** — Added `internal_api_integration` and `third_party_integration` deliverable types plus integration lanes for interface contracts, provider adapters, permissions, contract tests, observability, and rollout/rollback.
+- **Capability discovery** — Added an abstract `interface-integration-contract` capability slot while keeping concrete provider tools and skills run-scoped.
+- **Version metadata** — Bumped the package version to `2.0.44`.
+
+### Fixed
+
+- **Interface guesswork gap** — Meta-theory now blocks public-ready completion when interface fields or third-party integration facts remain `blocking_unknown`, instead of letting implementation proceed from undocumented assumptions.
+
 ## [2.0.43] - 2026-05-22
 
 ### Added

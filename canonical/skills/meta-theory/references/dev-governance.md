@@ -598,7 +598,9 @@ For executable deliverables, infer the likely `deliverableType` and expand it in
 |---|---|
 | `web_app` / `dashboard` | product, UX, UI, frontend, backend/API, database/data, auth/security, motion, accessibility, test automation, browser QA, performance, release, feedback, evolution |
 | `landing_page` | product offer, UX, UI, visual assets, frontend, motion, accessibility, SEO/analytics, browser QA, performance, release |
-| `api_service` | API contract, backend, database, auth/security, integration tests, performance, docs, release |
+| `api_service` | internal interface contract, third-party integration contract, API contract, backend, database, auth/security, contract tests, observability/fallback, performance, docs, release |
+| `internal_api_integration` | producer, consumer, schema/version compatibility, request/response field ledger, error model, contract tests, rollout/rollback |
+| `third_party_integration` | provider facts, official docs/SDK/sandbox evidence, auth/signature, idempotency, callback/webhook, rate limits, timeout/retry, error model, observability/fallback, human approval |
 | `data_pipeline` | data source, schema, transform, storage, observability, quality tests, privacy/security, release |
 | `custom` | infer lanes from the user's outcome and justify omissions |
 
@@ -635,6 +637,29 @@ Each lane becomes a capability slot with:
 ```
 
 The Fetch record must show which lanes were selected for this run, which lanes were explicitly omitted, and why. Each required or optional lane must preserve the global scan evidence (`capabilitySearchQuery`, `candidateOwners`, `candidateSkills`, `selectedOwner`, `selectionReason`, `coverageStatus`) so Review can tell whether the owner was selected capability-first. Omitted lanes without reasons fail the Review stage, but Review must not require every example dimension to appear in every run.
+
+### Interface Integration Contract Layer
+
+If the run touches an internal service boundary or a third-party provider, Fetch and Thinking must treat the interface contract as a first-class deliverable, not as implementation detail. Add `internal_interface_boundary` or `third_party_integration` to `taskClassification.triggerReasons` and produce `interfaceIntegrationContractPacket` before Stage 4 Execution.
+
+Internal interface work must identify the producer, consumer, schema or contract artifact, versioning / breaking-change policy, request fields, response fields, error model, and consumer contract tests.
+
+Third-party integration work must identify the provider, official evidence sources, SDK/API version, auth or signature policy reference, sandbox/prod distinction, rate limits, timeout/retry behavior, idempotency key, callback/webhook semantics, error-code mapping, data retention, observability, fallback, and rollback plan.
+
+Field handling must use an evidence-backed field ledger:
+
+- internal canonical field
+- outbound provider field
+- inbound provider field
+- view binding field
+- transformation rule
+- error code
+- state transition
+- auth/signature parameter
+
+Unknowns are not "maybe missing" prose. Classify each item as `confirmed`, `needs_verification`, `blocking_unknown`, or `assumption_with_rollback`. A `blocking_unknown` cannot enter public-ready completion; if implementation discovers a new blocking unknown, return to Thinking instead of patching guesses into code.
+
+This layer does not parse OpenAPI automatically, store provider secrets, or make the model a source of truth. Facts must come from code, schema, official docs, SDK, Postman/curl samples, sandbox responses, production logs, provider confirmation, or human owner confirmation. Use references such as `authPolicyRef` or `secretRef`; never write real token values, API keys, passwords, or provider account credentials into a run artifact.
 
 **Step 2 — Capability index search** (if no perfect local match):
 ```
@@ -1030,6 +1055,19 @@ Before invoking a runtime question tool, native choice, or conversation fallback
 ```
 
 `candidateTaskShape` may describe likely lanes, dependencies, and owner candidates. It must not be treated as `dispatchEnvelopePacket`, `dispatchBoard`, or `workerTaskPackets`; those are finalized only after the user choice or a valid skip. Valid skips are limited to trivial work, pure read-only/queryBypass, or explicit auto-proceed, and must record `skipReason`, `skipSource`, and `skipSafetyRationale` in `choiceGateSkip`.
+
+### Respect user choices (after questioning)
+
+After a native question tool, `request_user_input`, native choice surface, or `conversation_fallback` collects user answers, the post-choice analysis must close around the user's actual selections:
+
+- Base the analysis on the user's actual selections, not on what the model "thinks is better".
+- If a user choice carries significant risk, identify it in `Thinking` with specific evidence and trade-off reasoning.
+- If the system wants to recommend a different direction, the next action must present exactly two clear paths:
+  - **Option A**: Execute based on the user's original choice.
+  - **Option B**: Execute based on the suggested adjustment.
+- Do not unilaterally override their selection, silently rewrite the dispatch direction, or treat the recommended default as more authoritative than the user's answer.
+
+This is an autonomy boundary: the system may inform, warn, and offer a safer adjustment, but the user owns the final path unless the selected path is blocked by safety, permissions, or impossible constraints.
 
 ### Step 2: Risk Identification
 
@@ -1564,6 +1602,23 @@ Before content quality review begins, check the execution contract itself:
 - [ ] Did the run maintain one consolidated deliverable rather than drifting into detached outputs?
 
 If any answer is no, the Review packet must record **protocol non-compliance** even if the implementation quality looks good.
+
+### Step 1.6: Interface Integration Contract Review
+
+When `interfaceIntegrationContractPacket` is present or required, Review must verify the interface gate before normal code quality:
+
+- **Source-of-truth gate**: every field, enum, error code, state transition, and auth/signature parameter cites evidence.
+- **Contract diff gate**: internal API changes declare before/after compatibility and consumer impact.
+- **Signature/auth gate**: signing order, encoding, timestamp/nonce, secret reference, replay protection, callback verification, and auth failure behavior are explicit.
+- **Idempotency gate**: idempotency key, duplicate request semantics, duplicate callback handling, timeout retry behavior, and storage/locking strategy are explicit.
+- **Callback/webhook gate**: verification, duplicate, out-of-order, delayed, rollback, ACK timing, retry, dead-letter, and compensation behavior are explicit.
+- **Error model gate**: third-party raw errors are mapped to internal standard errors, retry class, alerting severity, and user-facing boundary.
+- **State machine gate**: payment/order/logistics/auth flows reject illegal transitions and document final consistency or compensation paths.
+- **Sandbox/contract test gate**: success, auth failure, rate limit, timeout, missing field, provider 5xx, and duplicate request/callback scenarios are covered.
+- **Security/secrets gate**: secrets stay out of source, logs, frontend, fixtures, and artifacts; environment separation is explicit.
+- **Human owner approval gate**: business semantics, money/order state, SLA, and error-code mappings are approved by the responsible owner.
+
+Missing required gates or any remaining `blocking_unknown` fail Review even when the implementation compiles.
 
 ### Step 2: Quality Review (dynamic, Fetch-first)
 

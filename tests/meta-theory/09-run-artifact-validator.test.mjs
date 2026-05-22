@@ -83,6 +83,72 @@ describe("validate-run-artifact.mjs", () => {
     }
   }
 
+  function validInterfaceIntegrationPacket(kind = "third_party") {
+    return {
+      integrationKind: kind,
+      interfaceInventory: [
+        {
+          interfaceId: "provider-create-order",
+          producer: kind === "internal" ? "backend" : "third-party-provider",
+          consumer: "backend",
+          contractArtifactRef: "docs/provider/create-order.openapi.json",
+          schemaRef: "components.schemas.CreateOrderRequest",
+        },
+      ],
+      fieldLedger: [
+        {
+          fieldName: "orderAmount",
+          fieldClass: "outbound_provider_field",
+          sourceOfTruth: "provider official docs",
+          evidenceRef: "ev-provider-docs",
+          owner: "backend",
+          transformationRule: "Convert internal cents to provider minor unit.",
+          unknownStatus: "confirmed",
+        },
+      ],
+      unknowns: [],
+      evidence: [
+        {
+          evidenceId: "ev-provider-docs",
+          sourceType: "official_docs",
+          sourceRef: "https://provider.example/docs/orders",
+          summary: "Provider create-order fields and auth requirements.",
+        },
+      ],
+      reviewGates:
+        kind === "internal"
+          ? [
+              "source_of_truth",
+              "contract_diff",
+              "error_model",
+              "state_machine",
+              "sandbox_contract_test",
+              "human_owner_approval",
+            ]
+          : [
+              "source_of_truth",
+              "signature_auth",
+              "idempotency",
+              "callback_webhook",
+              "error_model",
+              "state_machine",
+              "sandbox_contract_test",
+              "security_secrets",
+              "human_owner_approval",
+            ],
+      testMatrix: [
+        { scenario: "success" },
+        { scenario: "auth_failure" },
+        { scenario: "rate_limited" },
+        { scenario: "timeout" },
+        { scenario: "missing_field" },
+        { scenario: "provider_5xx" },
+        { scenario: "duplicate_request_or_callback" },
+      ],
+      ownerApprovals: [{ owner: "backend", approvalRef: "ticket-123" }],
+    };
+  }
+
   test("accepts a valid run artifact with full finding lineage", async () => {
     const result = await validateFixture(validFixture);
     assert.equal(result.ok, true);
@@ -115,6 +181,77 @@ describe("validate-run-artifact.mjs", () => {
         },
       ),
     );
+  });
+
+  test("rejects interface integration runs without interfaceIntegrationContractPacket", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.taskClassification.triggerReasons.push("third_party_integration");
+      artifact.businessFlowBlueprintPacket.deliverableType =
+        "third_party_integration";
+      delete artifact.interfaceIntegrationContractPacket;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /interfaceIntegrationContractPacket is required/,
+    );
+  });
+
+  test("rejects third-party interface integration packets that miss required gates", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.taskClassification.triggerReasons.push("third_party_integration");
+      artifact.businessFlowBlueprintPacket.deliverableType =
+        "third_party_integration";
+      artifact.interfaceIntegrationContractPacket =
+        validInterfaceIntegrationPacket("third_party");
+      artifact.interfaceIntegrationContractPacket.reviewGates =
+        artifact.interfaceIntegrationContractPacket.reviewGates.filter(
+          (gate) => gate !== "signature_auth",
+        );
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /must include signature_auth/,
+    );
+  });
+
+  test("rejects interface integration packets that store raw secret values", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.taskClassification.triggerReasons.push("third_party_integration");
+      artifact.businessFlowBlueprintPacket.deliverableType =
+        "third_party_integration";
+      artifact.interfaceIntegrationContractPacket =
+        validInterfaceIntegrationPacket("third_party");
+      artifact.interfaceIntegrationContractPacket.interfaceInventory[0].apiKeyValue =
+        "not-allowed";
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /must not store secret values/,
+    );
+  });
+
+  test("accepts a minimal valid third-party interface integration packet", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.taskClassification.triggerReasons.push("third_party_integration");
+      artifact.businessFlowBlueprintPacket.deliverableType =
+        "third_party_integration";
+      artifact.interfaceIntegrationContractPacket =
+        validInterfaceIntegrationPacket("third_party");
+    });
+    const result = await validateFixture(tempFixture);
+    assert.equal(result.ok, true);
   });
 
   test("rejects Evolution writeback targets that use local memory or continuity storage", async (t) => {
