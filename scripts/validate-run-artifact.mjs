@@ -407,6 +407,10 @@ function contractFromPolicy(policy) {
 function validateRoleDisplayName(name, context) {
   const trimmed = String(name ?? "").trim();
   ensure(
+    !/^agent-[0-9a-f-]+$/i.test(trimmed),
+    `${context} must be a role-family name; runtime alias ids such as agent-019e56a9 belong in runtimeInstanceAlias only.`,
+  );
+  ensure(
     !/^[A-Z][a-z]+$/.test(trimmed),
     `${context} must be business-readable, not a runtime nickname.`,
   );
@@ -824,6 +828,160 @@ function validateIntentGatePacketWhenRequired(contract, artifact) {
   }
 }
 
+function validatePreDecisionOptionFrame(contract, artifact) {
+  const when =
+    contract.runDiscipline.protocolFirst
+      .preDecisionOptionFrameRequiredBeforeUserChoiceWhenGovernanceFlows ?? [];
+  const flow = artifact.taskClassification?.governanceFlow;
+  if (!when.includes(flow)) {
+    return;
+  }
+
+  const packet = artifact.preDecisionOptionFrame;
+  ensure(
+    packet && typeof packet === "object",
+    `preDecisionOptionFrame is required when governanceFlow is ${flow}.`,
+  );
+  const policy = contract.protocols.preDecisionOptionFrame;
+  ensureFields(packet, policy.requiredFields, "preDecisionOptionFrame");
+  ensure(
+    packet.presentedBeforeDecision === true,
+    "preDecisionOptionFrame.presentedBeforeDecision must be true.",
+  );
+  ensure(
+    packet.builtFromContentEvidence === true,
+    "preDecisionOptionFrame.builtFromContentEvidence must be true.",
+  );
+  ensureArray(
+    packet.contentEvidenceRefs,
+    "preDecisionOptionFrame.contentEvidenceRefs",
+  );
+  ensure(
+    packet.contentEvidenceRefs.length >= 1,
+    "preDecisionOptionFrame.contentEvidenceRefs must include at least one evidence reference.",
+  );
+  ensureArray(
+    packet.unresolvedQuestions,
+    "preDecisionOptionFrame.unresolvedQuestions",
+  );
+  for (const [index, question] of packet.unresolvedQuestions.entries()) {
+    if (typeof question === "string") {
+      ensure(
+        question.trim().length >= 1,
+        `preDecisionOptionFrame.unresolvedQuestions[${index}] must be non-empty.`,
+      );
+    } else {
+      ensureObject(
+        question,
+        `preDecisionOptionFrame.unresolvedQuestions[${index}]`,
+      );
+      ensureString(
+        question.question ?? question.text,
+        `preDecisionOptionFrame.unresolvedQuestions[${index}].question`,
+      );
+      if (question.status !== undefined) {
+        ensure(
+          ["open", "closed", "skipped"].includes(question.status),
+          `preDecisionOptionFrame.unresolvedQuestions[${index}].status must be open, closed, or skipped.`,
+        );
+      }
+    }
+  }
+  ensureArray(packet.candidateOptions, "preDecisionOptionFrame.candidateOptions");
+  ensure(
+    packet.candidateOptions.length >= 2,
+    "preDecisionOptionFrame.candidateOptions must include at least two candidate solution paths.",
+  );
+  for (const [index, option] of packet.candidateOptions.entries()) {
+    ensureObject(option, `preDecisionOptionFrame.candidateOptions[${index}]`);
+    ensureFields(
+      option,
+      policy.candidateOptionRequiredFields,
+      `preDecisionOptionFrame.candidateOptions[${index}]`,
+    );
+    ensureArray(
+      option.candidateOwners,
+      `preDecisionOptionFrame.candidateOptions[${index}].candidateOwners`,
+    );
+    ensure(
+      option.candidateOwners.length >= 1,
+      `preDecisionOptionFrame.candidateOptions[${index}].candidateOwners must not be empty.`,
+    );
+    ensureString(
+      option.candidateTaskShape,
+      `preDecisionOptionFrame.candidateOptions[${index}].candidateTaskShape`,
+    );
+  }
+  ensure(
+    typeof packet.requiresUserChoice === "boolean",
+    "preDecisionOptionFrame.requiresUserChoice must be a boolean.",
+  );
+  const allowedSkips = policy.choiceGateSkipAllowedWhen ?? [];
+  if (packet.choiceGateSkip !== null && packet.choiceGateSkip !== undefined) {
+    ensureEnum(
+      packet.choiceGateSkip,
+      allowedSkips,
+      "preDecisionOptionFrame.choiceGateSkip",
+    );
+  }
+  ensureString(
+    packet.solutionChoiceState,
+    "preDecisionOptionFrame.solutionChoiceState",
+  );
+  ensureEnum(
+    packet.solutionChoiceState,
+    policy.solutionChoiceStateEnum ?? ["confirmed", ...allowedSkips],
+    "preDecisionOptionFrame.solutionChoiceState",
+  );
+  if (allowedSkips.includes(packet.solutionChoiceState)) {
+    ensure(
+      packet.choiceGateSkip === packet.solutionChoiceState,
+      "preDecisionOptionFrame.solutionChoiceState must match choiceGateSkip when confirmation is skipped.",
+    );
+  }
+  if (packet.requiresUserChoice === true) {
+    ensure(
+      packet.solutionChoiceState === "confirmed",
+      "preDecisionOptionFrame.solutionChoiceState must be confirmed before dispatch artifacts are finalized when user choice is required.",
+    );
+    ensure(
+      packet.choiceGateSkip === null || packet.choiceGateSkip === undefined,
+      "preDecisionOptionFrame.choiceGateSkip must be empty when user choice is required.",
+    );
+  }
+  if (packet.solutionChoiceState === "confirmed") {
+    ensure(
+      packet.userChoiceState === "confirmed",
+      "preDecisionOptionFrame.userChoiceState must be confirmed when solutionChoiceState is confirmed.",
+    );
+  } else {
+    ensure(
+      packet.userChoiceState === packet.solutionChoiceState,
+      "preDecisionOptionFrame.userChoiceState must match solutionChoiceState for skip-based confirmation.",
+    );
+  }
+}
+
+function validateFinalizedChoiceState(artifact, packet, context) {
+  const frame = artifact.preDecisionOptionFrame;
+  if (!frame) return;
+  ensureString(packet.preDecisionOptionFrameRef, `${context}.preDecisionOptionFrameRef`);
+  ensure(
+    packet.preDecisionOptionFrameRef === "preDecisionOptionFrame",
+    `${context}.preDecisionOptionFrameRef must point to preDecisionOptionFrame.`,
+  );
+  ensureString(packet.userChoiceState, `${context}.userChoiceState`);
+  ensure(
+    packet.userChoiceState === frame.solutionChoiceState,
+    `${context}.userChoiceState must match preDecisionOptionFrame.solutionChoiceState.`,
+  );
+  ensureString(packet.finalizationGate, `${context}.finalizationGate`);
+  ensure(
+    !/pending|before/i.test(packet.finalizationGate),
+    `${context}.finalizationGate must show dispatch was finalized after user choice or an allowed skip.`,
+  );
+}
+
 function validateDispatchEnvelope(contract, artifact) {
   const when =
     contract.runDiscipline.protocolFirst
@@ -852,6 +1010,7 @@ function validateDispatchEnvelope(contract, artifact) {
     "dispatchEnvelopePacket.roleDisplayName",
   );
   ensureString(packet.roleInstanceId, "dispatchEnvelopePacket.roleInstanceId");
+  validateFinalizedChoiceState(artifact, packet, "dispatchEnvelopePacket");
   ensureString(packet.taskRef, "dispatchEnvelopePacket.taskRef");
   ensureStringArray(
     packet.allowedCapabilities,
@@ -1929,6 +2088,11 @@ function validateWorkerPackets(contract, artifact) {
       packet.roleDisplayName,
       `workerTaskPacket ${packet.taskPacketId} roleDisplayName`,
     );
+    validateFinalizedChoiceState(
+      artifact,
+      packet,
+      `workerTaskPackets[${index}]`,
+    );
     const ownerPackets = packetsByOwnerAgent.get(packet.ownerAgent) ?? [];
     ownerPackets.push({ ...packet, index });
     packetsByOwnerAgent.set(packet.ownerAgent, ownerPackets);
@@ -2450,6 +2614,7 @@ export function validateArtifact(contract, artifact) {
   validateContentEvidencePacket(contract, artifact);
   validateIntentPacketWhenRequired(contract, artifact);
   validateIntentGatePacketWhenRequired(contract, artifact);
+  validatePreDecisionOptionFrame(contract, artifact);
   validateCardPlan(contract, artifact);
   validateDispatchEnvelope(contract, artifact);
   ensureFields(

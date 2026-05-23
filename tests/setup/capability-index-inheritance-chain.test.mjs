@@ -81,9 +81,34 @@ describe("capability index inheritance chain", () => {
     );
   });
 
+  test("capability index covers canonical runtime commands", async () => {
+    const index = await readJson("config/capability-index/meta-kim-capabilities.json");
+    const commandPaths = new Set(
+      Object.values(index.byCapabilityType?.commands ?? {}).map((entry) => entry.path),
+    );
+
+    for (const expectedPath of [
+      "canonical/runtime-assets/claude/commands/save-progress/SKILL.md",
+      "canonical/runtime-assets/codex/commands/meta-theory.md",
+    ]) {
+      assert.ok(
+        commandPaths.has(expectedPath),
+        `${expectedPath} must be represented in byCapabilityType.commands`,
+      );
+    }
+    assert.ok(
+      index.summary?.totalCommands >= 2,
+      "capability index summary must count canonical runtime commands",
+    );
+  });
+
   test("sync configuration treats canonical skills as a directory of skills", async () => {
     const manifest = await readJson("config/sync.json");
     assert.equal(manifest.canonicalRoots?.skills, "canonical/skills");
+    assert.ok(
+      manifest.generatedTargets?.codex?.includes(".agents/skills"),
+      "Codex project skill projection must include the official .agents/skills root.",
+    );
 
     for (const runtimeId of ["claude", "codex", "openclaw", "cursor"]) {
       const projection = resolveRuntimeProjection(runtimeId, "project");
@@ -101,6 +126,13 @@ describe("capability index inheritance chain", () => {
         `${runtimeId} projection must expose a capability index mirror directory`,
       );
     }
+
+    const codexProjection = resolveRuntimeProjection("codex", "project");
+    assert.equal(
+      codexProjection.projectSkillsDir.endsWith(path.join(".agents", "skills")),
+      true,
+      "Codex project projection must expose .agents/skills as the project skill root.",
+    );
   });
 
   test("release verification refreshes global capability discovery before checks", async () => {

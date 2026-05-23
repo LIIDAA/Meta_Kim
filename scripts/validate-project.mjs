@@ -2524,8 +2524,12 @@ async function validateSyncConfiguration() {
   assert(
     profiles.codex.projection.outputPaths.skillsDir === ".codex/skills" &&
       profiles.codex.projection.outputPaths.skillRoot ===
-        ".codex/skills/meta-theory",
-    "Codex runtime profile must declare both the skills root and the meta-theory compatibility root.",
+        ".codex/skills/meta-theory" &&
+      profiles.codex.projection.outputPaths.projectSkillsDir ===
+        ".agents/skills" &&
+      profiles.codex.projection.outputPaths.projectSkillRoot ===
+        ".agents/skills/meta-theory",
+    "Codex runtime profile must declare both the compatibility .codex/skills root and the official project .agents/skills root.",
   );
   assert(
     profiles.claude.projection.outputPaths.skillsDir === ".claude/skills" &&
@@ -2565,6 +2569,7 @@ async function validateCodexArtifacts() {
     "[agents]",
     "[mcp_servers.meta_kim_runtime]",
     ".codex/skills/",
+    ".agents/skills/",
   ]) {
     assert(
       configExample.includes(expected),
@@ -2581,6 +2586,7 @@ async function validateCodexArtifacts() {
   for (const expected of [
     "name: meta-theory",
     "~/.codex/skills/meta-theory/SKILL.md",
+    ".agents/skills/meta-theory/SKILL.md",
     ".codex/skills/meta-theory/SKILL.md",
   ]) {
     assert(

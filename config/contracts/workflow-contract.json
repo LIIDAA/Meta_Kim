@@ -15,6 +15,60 @@
       "verification",
       "evolution"
     ],
+    "stageSemantics": {
+      "critical": {
+        "primaryAction": "clarify_intent_first",
+        "description": "Clarify true intent, scope, constraints, permissions, safety, and language before Fetch, planning, or execution confirmation."
+      },
+      "fetch": {
+        "primaryAction": "research_and_confirm_problem_with_candidate_solutions",
+        "sourceModes": ["online", "local"],
+        "requiredConfirmations": ["problem_statement", "candidate_solutions"],
+        "description": "Search local project evidence and online or external retrieval sources when needed; confirm the actual problem and candidate solutions before Thinking chooses capability owners."
+      },
+      "thinking": {
+        "primaryAction": "capability_first_orchestration",
+        "capabilityDecisionOrder": [
+          "determine_needed_execution_capabilities",
+          "match_existing_capabilities",
+          "create_or_upgrade_only_for_gaps",
+          "orchestrate_dag_with_merge_owner"
+        ],
+        "capabilityTypes": [
+          "agent",
+          "skill",
+          "command",
+          "mcp_capability",
+          "tool"
+        ],
+        "orchestrationModes": ["parallel", "serial", "dag"],
+        "description": "First decide which execution agents, skills, commands, MCP capabilities, and tools are needed; then match existing capabilities, create or upgrade only for documented gaps, and build parallel, serial, or DAG orchestration with mergeOwner."
+      },
+      "execution": {
+        "primaryAction": "multi_agent_execution_using_matched_capabilities",
+        "executionCapabilityTypes": [
+          "agent",
+          "skill",
+          "command",
+          "mcp_capability",
+          "tool"
+        ],
+        "description": "Run multi-agent execution through matched agents and their selected skills, commands, MCP capabilities, and tools from the Thinking dispatch plan."
+      },
+      "review": {
+        "primaryAction": "capability_matched_output_review"
+      },
+      "meta_review": {
+        "primaryAction": "review_standard_verification"
+      },
+      "verification": {
+        "primaryAction": "run_real_tests_with_fresh_evidence"
+      },
+      "evolution": {
+        "primaryAction": "writeback_or_explicit_none",
+        "allowedDecisions": ["writeback", "none"]
+      }
+    },
     "phases": [
       "direction",
       "planning",
@@ -1098,11 +1152,13 @@
         "userChoiceState",
         "builtFromContentEvidence",
         "contentEvidenceRefs",
+        "unresolvedQuestions",
         "candidateOptions",
         "recommendedDefault",
         "requiresUserChoice",
         "nativeChoiceSurface",
         "choiceGateSkip",
+        "solutionChoiceState",
         "reviewOwner"
       ],
       "candidateOptionRequiredFields": [
@@ -1120,7 +1176,13 @@
         "pure_read_only_queryBypass",
         "explicit_auto_proceed"
       ],
-      "description": "Thinking-stage pre-decision frame for non-trivial executable work before AskUserQuestion, native choice, or fallback. It contains contentEvidence-backed candidate orchestration paths and trade-offs only; it is not a finalized dispatchEnvelopePacket, dispatchBoard, or workerTaskPacket."
+      "solutionChoiceStateEnum": [
+        "confirmed",
+        "trivial",
+        "pure_read_only_queryBypass",
+        "explicit_auto_proceed"
+      ],
+      "description": "Thinking-stage pre-decision frame for non-trivial executable work before AskUserQuestion, native choice, or fallback. It must list unresolvedQuestions, present contentEvidence-backed candidate solution paths, and record solutionChoiceState before detailed orchestration is locked. It contains candidate orchestration paths and trade-offs only; it is not a finalized dispatchEnvelopePacket, dispatchBoard, or workerTaskPacket."
     },
     "intentPacket": {
       "requiredFields": [
@@ -1409,7 +1471,7 @@
         "forbiddenPrimaryNamePattern": "^[A-Z][a-z]+$",
         "forbiddenScopedNamePattern": "[-_/\\\\:]",
         "scopeDetailsBelongInInstanceFields": true,
-        "description": "User-visible agent names must be coarse business role-family names such as 前端, 后端, 测试, frontend, backend, test. Do not use scoped work-item names as roleDisplayName; put feature, page, installation, shard, or task detail in roleInstanceId, shardScope, assignedResponsibilitySlice, or task text. Host-generated personal nicknames such as Huygens or Mill may be recorded only as runtimeInstanceAlias."
+        "description": "User-visible agent names must be coarse business role-family names such as 代码库分析, 平台规范, 前端, 后端, 测试, frontend, backend, test. Do not use scoped work-item names or host-generated ids such as agent-019e56a9 as roleDisplayName; put feature, page, installation, shard, or task detail in roleInstanceId, shardScope, assignedResponsibilitySlice, or task text. Host-generated personal nicknames or ids may be recorded only as runtimeInstanceAlias."
       },
       "longTermCapabilityPolicy": {
         "abstractCapabilitySlotsRequired": true,
@@ -1456,7 +1518,7 @@
           "Thinking",
           "Review"
         ],
-        "description": "Fetch searches global agents, skills, tools, and capability indexes first. A global agent that already satisfies the orchestration node is used directly and is not copied into the user project. Only agents that need project-specific modification, persistent capability changes, or recurring local ownership are copied into the downstream project as project-local agents, under governance review. agentCopyPolicy=copy_to_project_for_modification is valid only with ownerSource=project_local and ownerResolution=upgrade_existing_owner; agentCopyPolicy=create_project_local_agent is valid only with ownerSource=project_local and ownerResolution=create_owner_first."
+        "description": "Fetch inventories global agents, skills, tools, and capability indexes as evidence while confirming the problem and candidate solutions. Thinking resolves the owner/loadout from that evidence. A global agent that already satisfies the orchestration node is used directly and is not copied into the user project. Only agents that need project-specific modification, persistent capability changes, or recurring local ownership are copied into the downstream project as project-local agents, under governance review. agentCopyPolicy=copy_to_project_for_modification is valid only with ownerSource=project_local and ownerResolution=upgrade_existing_owner; agentCopyPolicy=create_project_local_agent is valid only with ownerSource=project_local and ownerResolution=create_owner_first."
       },
       "ownerAgentPublicRepoRule": {
         "allowedOwnerAgents": [

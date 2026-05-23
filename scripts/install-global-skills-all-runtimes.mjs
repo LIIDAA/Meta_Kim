@@ -42,6 +42,12 @@ import {
   shouldUseArchiveFallbackForUnknownClone,
 } from "./install-error-classifier.mjs";
 import {
+  CATEGORIES,
+  manifestPathFor,
+  readManifest,
+} from "./install-manifest.mjs";
+import {
+  detectManagedInstallConflict,
   detectLegacySubdirInstall,
   detectPluginBundleSkillResidue,
   sanitizeInstalledSkillTree,
@@ -391,6 +397,15 @@ let CLAUDE_PLUGIN_SPECS = SKILL_REPOS.map((s) => s.claudePlugin).filter(
   Boolean,
 );
 
+function loadGlobalManagedSkillPaths() {
+  const manifest = readManifest(manifestPathFor("global"));
+  return (manifest?.entries ?? [])
+    .filter((entry) => entry.category === CATEGORIES.A && entry.kind === "dir")
+    .map((entry) => entry);
+}
+
+const globalManagedSkillPaths = loadGlobalManagedSkillPaths();
+
 function resolveHomes() {
   return {
     claude: resolveRuntimeHomeDir("claude"),
@@ -608,11 +623,11 @@ async function repairManagedSkillTarget({
     return { repaired: false };
   }
 
-  const isLegacySubdirInstall = await detectLegacySubdirInstall(
-    targetDir,
+  const conflict = await detectManagedInstallConflict(targetDir, {
     subdirPath,
-  );
-  if (!isLegacySubdirInstall) {
+    manifestManagedPaths: updateMode ? globalManagedSkillPaths : [],
+  });
+  if (!conflict.conflict) {
     return { repaired: false };
   }
 
@@ -620,22 +635,35 @@ async function repairManagedSkillTarget({
     skillId,
     targetDir,
     subdirPath,
+    reason: conflict.reason,
     action: allowDelete ? "reinstall" : "sanitize_only",
   });
 
   if (!allowDelete) {
-    return { repaired: false, legacyDetected: true };
+    return {
+      repaired: false,
+      conflictDetected: true,
+      legacyDetected: conflict.reason === "legacy_subdir_install",
+      reason: conflict.reason,
+    };
   }
 
   console.warn(
-    `${C.yellow}⚠${C.reset} ${t.warnRepairLegacyLayout(skillId, targetDir)}`,
+    conflict.reason === "legacy_subdir_install"
+      ? `${C.yellow}⚠${C.reset} ${t.warnRepairLegacyLayout(skillId, targetDir)}`
+      : `${C.yellow}⚠${C.reset} ${skillId}: replacing managed install conflict (${conflict.reason}) at ${targetDir}`,
   );
   if (dryRun) {
     console.log(
       t.dryRun(`Replace malformed install during reinstall: ${targetDir}`),
     );
   }
-  return { repaired: true, legacyDetected: true };
+  return {
+    repaired: true,
+    conflictDetected: true,
+    legacyDetected: conflict.reason === "legacy_subdir_install",
+    reason: conflict.reason,
+  };
 }
 
 async function sanitizeManagedSkillTarget(skillId, targetDir) {
@@ -1271,7 +1299,7 @@ async function handleGitFailure({
 
 async function installGitSkill(skillId, targetDir, repoUrl) {
   assertUnderHome(targetDir);
-  await repairManagedSkillTarget({ skillId, targetDir });
+  const repairResult = await repairManagedSkillTarget({ skillId, targetDir });
   const targetExists = await pathExists(targetDir);
   const targetEmpty = targetExists && (await isEmptyDir(targetDir));
   if (targetExists && !targetEmpty) {
@@ -1280,6 +1308,9 @@ async function installGitSkill(skillId, targetDir, repoUrl) {
         console.log(t.dryRun(`update ${targetDir}`));
       } else {
         try {
+          if (repairResult.conflictDetected) {
+            throw new Error(`managed install conflict: ${repairResult.reason}`);
+          }
           runGit(["-C", targetDir, "pull", "--ff-only"], {
             skillLabel: `pull ${skillId}`,
           });
@@ -1287,6 +1318,7 @@ async function installGitSkill(skillId, targetDir, repoUrl) {
         } catch {
           console.warn(`${C.yellow}⚠${C.reset} ${t.warnPullFailed(targetDir)}`);
           const stagedDir = await createSiblingStagingDir(targetDir);
+          const failureCountBeforeFallback = installFailures.length;
           try {
             try {
               runGit(["clone", "--depth", "1", repoUrl, stagedDir], {
@@ -1306,8 +1338,27 @@ async function installGitSkill(skillId, targetDir, repoUrl) {
               (await pathExists(stagedDir)) &&
               !(await isEmptyDir(stagedDir))
             ) {
+              await replaceTargetDir(targetDir, stagedDir);
+              console.log(`${C.green}✓${C.reset} ${t.okUpdated(targetDir)}`);
+            } else if (installFailures.length === failureCountBeforeFallback) {
+              recordInstallFailure({
+                skillId,
+                targetDir,
+                repoUrl,
+                category: "unknown",
+                fallback: "update_clone_replace",
+                reason: "pull fallback clone produced no staged content",
+              });
             }
           } catch (error) {
+            recordInstallFailure({
+              skillId,
+              targetDir,
+              repoUrl,
+              category: "unknown",
+              fallback: "update_clone_replace",
+              reason: error?.message || String(error),
+            });
             console.warn(
               `${C.yellow}⚠${C.reset} ${t.warnReplaceFailed(skillId, targetDir, error.message)}`,
             );
@@ -1590,9 +1641,9 @@ async function installPluginBundlesForNonClaudeRuntimes(
       // bundles (obra/superpowers etc.) dump .claude-plugin/ at targetDir root,
       // which non-Claude runtimes cannot consume. Treat such dirs as stale
       // and re-extract the runtime-specific subtree.
+      const conflict = await detectManagedInstallConflict(targetDir);
       const staleResidue =
-        !updateMode &&
-        (await pathExists(path.join(targetDir, ".claude-plugin")));
+        !updateMode && conflict.reason === "plugin_bundle_residue";
 
       if (
         !updateMode &&
@@ -2193,40 +2244,42 @@ async function cleanupStaleStagingDirs(homes) {
   const cleaned = [];
 
   for (const homeDir of Object.values(homes)) {
-    const skillsRoot = path.join(homeDir, "skills");
-    if (!(await pathExists(skillsRoot))) continue;
+    for (const segment of ["skills", "plugins"]) {
+      const installRoot = path.join(homeDir, segment);
+      if (!(await pathExists(installRoot))) continue;
 
-    let entries;
-    try {
-      entries = await fs.readdir(skillsRoot, { withFileTypes: true });
-    } catch {
-      continue;
-    }
-
-    for (const entry of entries) {
-      if (!entry.isDirectory() || !entry.name.includes(".staged-")) {
+      let entries;
+      try {
+        entries = await fs.readdir(installRoot, { withFileTypes: true });
+      } catch {
         continue;
       }
 
-      const stagedPath = path.join(skillsRoot, entry.name);
-      console.warn(`${C.yellow}⚠${C.reset} ${t.warnRemovingObsoleteDir}`);
-      console.warn(
-        `${C.dim}  ${stagedPath}${C.reset} — ${t.warnStaleStagingResidual}`,
-      );
-      if (!dryRun) {
-        try {
-          await fs.rm(stagedPath, { recursive: true, force: true });
-        } catch (rmError) {
-          if (isWindowsLockError(rmError)) {
-            console.warn(
-              `${C.yellow}⚠${C.reset} ${t.warnStagingLocked(stagedPath)}`,
-            );
-            continue;
-          }
-          throw rmError;
+      for (const entry of entries) {
+        if (!entry.isDirectory() || !entry.name.includes(".staged-")) {
+          continue;
         }
+
+        const stagedPath = path.join(installRoot, entry.name);
+        console.warn(`${C.yellow}⚠${C.reset} ${t.warnRemovingObsoleteDir}`);
+        console.warn(
+          `${C.dim}  ${stagedPath}${C.reset} — ${t.warnStaleStagingResidual}`,
+        );
+        if (!dryRun) {
+          try {
+            await fs.rm(stagedPath, { recursive: true, force: true });
+          } catch (rmError) {
+            if (isWindowsLockError(rmError)) {
+              console.warn(
+                `${C.yellow}⚠${C.reset} ${t.warnStagingLocked(stagedPath)}`,
+              );
+              continue;
+            }
+            throw rmError;
+          }
+        }
+        cleaned.push(stagedPath);
       }
-      cleaned.push(stagedPath);
     }
   }
 
@@ -2980,6 +3033,7 @@ async function main() {
     for (const cat of uniqueCats) {
       console.log(`${C.dim}•${C.reset} ${failureHint(cat)}`);
     }
+    process.exitCode = 1;
   }
   if (archiveFallbacks.length > 0) {
     console.log(

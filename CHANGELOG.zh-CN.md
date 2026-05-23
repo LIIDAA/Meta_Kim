@@ -6,6 +6,26 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.1.2] - 2026-05-24
+
+### 新增
+
+- **编排前选择门禁** — Critical 和 Fetch 现在必须先产出不明确问题与候选解决方案，Thinking 只有在用户确认或记录跳过理由后，才能锁定方案、生成详细编排和 worker packets。
+- **跨运行时同步覆盖检查** — 新增 `npm run meta:check:sync-coverage`，防止 canonical runtime assets 和生成镜像静默漂移。
+- **OpenClaw heartbeat 模板覆盖** — 新增 canonical OpenClaw heartbeat 模板，让下游安装拿到与其他运行时一致的治理提示。
+
+### 变更
+
+- **治理层与执行层边界** — 明确治理 agent 在 Critical、Fetch、Thinking、Review 必须参与；但大写 Execution 产出阶段必须派执行层 agent、skill、command、MCP 或 tool 具体干活。
+- **角色显示名** — 用户可见 worker 名称保持粗粒度、可读；宿主生成的实例 id 等 runtime alias 只留在内部 metadata。
+- **Codex skill 安装形态** — Codex 项目 skill 现在优先投影到当前 `.agents/skills/` 路径，同时保留旧 `.codex/skills/` 镜像兼容已安装用户。
+- **版本元数据** — 包版本提升到 `2.1.2`。
+
+### 修复
+
+- **过早编排** — run artifact 校验现在会拒绝没有处理不明确问题、候选方案和确认/跳过证据就直接 finalize 计划的运行。
+- **安装器冲突清理** — skill 更新清理现在更窄地限定 Meta_Kim 管理的旧残留，避免误删用户自建 skill，同时仍能安全迁移旧安装。
+
 ## [2.1.1] - 2026-05-23
 
 ### 修复

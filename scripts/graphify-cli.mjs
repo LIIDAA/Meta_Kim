@@ -6,8 +6,11 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import {
   detectPython310,
+  discoverWindowsPythonPaths,
+  discoverWindowsPythonPathCommands,
   extractPipShowVersion,
   formatPythonLauncher,
+  parsePythonVersion,
   readProcessText,
   runPythonModule,
 } from "./graphify-runtime.mjs";
@@ -29,6 +32,79 @@ function ensurePython({ requirePip = false } = {}) {
     return null;
   }
   return python;
+}
+
+function probePython(candidate) {
+  let result;
+  try {
+    result = spawnSync(candidate.command, [...candidate.args, "--version"], {
+      encoding: "utf8",
+      shell: false,
+    });
+  } catch {
+    return null;
+  }
+  if (result?.error || result?.status !== 0) {
+    return null;
+  }
+  const versionText = readProcessText(result);
+  const parsed = parsePythonVersion(versionText);
+  if (!parsed) {
+    return null;
+  }
+  if (parsed.major < 3 || (parsed.major === 3 && parsed.minor < 10)) {
+    return null;
+  }
+  return { ...candidate, version: parsed, versionText };
+}
+
+function pythonKey(python) {
+  return `${python.command}::${python.args.join(" ")}`;
+}
+
+function* iterateGraphifyPythonCandidates(primary) {
+  const seen = new Set();
+  const yieldIfNew = function* (python) {
+    if (!python) return;
+    const key = pythonKey(python);
+    if (seen.has(key)) return;
+    seen.add(key);
+    yield python;
+  };
+
+  const envOverride = process.env.META_KIM_GRAPHIFY_PYTHON;
+  if (envOverride && envOverride.trim()) {
+    const parts = envOverride.trim().split(/\s+/u);
+    const probed = probePython({ command: parts[0], args: parts.slice(1) });
+    yield* yieldIfNew(probed);
+  }
+
+  yield* yieldIfNew(primary);
+
+  if (process.platform === "win32") {
+    for (const candidate of discoverWindowsPythonPathCommands(spawnSync)) {
+      const probed = probePython(candidate);
+      yield* yieldIfNew(probed);
+    }
+    for (const { major, minor, path: exePath } of discoverWindowsPythonPaths()) {
+      if (major < 3 || (major === 3 && minor < 10)) continue;
+      const probed = probePython({ command: exePath, args: [] });
+      yield* yieldIfNew(probed);
+    }
+  }
+}
+
+function locateGraphifyInstallation(primaryPython) {
+  for (const python of iterateGraphifyPythonCandidates(primaryPython)) {
+    const pipShow = runPythonModule(python, ["-m", "pip", "show", "graphifyy"]);
+    if (pipShow.status === 0) {
+      return {
+        python,
+        pipShowText: readProcessText(pipShow),
+      };
+    }
+  }
+  return null;
 }
 
 function extractReportCommit(reportRaw) {
@@ -110,13 +186,19 @@ function runCheck() {
 
   console.log(python.versionText);
 
-  const pipShow = runPythonModule(python, ["-m", "pip", "show", "graphifyy"]);
-  if (pipShow.status !== 0) {
+  const located = locateGraphifyInstallation(python);
+  if (!located) {
     fail("graphify not installed");
     return;
   }
 
-  const version = extractPipShowVersion(readProcessText(pipShow)) ?? "unknown";
+  if (pythonKey(located.python) !== pythonKey(python)) {
+    console.log(
+      `graphifyy located via ${formatPythonLauncher(located.python)} (${located.python.versionText})`,
+    );
+  }
+
+  const version = extractPipShowVersion(located.pipShowText) ?? "unknown";
   console.log(`graphify ${version}`);
   checkGraphFreshness();
 }

@@ -159,6 +159,61 @@ describe("validate-run-artifact.mjs", () => {
     assert.ok(result.validatedPackets.includes("summaryPacket"));
   });
 
+  test("rejects pre-decision frames missing unresolved question closure", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      delete artifact.preDecisionOptionFrame.unresolvedQuestions;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /preDecisionOptionFrame.*unresolvedQuestions/,
+    );
+  });
+
+  test("rejects finalized dispatch when solution choice is still pending", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.intentGatePacket.requiresUserChoice = true;
+      artifact.intentGatePacket.pendingUserChoices = [
+        "Choose between narrow patch and full runtime migration.",
+      ];
+      artifact.preDecisionOptionFrame.requiresUserChoice = true;
+      artifact.preDecisionOptionFrame.choiceGateSkip = null;
+      artifact.preDecisionOptionFrame.solutionChoiceState = "pending";
+      artifact.dispatchEnvelopePacket.userChoiceState = "pending";
+      artifact.workerTaskPackets[0].userChoiceState = "pending";
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /solutionChoiceState/,
+    );
+  });
+
+  test("rejects runtime-generated agent ids as user-visible role names", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.dispatchEnvelopePacket.roleDisplayName = "agent-019e56a9";
+      artifact.agentBlueprintPacket.roles[0].roleDisplayName =
+        "agent-019e56a9";
+      artifact.workerTaskPackets[0].roleDisplayName = "agent-019e56a9";
+      artifact.orchestrationTaskBoardPacket.tasks[0].roleDisplayName =
+        "agent-019e56a9";
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /runtime alias|runtime nickname|role-family/,
+    );
+  });
+
   test("rejects an invalid public-ready run artifact", async () => {
     await assert.rejects(
       execFileAsync(

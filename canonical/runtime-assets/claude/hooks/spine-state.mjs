@@ -457,6 +457,188 @@ export function recordDispatch(state, agentName, metaAgentName) {
   return newState;
 }
 
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isObject(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasNonEmptyArray(value) {
+  return Array.isArray(value) && value.length > 0;
+}
+
+function collectCapabilityNodeBindingGaps(state) {
+  const missing = [];
+
+  const fetchRecord = state?.fetchRecord;
+  if (!isObject(fetchRecord)) {
+    missing.push("fetchRecord");
+  } else {
+    if (fetchRecord.capabilitySearchPerformed !== true) {
+      missing.push("fetchRecord.capabilitySearchPerformed=true");
+    }
+    if (
+      !hasNonEmptyArray(fetchRecord.capabilityMatches) &&
+      !hasNonEmptyArray(fetchRecord.matchedCapabilities)
+    ) {
+      missing.push("fetchRecord.capabilityMatches or fetchRecord.matchedCapabilities");
+    }
+  }
+
+  const flow = state?.businessFlowBlueprintPacket;
+  if (!isObject(flow)) {
+    missing.push("businessFlowBlueprintPacket");
+  } else {
+    const laneGroups = [
+      ["requiredLanes", flow.requiredLanes],
+      ["optionalLanes", flow.optionalLanes],
+    ];
+    const lanes = [];
+    for (const [groupName, group] of laneGroups) {
+      if (!Array.isArray(group)) {
+        missing.push(`businessFlowBlueprintPacket.${groupName}`);
+        continue;
+      }
+      for (const [index, lane] of group.entries()) {
+        lanes.push(lane);
+        const context = `businessFlowBlueprintPacket.${groupName}[${index}]`;
+        if (!isObject(lane)) {
+          missing.push(context);
+          continue;
+        }
+        for (const field of [
+          "laneId",
+          "capabilityNeed",
+          "capabilitySearchQuery",
+          "selectedOwner",
+          "selectionReason",
+          "coverageStatus",
+        ]) {
+          if (!isNonEmptyString(lane[field])) missing.push(`${context}.${field}`);
+        }
+        if (!hasNonEmptyArray(lane.candidateOwners)) {
+          missing.push(`${context}.candidateOwners`);
+        }
+        if (!hasNonEmptyArray(lane.candidateSkills)) {
+          missing.push(`${context}.candidateSkills`);
+        }
+      }
+    }
+    if (lanes.length === 0) {
+      missing.push("businessFlowBlueprintPacket.requiredLanes or optionalLanes");
+    }
+  }
+
+  const agentBlueprint = state?.agentBlueprintPacket;
+  const roleKeys = new Set();
+  if (!isObject(agentBlueprint)) {
+    missing.push("agentBlueprintPacket");
+  } else if (!hasNonEmptyArray(agentBlueprint.roles)) {
+    missing.push("agentBlueprintPacket.roles");
+  } else {
+    for (const [index, role] of agentBlueprint.roles.entries()) {
+      const context = `agentBlueprintPacket.roles[${index}]`;
+      if (!isObject(role)) {
+        missing.push(context);
+        continue;
+      }
+      for (const field of [
+        "businessRoleId",
+        "roleDisplayName",
+        "ownerAgent",
+        "ownerSource",
+        "agentCopyPolicy",
+        "ownerResolution",
+        "skillSelectionScope",
+      ]) {
+        if (!isNonEmptyString(role[field])) missing.push(`${context}.${field}`);
+      }
+      if (!hasNonEmptyArray(role.assignedResponsibilitySlice)) {
+        missing.push(`${context}.assignedResponsibilitySlice`);
+      }
+      if (!hasNonEmptyArray(role.governanceStageNodes)) {
+        missing.push(`${context}.governanceStageNodes`);
+      }
+      if (!hasNonEmptyArray(role.matchedSkills)) {
+        missing.push(`${context}.matchedSkills`);
+      } else {
+        for (const [skillIndex, skill] of role.matchedSkills.entries()) {
+          const skillContext = `${context}.matchedSkills[${skillIndex}]`;
+          for (const field of [
+            "matchId",
+            "capabilitySlot",
+            "providerId",
+            "skillId",
+            "source",
+            "selectionReason",
+            "selectionScope",
+          ]) {
+            if (!isNonEmptyString(skill?.[field])) missing.push(`${skillContext}.${field}`);
+          }
+        }
+      }
+      if (isNonEmptyString(role.ownerAgent) && isNonEmptyString(role.businessRoleId)) {
+        roleKeys.add(`${role.ownerAgent}::${role.businessRoleId}`);
+      }
+    }
+  }
+
+  const workerTaskPackets = state?.workerTaskPackets;
+  if (!hasNonEmptyArray(workerTaskPackets)) {
+    missing.push("workerTaskPackets");
+  } else {
+    for (const [index, packet] of workerTaskPackets.entries()) {
+      const context = `workerTaskPackets[${index}]`;
+      if (!isObject(packet)) {
+        missing.push(context);
+        continue;
+      }
+      for (const field of [
+        "taskPacketId",
+        "ownerAgent",
+        "businessRoleId",
+        "roleDisplayName",
+        "roleInstanceId",
+        "todayTask",
+        "output",
+        "verifySteps",
+      ]) {
+        const value = packet[field];
+        if (field === "verifySteps") {
+          if (!hasNonEmptyArray(value)) missing.push(`${context}.${field}`);
+        } else if (!isNonEmptyString(value)) {
+          missing.push(`${context}.${field}`);
+        }
+      }
+      const roleKey = `${packet.ownerAgent}::${packet.businessRoleId}`;
+      if (!roleKeys.has(roleKey)) {
+        missing.push(`${context}.agentBlueprintRoleBinding`);
+      }
+    }
+  }
+
+  return missing;
+}
+
+export function checkCapabilityNodeBindings(state) {
+  const normalized = normalizeSpineState(state);
+  if (!normalized || normalized.queryBypass || normalized.simpleMode) {
+    return { met: true, missing: [], reason: "capability node binding gate bypassed" };
+  }
+
+  const missing = collectCapabilityNodeBindingGaps(normalized);
+  return {
+    met: missing.length === 0,
+    missing,
+    reason:
+      missing.length === 0
+        ? "capability node bindings present"
+        : "Execution requires every orchestration node to carry capability search evidence, selected owner, run-scoped skill/tool evidence, and worker task binding.",
+  };
+}
+
 export function checkStageRequirements(state) {
   const normalized = normalizeSpineState(state);
   const stage = normalized.currentStage;
@@ -506,6 +688,13 @@ export function checkStageRequirements(state) {
   const choiceSurfaceGate = checkChoiceSurfaceGate(normalized);
   if (!choiceSurfaceGate.met) {
     return choiceSurfaceGate;
+  }
+
+  if (STAGE_ORDER.indexOf(stage) >= STAGE_ORDER.indexOf("execution")) {
+    const nodeBindingGate = checkCapabilityNodeBindings(normalized);
+    if (!nodeBindingGate.met) {
+      return nodeBindingGate;
+    }
   }
 
   return {
@@ -641,7 +830,14 @@ export function deactivateState(state) {
 }
 
 export function isExecutionTool(toolName) {
-  const execTools = ["Write", "Edit", "Bash", "MultiEdit", "NotebookEdit"];
+  const execTools = [
+    "Write",
+    "Edit",
+    "Bash",
+    "MultiEdit",
+    "NotebookEdit",
+    "apply_patch",
+  ];
   return execTools.includes(toolName);
 }
 

@@ -54,6 +54,7 @@ Treat these as generated mirrors or runtime adapters unless the task explicitly 
 - `.mcp.json`
 - `.claude/capability-index/`
 - `.codex/agents/*.toml`
+- `.agents/skills/`
 - `.codex/skills/`
 - `.codex/capability-index/`
 - `.cursor/agents/*.md`
@@ -73,7 +74,7 @@ When this repository is opened in Codex:
 
 - `AGENTS.md` is this resident project guide.
 - `.codex/agents/*.toml` contains Codex custom-agent mirrors for the Meta_Kim team.
-- `.codex/skills/meta-theory/` is the Codex project skill mirror.
+- `.agents/skills/meta-theory/` is the Codex project skill mirror; `.codex/skills/meta-theory/` is kept as a compatibility mirror for older installs.
 - `.codex/hooks.json` and `.codex/hooks/` carry Codex-compatible project hook wiring.
 - `codex/config.toml.example` is generated from `canonical/runtime-assets/codex/config.toml.example`.
 
@@ -105,6 +106,19 @@ config/capability-index/
 ```
 
 Hardcoding a specific agent name before discovery is a shortcut, not the canonical method.
+
+### Mechanical Enforcement (Cross-Runtime)
+
+Capability-first is now enforced mechanically on three of the four runtimes, not just prompt-level discipline:
+
+- **Claude Code**: mechanically enforced via the PreToolUse hook `enforce-agent-dispatch.mjs` (deny payload `{hookSpecificOutput.permissionDecision: "deny"}`). The gate denies `Agent` dispatches in stages `execution`, `review`, `meta_review`, `verification`, `evolution` unless `fetchRecord.capabilitySearchPerformed === true`. Discovery stages `critical`, `fetch`, `thinking` are exempt.
+- **Codex CLI**: mechanically enforced via PreToolUse hook (same `enforce-agent-dispatch.mjs` script projected to `.codex/hooks/`). Matcher: `"Bash|apply_patch|Edit|Write|MultiEdit|NotebookEdit|Agent"`. Registered at `scripts/runtime-hook-mapping.mjs:213-219`.
+- **Cursor v1.7+**: mechanically enforced via `preToolUse` hook with `failClosed: true` (crash defaults to deny). Uses exit code 2 + stderr deny reason or stdout JSON `{"permission":"deny",...}`. Registered at `scripts/runtime-hook-mapping.mjs:269-280`.
+- **OpenClaw**: declarative-only — hard refusal prose in workspace `HEARTBEAT.md` and `SOUL.md` (`executionBlock=true`). OpenClaw has no PreToolUse equivalent at the lifecycle-hook level, so capability-first remains a prompt constraint there.
+
+Override knob (all hook-equipped runtimes): `META_KIM_CAPABILITY_GATE=progressive|block|warn|off` (default `progressive`; set `block` env for immediate hard deny). Set `warn` to emit stderr warnings without denying, or `off` to disable the gate entirely. Runtime-payload schema selector: `META_KIM_HOOK_RUNTIME=claude|codex|cursor`.
+
+Canonical hook source: `canonical/runtime-assets/claude/hooks/enforce-agent-dispatch.mjs`. Full matrix and limits: `docs/cross-runtime-meta-enforcement.md`.
 
 ## Meta-Theory Activation
 
@@ -279,6 +293,7 @@ Use these supporting commands as needed:
 
 - `npm run meta:validate`
 - `npm run meta:check:runtimes`
+- `npm run meta:check:sync-coverage`
 - `npm run meta:doctor:governance`
 - `npm run meta:eval:agents`
 - `npm run meta:eval:agents:live`

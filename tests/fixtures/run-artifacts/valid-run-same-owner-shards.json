@@ -928,6 +928,7 @@
     "contentEvidenceRefs": [
       "contentEvidencePacket"
     ],
+    "unresolvedQuestions": [],
     "candidateOptions": [
       {
         "optionId": "A",
@@ -969,6 +970,7 @@
     "requiresUserChoice": false,
     "nativeChoiceSurface": "conversation_fallback",
     "choiceGateSkip": "explicit_auto_proceed",
+    "solutionChoiceState": "explicit_auto_proceed",
     "reviewOwner": "meta-prism"
   }
 }

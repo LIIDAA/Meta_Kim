@@ -6,6 +6,26 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.1.2] - 2026-05-24
+
+### Added
+
+- **Pre-orchestration choice gate** — Critical and Fetch now feed an explicit unresolved-question and solution-option gate before Thinking may lock the plan, produce orchestration details, or create worker packets.
+- **Cross-runtime sync coverage check** — Added `npm run meta:check:sync-coverage` to keep canonical runtime assets and generated mirrors from drifting silently.
+- **OpenClaw heartbeat template coverage** — Added the canonical OpenClaw heartbeat template to the sync surface so downstream installs receive the same governance wording as other runtimes.
+
+### Changed
+
+- **Governance vs execution boundary** — Clarified that governance agents actively participate in Critical, Fetch, Thinking, and Review, while the Execution production stage must dispatch execution-layer agents, skills, commands, MCPs, or tools for concrete work.
+- **Role display naming** — User-visible worker names now stay coarse and readable; generated runtime aliases such as host instance ids remain internal metadata.
+- **Codex skill installation shape** — Codex project skill projection now prefers the current `.agents/skills/` path while keeping the legacy `.codex/skills/` mirror for already-installed users.
+- **Version metadata** — Bumped the package version to `2.1.2`.
+
+### Fixed
+
+- **Premature orchestration** — Run validation now rejects artifacts that finalize a plan without unresolved-question handling, solution options, and explicit confirmation or recorded skip evidence.
+- **Installer conflict cleanup** — Skill update cleanup now targets Meta_Kim-managed legacy residue more narrowly, avoiding accidental removal of user-created skills while still migrating old installs safely.
+
 ## [2.1.1] - 2026-05-23
 
 ### Fixed

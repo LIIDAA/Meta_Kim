@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 
 import {
+  buildCodexSkillContent,
   buildCursorAgent,
   buildCursorProjectHooksJson,
   buildCodexGraphifyContextHook,
@@ -102,6 +103,10 @@ describe("sync-runtimes / inferProjectCategory", () => {
       inferProjectCategory(p("openclaw/skills/meta-theory/SKILL.md"), REPO),
       CATEGORIES.D,
     );
+    assert.equal(
+      inferProjectCategory(p(".agents/skills/meta-theory/SKILL.md"), REPO),
+      CATEGORIES.D,
+    );
   });
 
   test("maps capability index mirrors to project settings category", () => {
@@ -196,10 +201,43 @@ describe("sync-runtimes / inferProjectPurpose", () => {
 });
 
 describe("sync-runtimes / Codex project hooks", () => {
+  test("registers the enforce-agent-dispatch deny gate before context hooks", () => {
+    const config = buildCodexProjectHooksJson();
+    const preToolUse = config.hooks.PreToolUse;
+
+    const enforceEntry = preToolUse.find((entry) =>
+      entry.hooks?.some((cmd) =>
+        cmd.command?.includes("enforce-agent-dispatch.mjs"),
+      ),
+    );
+    assert(enforceEntry, "enforce-agent-dispatch should be registered");
+    assert.equal(
+      preToolUse[0],
+      enforceEntry,
+      "enforce-agent-dispatch must run before any other PreToolUse hook",
+    );
+    assert.match(
+      enforceEntry.matcher,
+      /Bash\|apply_patch\|Edit\|Write\|MultiEdit\|NotebookEdit\|Agent/,
+    );
+
+    const graphifyEntry = preToolUse.find((entry) =>
+      entry.hooks?.some((cmd) =>
+        cmd.command?.includes("graphify-context.mjs"),
+      ),
+    );
+    assert(graphifyEntry, "graphify-context should still be registered");
+  });
+
   test("uses a cross-platform Node command instead of Unix shell syntax", () => {
     const config = buildCodexProjectHooksJson();
-    const command =
-      config.hooks.PreToolUse[0].hooks[0].command;
+    const graphifyEntry = config.hooks.PreToolUse.find((entry) =>
+      entry.hooks?.some((cmd) =>
+        cmd.command?.includes("graphify-context.mjs"),
+      ),
+    );
+    assert(graphifyEntry, "graphify-context entry should be present");
+    const command = graphifyEntry.hooks[0].command;
 
     assert.match(command, /node(\.exe)?/);
     assert.match(command, /\.codex\/hooks\/graphify-context\.mjs/);
@@ -255,6 +293,35 @@ describe("sync-runtimes / Codex project hooks", () => {
   });
 });
 
+describe("sync-runtimes / Codex skills", () => {
+  test("emits Codex-compatible skill frontmatter with only name and description", () => {
+    const rendered = buildCodexSkillContent(`---
+name: meta-theory
+version: 3.0.0
+author: KimYx0207
+user-invocable: true
+trigger: "meta theory"
+tools:
+  - shell
+description: Meta Arsenal dispatcher
+---
+
+# Meta Arsenal
+
+Body content.
+`);
+
+    const frontmatter = rendered.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
+    assert.match(frontmatter, /^name: meta-theory$/m);
+    assert.match(frontmatter, /^description: Meta Arsenal dispatcher$/m);
+    assert.doesNotMatch(frontmatter, /^version:/m);
+    assert.doesNotMatch(frontmatter, /^author:/m);
+    assert.doesNotMatch(frontmatter, /^user-invocable:/m);
+    assert.doesNotMatch(frontmatter, /^trigger:/m);
+    assert.doesNotMatch(frontmatter, /^tools:/m);
+  });
+});
+
 describe("sync-runtimes / Cursor agents", () => {
   test("emits Cursor-required YAML frontmatter", () => {
     const rendered = buildCursorAgent({
@@ -292,7 +359,29 @@ describe("sync-runtimes / Cursor project hooks", () => {
       config.hooks.beforeSubmitPrompt[1].command,
       /hookprompt-adapter\.mjs/,
     );
-    assert.match(config.hooks.preToolUse[0].command, /graphify-context\.mjs/);
+
+    const preToolUse = config.hooks.preToolUse;
+
+    const enforceEntry = preToolUse.find((entry) =>
+      entry.command?.includes("enforce-agent-dispatch.mjs"),
+    );
+    assert(enforceEntry, "enforce-agent-dispatch should be registered");
+    assert.equal(
+      preToolUse[0],
+      enforceEntry,
+      "enforce-agent-dispatch must run before any other preToolUse hook",
+    );
+    assert.equal(
+      enforceEntry.failClosed,
+      true,
+      "enforce-agent-dispatch must be failClosed so the deny payload is honored",
+    );
+
+    const graphifyEntry = preToolUse.find((entry) =>
+      entry.command?.includes("graphify-context.mjs"),
+    );
+    assert(graphifyEntry, "graphify-context should still be registered");
+
     assert.match(
       config.hooks.stop[0].command,
       /meta-kim-memory-save\.mjs.*stop/,

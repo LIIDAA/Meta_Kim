@@ -102,6 +102,7 @@ export function inferProjectCategory(filePath, rootDir = repoRoot) {
   if (
     rel.startsWith(".claude/skills/") ||
     rel.startsWith(".codex/skills/") ||
+    rel.startsWith(".agents/skills/") ||
     rel.startsWith(".cursor/skills/") ||
     rel.startsWith("openclaw/skills/") ||
     rel.startsWith("openclaw/workspaces/")
@@ -111,7 +112,8 @@ export function inferProjectCategory(filePath, rootDir = repoRoot) {
   if (
     rel.startsWith(".codex/commands/") ||
     rel === ".codex/hooks.json" ||
-    rel === ".cursor/hooks.json"
+    rel === ".cursor/hooks.json" ||
+    rel.startsWith(".cursor/rules/")
   ) {
     return CATEGORIES.G;
   }
@@ -628,6 +630,8 @@ function resolveProjectionDirs(scope) {
     // Codex
     codexSkillsDir: codex.skillsDir,
     codexSkillRoot: codex.skillRoot,
+    codexProjectSkillsDir: codex.projectSkillsDir,
+    codexProjectSkillRoot: codex.projectSkillRoot,
     codexLegacySkillFile: globalScope ? null : codex.legacySkillFile,
     codexLegacySkillReferencesDir: globalScope
       ? null
@@ -661,6 +665,7 @@ function resolveProjectionDirs(scope) {
     cursorHooksFile: cursor.hooksFile,
     cursorMcpPath: cursor.mcpFile,
     cursorCapabilityIndexDir: cursor.capabilityIndexDir,
+    cursorRulesDir: cursor.rulesDir,
 
     // Allowed roots for safety assertion
     allowedRoots: resolveRuntimeAllowedRoots(scope),
@@ -676,6 +681,8 @@ function resolveProjectionDirs(scope) {
       codexAgents: codex.display.agentsDir,
       codexSkillsRoot: codex.display.skillsDir,
       codexSkills: codex.display.skillRoot,
+      codexProjectSkillsRoot: codex.display.projectSkillsDir,
+      codexProjectSkill: codex.display.projectSkillRoot,
       codexHooks: globalScope ? null : codex.display.hooksDir,
       codexHooksFile: globalScope ? null : codex.display.hooksFile,
       codexCommands: codex.display.commandsDir,
@@ -696,6 +703,7 @@ function resolveProjectionDirs(scope) {
       cursorHooksFile: cursor.display.hooksFile,
       cursorMcp: cursor.display.mcpFile,
       cursorCapabilityIndex: cursor.display.capabilityIndexDir,
+      cursorRules: cursor.display.rulesDir,
     },
   };
 }
@@ -739,6 +747,23 @@ const canonicalSharedSpineHookPath = path.join(
   "shared",
   "hooks",
   "activate-meta-theory-spine.mjs",
+);
+const canonicalClaudeEnforceDispatchHookPath = path.join(
+  canonicalRuntimeAssetsDir,
+  "claude",
+  "hooks",
+  "enforce-agent-dispatch.mjs",
+);
+const canonicalClaudeBashReadonlyWhitelistPath = path.join(
+  canonicalRuntimeAssetsDir,
+  "claude",
+  "hooks",
+  "bash-readonly-whitelist.mjs",
+);
+const canonicalCursorRulesDir = path.join(
+  canonicalRuntimeAssetsDir,
+  "cursor",
+  "rules",
 );
 const canonicalOpenClawTemplatePath = path.join(
   canonicalRuntimeAssetsDir,
@@ -1005,19 +1030,26 @@ ${agent.body}
 `;
 }
 
-function buildHeartbeat(agent) {
-  return `# HEARTBEAT.md - ${agent.id}
+let heartbeatTemplateCache = null;
 
-Default heartbeat policy:
+async function loadHeartbeatTemplate() {
+  if (heartbeatTemplateCache !== null) return heartbeatTemplateCache;
+  const templatePath = path.join(
+    canonicalRuntimeAssetsDir,
+    "openclaw",
+    "HEARTBEAT.template.md",
+  );
+  const raw = await fs.readFile(templatePath, "utf8");
+  // Strip leading canonical-only HTML comment line(s). The comment is metadata
+  // for editors; it must not appear in the generated workspace file.
+  const stripped = raw.replace(/^<!--[\s\S]*?-->\r?\n/, "");
+  heartbeatTemplateCache = stripped;
+  return stripped;
+}
 
-- If there is no explicit scheduled work, respond with \`HEARTBEAT_OK\`.
-- Do not create autonomous tasks or self-assign missions by default.
-- Only act proactively after the deployment owner adds concrete heartbeat tasks below.
-
-## Deployment Tasks
-
-- None by default.
-`;
+async function buildHeartbeat(agent) {
+  const template = await loadHeartbeatTemplate();
+  return template.replaceAll("{{AGENT_ID}}", agent.id);
 }
 
 function buildTools(agent, agents) {
@@ -1435,6 +1467,55 @@ function applyRuntimePaths(content, targetId) {
   return result;
 }
 
+function readFrontmatterField(frontmatter, key) {
+  const lines = frontmatter.split(/\r?\n/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = lines[index].match(new RegExp(`^${key}:\\s*(.*)$`));
+    if (!match) continue;
+    const rawValue = match[1].trim();
+    if (rawValue === "|" || rawValue === ">") {
+      const blockLines = [];
+      for (let next = index + 1; next < lines.length; next += 1) {
+        if (/^[A-Za-z0-9_-]+:\s*/.test(lines[next])) {
+          break;
+        }
+        blockLines.push(lines[next].replace(/^\s{2}/, ""));
+      }
+      return blockLines.join("\n").trim();
+    }
+    return rawValue.replace(/^['"]|['"]$/g, "").trim();
+  }
+  return "";
+}
+
+function formatYamlScalar(value) {
+  const normalized = String(value ?? "").trim();
+  if (normalized.includes("\n")) {
+    return `|\n${normalized
+      .split(/\r?\n/)
+      .map((line) => `  ${line}`)
+      .join("\n")}`;
+  }
+  if (/^[A-Za-z0-9 _.,;()'"—-]+$/.test(normalized)) {
+    return normalized;
+  }
+  return JSON.stringify(normalized);
+}
+
+export function buildCodexSkillContent(content) {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!match) {
+    return content;
+  }
+  const frontmatter = match[1];
+  const name = readFrontmatterField(frontmatter, "name");
+  const description = readFrontmatterField(frontmatter, "description");
+  if (!name || !description) {
+    return content;
+  }
+  return `---\nname: ${formatYamlScalar(name)}\ndescription: ${formatYamlScalar(description)}\n---\n\n${content.slice(match[0].length)}`;
+}
+
 export function buildCodexGraphifyContextHook() {
   return [
     'import { existsSync, readFileSync } from "node:fs";',
@@ -1469,12 +1550,14 @@ export function buildCodexProjectHooksJson({
   graphifyHookPath = ".codex/hooks/graphify-context.mjs",
   memoryHookPath = ".codex/hooks/meta-kim-memory-save.mjs",
   spineHookPath = ".codex/hooks/activate-meta-theory-spine.mjs",
+  enforceAgentDispatchHookPath = ".codex/hooks/enforce-agent-dispatch.mjs",
   hookPromptAdapterPath = null,
 } = {}) {
   return buildCodexHooksJson({
     graphifyHookPath,
     memoryHookPath,
     spineHookPath,
+    enforceAgentDispatchHookPath,
     hookPromptAdapterPath,
   });
 }
@@ -1482,11 +1565,13 @@ export function buildCodexProjectHooksJson({
 export function buildCursorProjectHooksJson({
   graphifyHookPath = ".cursor/hooks/graphify-context.mjs",
   memoryHookPath = ".cursor/hooks/meta-kim-memory-save.mjs",
+  enforceAgentDispatchHookPath = ".cursor/hooks/enforce-agent-dispatch.mjs",
   hookPromptAdapterPath = null,
 } = {}) {
   return buildCursorHooksJson({
     graphifyHookPath,
     memoryHookPath,
+    enforceAgentDispatchHookPath,
     hookPromptAdapterPath,
   });
 }
@@ -1505,11 +1590,15 @@ async function syncRuntimeSkills(
         skill.id,
         ...file.relativePath.split("/"),
       );
+      const runtimeContent =
+        runtimeId === "codex" && file.relativePath === "SKILL.md"
+          ? buildCodexSkillContent(applyRuntimePaths(file.content, runtimeId))
+          : applyRuntimePaths(file.content, runtimeId);
       if (
         (
           await writeGeneratedFile(
             targetPath,
-            applyRuntimePaths(file.content, runtimeId),
+            runtimeContent,
           )
         ).changed
       ) {
@@ -1769,6 +1858,7 @@ Examples:
 
     for (const agent of agents) {
       const workspaceDir = dirs.openclawWorkspaceDir(agent.id);
+      const heartbeatContent = await buildHeartbeat(agent);
       const writes = await Promise.all([
         writeGeneratedFile(
           path.join(workspaceDir, "BOOT.md"),
@@ -1794,7 +1884,7 @@ Examples:
         writeGeneratedFile(path.join(workspaceDir, "AGENTS.md"), teamDirectory),
         writeGeneratedFile(
           path.join(workspaceDir, "HEARTBEAT.md"),
-          buildHeartbeat(agent),
+          heartbeatContent,
         ),
         writeGeneratedFile(
           path.join(workspaceDir, "TOOLS.md"),
@@ -1899,15 +1989,14 @@ Examples:
       canonicalSkills,
       changedFiles,
     );
-    if (
-      scope !== "global" &&
-      (
-        await removeGeneratedPath(
-          path.join(repoRoot, ".agents", "skills", "meta-theory"),
-        )
-      ).changed
-    ) {
-      changedFiles.push(".agents/skills/meta-theory");
+    if (scope !== "global" && dirs.codexProjectSkillsDir) {
+      await syncRuntimeSkills(
+        "codex",
+        dirs.codexProjectSkillsDir,
+        dp.codexProjectSkillsRoot,
+        canonicalSkills,
+        changedFiles,
+      );
     }
     const codexConfigExample = await tryReadCanonical(
       canonicalCodexConfigExamplePath,
@@ -1973,6 +2062,38 @@ Examples:
         ).changed
       ) {
         changedFiles.push(`${dp.codexHooks}/activate-meta-theory-spine.mjs`);
+      }
+      // Sync the dispatch-enforcement gate + its bash-readonly classifier from
+      // the Claude canonical hooks directory. These two files implement the
+      // capability-first gate and meta-readonly contract; they share a deny()
+      // shape that detects the host runtime at invocation time.
+      const enforceDispatchHookContent = await tryReadCanonical(
+        canonicalClaudeEnforceDispatchHookPath,
+      );
+      if (
+        enforceDispatchHookContent &&
+        (
+          await writeGeneratedFile(
+            path.join(dirs.codexHooksDir, "enforce-agent-dispatch.mjs"),
+            enforceDispatchHookContent,
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.codexHooks}/enforce-agent-dispatch.mjs`);
+      }
+      const bashReadonlyWhitelistContent = await tryReadCanonical(
+        canonicalClaudeBashReadonlyWhitelistPath,
+      );
+      if (
+        bashReadonlyWhitelistContent &&
+        (
+          await writeGeneratedFile(
+            path.join(dirs.codexHooksDir, "bash-readonly-whitelist.mjs"),
+            bashReadonlyWhitelistContent,
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.codexHooks}/bash-readonly-whitelist.mjs`);
       }
       // Sync shared hook dependencies (utils.mjs, spine-state.mjs, hook-i18n.mjs, skip-reminder.mjs)
       const utilsHookContent = await tryReadCanonical(
@@ -2053,6 +2174,10 @@ Examples:
         scope === "global"
           ? path.join(dirs.codexHooksDir, "activate-meta-theory-spine.mjs")
           : ".codex/hooks/activate-meta-theory-spine.mjs";
+      const enforceAgentDispatchHookPath =
+        scope === "global"
+          ? path.join(dirs.codexHooksDir, "enforce-agent-dispatch.mjs")
+          : ".codex/hooks/enforce-agent-dispatch.mjs";
       const hookPromptAdapterPath =
         scope === "global"
           ? path.join(dirs.codexHooksDir, "hookprompt-adapter.mjs")
@@ -2065,6 +2190,7 @@ Examples:
               graphifyHookPath,
               memoryHookPath,
               spineHookPath,
+              enforceAgentDispatchHookPath,
               hookPromptAdapterPath,
             }),
           )
@@ -2106,6 +2232,43 @@ Examples:
       }
     }
 
+    // Cursor MDC rules (.cursor/rules/*.mdc) — copied verbatim from
+    // canonical/runtime-assets/cursor/rules/. Mirrors the agent-projection
+    // pattern: each canonical .mdc file is fully overwritten in the runtime
+    // mirror. Files only in the destination are left alone (no prune) —
+    // matches buildCursorAgent semantics that only emit canonical-owned IDs.
+    if (dirs.cursorRulesDir) {
+      let cursorRuleEntries = [];
+      try {
+        cursorRuleEntries = await fs.readdir(canonicalCursorRulesDir, {
+          withFileTypes: true,
+        });
+      } catch (error) {
+        if (error.code !== "ENOENT") {
+          throw error;
+        }
+      }
+      const sortedRuleEntries = cursorRuleEntries
+        .filter((entry) => entry.isFile() && entry.name.endsWith(".mdc"))
+        .sort((left, right) => left.name.localeCompare(right.name));
+      for (const ruleEntry of sortedRuleEntries) {
+        const ruleContent = await tryReadCanonical(
+          path.join(canonicalCursorRulesDir, ruleEntry.name),
+        );
+        if (
+          ruleContent &&
+          (
+            await writeGeneratedFile(
+              path.join(dirs.cursorRulesDir, ruleEntry.name),
+              ruleContent,
+            )
+          ).changed
+        ) {
+          changedFiles.push(`${dp.cursorRules}/${ruleEntry.name}`);
+        }
+      }
+    }
+
     // Skill projections (.cursor/skills/meta-theory/)
     await syncRuntimeSkills(
       "cursor",
@@ -2138,6 +2301,96 @@ Examples:
       ) {
         changedFiles.push(`${dp.cursorHooks}/graphify-context.mjs`);
       }
+      // Sync the dispatch-enforcement gate + its bash-readonly classifier from
+      // the Claude canonical hooks directory. deny() output adapts to Cursor's
+      // v1.7+ JSON schema at runtime via META_KIM_HOOK_RUNTIME / argv inspection.
+      const cursorEnforceDispatchHookContent = await tryReadCanonical(
+        canonicalClaudeEnforceDispatchHookPath,
+      );
+      if (
+        cursorEnforceDispatchHookContent &&
+        (
+          await writeGeneratedFile(
+            path.join(dirs.cursorHooksDir, "enforce-agent-dispatch.mjs"),
+            cursorEnforceDispatchHookContent,
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.cursorHooks}/enforce-agent-dispatch.mjs`);
+      }
+      const cursorBashReadonlyWhitelistContent = await tryReadCanonical(
+        canonicalClaudeBashReadonlyWhitelistPath,
+      );
+      if (
+        cursorBashReadonlyWhitelistContent &&
+        (
+          await writeGeneratedFile(
+            path.join(dirs.cursorHooksDir, "bash-readonly-whitelist.mjs"),
+            cursorBashReadonlyWhitelistContent,
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.cursorHooks}/bash-readonly-whitelist.mjs`);
+      }
+      // Shared dependencies required by enforce-agent-dispatch.mjs: utils.mjs,
+      // spine-state.mjs, skip-reminder.mjs, hook-i18n.mjs. Without these the
+      // dispatch gate cannot resolve its imports.
+      const cursorUtilsHookContent = await tryReadCanonical(
+        path.join(canonicalRuntimeAssetsDir, "shared", "hooks", "utils.mjs"),
+      );
+      if (
+        cursorUtilsHookContent &&
+        (
+          await writeGeneratedFile(
+            path.join(dirs.cursorHooksDir, "utils.mjs"),
+            cursorUtilsHookContent,
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.cursorHooks}/utils.mjs`);
+      }
+      const cursorSpineStateHookContent = await tryReadCanonical(
+        path.join(canonicalRuntimeAssetsDir, "shared", "hooks", "spine-state.mjs"),
+      );
+      if (
+        cursorSpineStateHookContent &&
+        (
+          await writeGeneratedFile(
+            path.join(dirs.cursorHooksDir, "spine-state.mjs"),
+            cursorSpineStateHookContent,
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.cursorHooks}/spine-state.mjs`);
+      }
+      const cursorSkipReminderHookContent = await tryReadCanonical(
+        path.join(canonicalRuntimeAssetsDir, "shared", "hooks", "skip-reminder.mjs"),
+      );
+      if (
+        cursorSkipReminderHookContent &&
+        (
+          await writeGeneratedFile(
+            path.join(dirs.cursorHooksDir, "skip-reminder.mjs"),
+            cursorSkipReminderHookContent,
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.cursorHooks}/skip-reminder.mjs`);
+      }
+      const cursorHookI18nContent = await tryReadCanonical(
+        path.join(canonicalRuntimeAssetsDir, "shared", "hooks", "hook-i18n.mjs"),
+      );
+      if (
+        cursorHookI18nContent &&
+        (
+          await writeGeneratedFile(
+            path.join(dirs.cursorHooksDir, "hook-i18n.mjs"),
+            cursorHookI18nContent,
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.cursorHooks}/hook-i18n.mjs`);
+      }
       if (
         (
           await writeGeneratedFile(
@@ -2156,6 +2409,10 @@ Examples:
         scope === "global"
           ? path.join(dirs.cursorHooksDir, "meta-kim-memory-save.mjs")
           : ".cursor/hooks/meta-kim-memory-save.mjs";
+      const enforceAgentDispatchHookPath =
+        scope === "global"
+          ? path.join(dirs.cursorHooksDir, "enforce-agent-dispatch.mjs")
+          : ".cursor/hooks/enforce-agent-dispatch.mjs";
       const hookPromptAdapterPath =
         scope === "global"
           ? path.join(dirs.cursorHooksDir, "hookprompt-adapter.mjs")
@@ -2167,6 +2424,7 @@ Examples:
             buildCursorProjectHooksJson({
               graphifyHookPath,
               memoryHookPath,
+              enforceAgentDispatchHookPath,
               hookPromptAdapterPath,
             }),
           )
@@ -2327,6 +2585,9 @@ Examples:
         normalizeDisplayPath(f) ===
         normalizeDisplayPath(dirs.displayPaths.cursorMcp),
     ).length,
+    cursorRules: changedFiles.filter((f) =>
+      hasDisplayPrefix(f, dirs.displayPaths.cursorRules),
+    ).length,
   };
 
   const teamSize = agents.length;
@@ -2442,6 +2703,11 @@ Examples:
         {
           label: dirs.displayPaths.cursorMcp,
           count: layerCounts.cursorMcp,
+          summaryKind: "files",
+        },
+        {
+          label: dirs.displayPaths.cursorRules,
+          count: layerCounts.cursorRules,
           summaryKind: "files",
         },
       ],
