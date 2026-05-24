@@ -536,11 +536,17 @@ CHECK: Does graphify-out/graph.json exist in the target project root?
 
 **Step 1 — Local agent scan**:
 ```
-Glob: .claude/agents/*.md
-Read each file, verify it has `name:` YAML frontmatter (valid = registered agent)
+Glob the current runtime's real agent projection, not a copied path from another runtime:
+  Claude Code: .claude/agents/*.md with YAML frontmatter
+  Codex: .codex/agents/*.toml with name / description / developer_instructions and optional ASCII nickname_candidates
+  Cursor: .cursor/agents/*.md with YAML frontmatter, plus .cursor/rules/*.mdc and AGENTS.md context
+  OpenClaw: openclaw/workspaces/<agent>/SOUL.md and openclaw/openclaw.template.json workspace entries
+Read each file, verify the runtime-native manifest fields (valid = registered agent)
 Extract each agent's "Own / Do Not Touch" boundaries
 Score match: does "Own" cover the needed capability?
 ```
+
+**Platform format boundary**: Codex is the only target that uses agent TOML. Claude Code and Cursor use Markdown/YAML agent files, and OpenClaw uses workspace identity files. Do not generate `.toml` for Claude/Cursor/OpenClaw, and do not describe Codex project agents as `.md` files. Codex `nickname_candidates` are best-effort display hints; Meta_Kim task boards and run artifacts still use `roleDisplayName`, with host aliases stored only as `runtimeInstanceAlias`.
 
 **Step 1.5 — Global capability search** (fast keyword match via search index):
 ```

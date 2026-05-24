@@ -481,6 +481,15 @@ Do not use this Notice as a Decision surface. If the user must choose among mult
 
 Capability index layers: (1) repo canonical (2) runtime mirrors (3) local global inventory. Codex fallback: `spawn_agent` with `agent_type: "default"` + discovered profile prompt as degradation.
 
+**Runtime agent format boundary (hard rule)**: do not copy one platform's agent file format into another runtime.
+
+| Runtime | Agent projection | Naming/display behavior |
+|---|---|---|
+| Claude Code | `.claude/agents/*.md` with YAML frontmatter | Agent name comes from Markdown frontmatter; no Codex `nickname_candidates`. |
+| Codex | `.codex/agents/*.toml` with `name`, `description`, `developer_instructions`, and optional ASCII `nickname_candidates` | Project may provide `worker.toml` / `explorer.toml` runtime adapters as best-effort readable nicknames; host-generated aliases still remain `runtimeInstanceAlias` only. |
+| Cursor | `.cursor/agents/*.md` plus `.cursor/rules/*.mdc` / `AGENTS.md` context | Markdown/YAML agent mirror; no Codex TOML. |
+| OpenClaw | `openclaw/workspaces/<agent>/` files plus `openclaw/openclaw.template.json` | Workspace identity model (`BOOT.md`, `IDENTITY.md`, `SOUL.md`, `TOOLS.md`, `AGENTS.md`, `MEMORY.md`, `HEARTBEAT.md`, `USER.md`); no Codex TOML. |
+
 **DRY conflict detection**: during Fetch, check whether multiple agents, skills, tools, or commands claim the same capability boundary. Record overlap detection before dispatch. Reject duplicate routing unless one owner has a clearly stronger boundary match; prefer the smallest owner that fully covers the task.
 
 **Skill ROI filter**: when several skills could apply, score them with `ROI = (Task Coverage x Usage Frequency) / (Context Cost + Learning Curve)`. Choose the highest useful ROI skill set, not the largest skill set. Low-ROI skills stay out of the prompt unless Fetch finds a specific capability gap they cover.

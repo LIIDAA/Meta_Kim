@@ -1162,6 +1162,98 @@ function escapeTomlBasicMultiline(value) {
   return value.replace(/\\/g, "\\\\").replace(/"""/g, '\\"\\"\\"');
 }
 
+function escapeTomlBasicString(value) {
+  return String(value ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+const CODEX_NICKNAME_CANDIDATES_BY_AGENT = {
+  "meta-warden": ["Meta Warden", "Warden"],
+  "meta-genesis": ["Meta Genesis", "Genesis"],
+  "meta-artisan": ["Meta Artisan", "Artisan"],
+  "meta-sentinel": ["Meta Sentinel", "Sentinel"],
+  "meta-librarian": ["Meta Librarian", "Librarian"],
+  "meta-conductor": ["Meta Conductor", "Conductor"],
+  "meta-prism": ["Meta Prism", "Prism", "Review"],
+  "meta-scout": ["Meta Scout", "Scout"],
+  "meta-chrysalis": ["Meta Chrysalis", "Chrysalis"],
+};
+
+export const CODEX_RUNTIME_ADAPTER_AGENTS = [
+  {
+    id: "worker",
+    description:
+      "Execute bounded Meta_Kim implementation tasks after governance dispatch.",
+    nicknameCandidates: ["Execution", "Worker", "Implementation"],
+    instructions: [
+      "You are the Codex runtime adapter for bounded Meta_Kim execution work.",
+      "This file exists to give Codex a readable project-level custom-agent definition for its generic worker role.",
+      "It is not a canonical durable Meta_Kim owner. Durable governance ownership stays with canonical meta agents; concrete execution ownership is selected per run through matched capabilities, skills, commands, MCP capabilities, and tools.",
+      "Use the parent task packet as the source of truth for roleDisplayName, roleInstanceId, scope, dependencies, verification steps, and merge owner.",
+      "Never replace roleDisplayName with a Codex runtime nickname. If Codex assigns an incidental alias, report it only as runtimeInstanceAlias.",
+    ].join("\n"),
+  },
+  {
+    id: "explorer",
+    description:
+      "Perform read-only codebase, platform, and evidence discovery for Meta_Kim runs.",
+    nicknameCandidates: ["Codebase Analysis", "Explorer", "Research"],
+    instructions: [
+      "You are the Codex runtime adapter for read-only Meta_Kim discovery work.",
+      "This file exists to give Codex a readable project-level custom-agent definition for its generic explorer role.",
+      "Inspect files, official documentation, capability indexes, commands, MCP capabilities, and tool availability as requested by the parent task packet.",
+      "Do not edit files or finalize implementation decisions. Return evidence, uncertainty, and candidate paths for the governance owner to merge.",
+      "Never replace roleDisplayName with a Codex runtime nickname. If Codex assigns an incidental alias, report it only as runtimeInstanceAlias.",
+    ].join("\n"),
+  },
+];
+
+function normalizeCodexNicknameCandidate(value) {
+  return String(value ?? "").trim().replace(/\s+/g, " ");
+}
+
+function assertCodexNicknameCandidate(value, context) {
+  if (!/^[A-Za-z0-9 _-]+$/.test(value)) {
+    throw new Error(
+      `${context} has invalid Codex nickname candidate "${value}". ` +
+        "Codex nickname_candidates must stay ASCII alphanumeric with spaces, hyphens, or underscores.",
+    );
+  }
+}
+
+function uniqueNicknameCandidates(candidates, context) {
+  const result = [];
+  const seen = new Set();
+  for (const rawCandidate of candidates) {
+    const candidate = normalizeCodexNicknameCandidate(rawCandidate);
+    if (!candidate || seen.has(candidate)) continue;
+    assertCodexNicknameCandidate(candidate, context);
+    seen.add(candidate);
+    result.push(candidate);
+  }
+  return result;
+}
+
+function titleCaseAgentId(agentId) {
+  return String(agentId ?? "")
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+export function buildCodexNicknameCandidates(agent) {
+  const configured = CODEX_NICKNAME_CANDIDATES_BY_AGENT[agent.id] ?? [];
+  const fallback = titleCaseAgentId(agent.id);
+  return uniqueNicknameCandidates(
+    [...configured, fallback, agent.id],
+    `Codex agent ${agent.id}`,
+  );
+}
+
+function formatTomlStringArray(values) {
+  return `[${values.map((value) => `"${escapeTomlBasicString(value)}"`).join(", ")}]`;
+}
+
 function buildCodexAgentInstructions(agent) {
   return [
     `You are the Codex custom agent mirror of Meta_Kim agent \`${agent.id}\`.`,
@@ -1174,13 +1266,31 @@ function buildCodexAgentInstructions(agent) {
   ].join("\n");
 }
 
-function buildCodexAgent(agent) {
+export function buildCodexAgent(agent) {
   const instructions = escapeTomlBasicMultiline(
     buildCodexAgentInstructions(agent),
   );
+  const nicknameCandidates = buildCodexNicknameCandidates(agent);
 
   return `name = "${agent.id}"
-description = "${agent.description.replace(/"/g, '\\"')}"
+description = "${escapeTomlBasicString(agent.description)}"
+nickname_candidates = ${formatTomlStringArray(nicknameCandidates)}
+developer_instructions = """
+${instructions}
+"""
+`;
+}
+
+export function buildCodexRuntimeAdapterAgent(agent) {
+  const nicknameCandidates = uniqueNicknameCandidates(
+    agent.nicknameCandidates ?? [],
+    `Codex runtime adapter ${agent.id}`,
+  );
+  const instructions = escapeTomlBasicMultiline(agent.instructions ?? "");
+
+  return `name = "${escapeTomlBasicString(agent.id)}"
+description = "${escapeTomlBasicString(agent.description)}"
+nickname_candidates = ${formatTomlStringArray(nicknameCandidates)}
 developer_instructions = """
 ${instructions}
 """
@@ -1371,6 +1481,10 @@ function buildRuntimeSkillMap(targetId) {
         pattern: /canonical\/skills\/meta-theory\/references\//g,
         replacement: ".claude/skills/meta-theory/references/",
       },
+      {
+        pattern: /canonical\/agents\/([A-Za-z0-9_*{}<>-]+)\.md/g,
+        replacement: ".claude/agents/$1.md",
+      },
       // Agent definitions: canonical/ → runtime-specific for Claude
       { pattern: /canonical\/agents\//g, replacement: ".claude/agents/" },
       // Hook files: stay in .claude/hooks/ (no canonical equivalent)
@@ -1391,6 +1505,10 @@ function buildRuntimeSkillMap(targetId) {
       },
       // Skill root: canonical/skills/ → .codex/skills/
       { pattern: /canonical\/skills\//g, replacement: ".codex/skills/" },
+      {
+        pattern: /canonical\/agents\/([A-Za-z0-9_*{}<>-]+)\.md/g,
+        replacement: ".codex/agents/$1.toml",
+      },
       // Agent definitions: canonical/ → .codex/agents/
       { pattern: /canonical\/agents\//g, replacement: ".codex/agents/" },
       // Hooks: Codex uses .codex/hooks/ plus .codex/hooks.json
@@ -1411,6 +1529,10 @@ function buildRuntimeSkillMap(targetId) {
       },
       // Skill root: canonical/skills/ → openclaw/skills/
       { pattern: /canonical\/skills\//g, replacement: "openclaw/skills/" },
+      {
+        pattern: /canonical\/agents\/([A-Za-z0-9_*{}<>-]+)\.md/g,
+        replacement: "openclaw/workspaces/$1/SOUL.md",
+      },
       // Agent definitions: OpenClaw uses workspace-per-agent model.
       // Each workspace has AGENTS.md containing all agent definitions.
       {
@@ -1435,6 +1557,10 @@ function buildRuntimeSkillMap(targetId) {
       },
       // Skill root: canonical/skills/ → .cursor/skills/
       { pattern: /canonical\/skills\//g, replacement: ".cursor/skills/" },
+      {
+        pattern: /canonical\/agents\/([A-Za-z0-9_*{}<>-]+)\.md/g,
+        replacement: ".cursor/agents/$1.md",
+      },
       // Agent definitions: canonical/ → .cursor/agents/
       { pattern: /canonical\/agents\//g, replacement: ".cursor/agents/" },
       // Hooks: Cursor uses .cursor/hooks/ plus .cursor/hooks.json
@@ -1458,7 +1584,7 @@ function buildRuntimeSkillMap(targetId) {
  * @param {"claude"|"codex"|"openclaw"|"cursor"} targetId
  * @returns {string}
  */
-function applyRuntimePaths(content, targetId) {
+export function applyRuntimePaths(content, targetId) {
   const rules = buildRuntimeSkillMap(targetId);
   let result = content;
   for (const { pattern, replacement } of rules) {
@@ -2212,6 +2338,19 @@ Examples:
         changedFiles.push(`${dp.codexAgents}/${agent.id}.toml`);
       }
     }
+
+    for (const agent of CODEX_RUNTIME_ADAPTER_AGENTS) {
+      if (
+        (
+          await writeGeneratedFile(
+            path.join(dirs.codexAgentsDir, `${agent.id}.toml`),
+            buildCodexRuntimeAdapterAgent(agent),
+          )
+        ).changed
+      ) {
+        changedFiles.push(`${dp.codexAgents}/${agent.id}.toml`);
+      }
+    }
   }
 
   // ── Cursor sync ───────────────────────────────────────────────
@@ -2629,6 +2768,7 @@ Examples:
           label: dirs.displayPaths.codexAgents,
           count: layerCounts.codexAgents,
           summaryKind: "agents",
+          expectedCount: teamSize + CODEX_RUNTIME_ADAPTER_AGENTS.length,
         },
         {
           label: dirs.displayPaths.codexSkillsRoot,
@@ -2743,7 +2883,7 @@ Examples:
       const pathCol = String(entry.label).padEnd(pathColWidth);
       let detail = "";
       if (entry.summaryKind === "agents") {
-        detail = t.syncDetailAgents(entry.count, teamSize);
+        detail = t.syncDetailAgents(entry.count, entry.expectedCount ?? teamSize);
       } else if (entry.summaryKind === "workspaces") {
         detail = t.syncDetailWorkspaces(entry.count, teamSize);
       } else {

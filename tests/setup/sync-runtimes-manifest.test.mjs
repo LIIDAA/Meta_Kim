@@ -3,6 +3,10 @@ import assert from "node:assert/strict";
 import path from "node:path";
 
 import {
+  CODEX_RUNTIME_ADAPTER_AGENTS,
+  applyRuntimePaths,
+  buildCodexAgent,
+  buildCodexRuntimeAdapterAgent,
   buildCodexSkillContent,
   buildCursorAgent,
   buildCursorProjectHooksJson,
@@ -320,6 +324,71 @@ Body content.
     assert.doesNotMatch(frontmatter, /^trigger:/m);
     assert.doesNotMatch(frontmatter, /^tools:/m);
   });
+
+  test("rewrites canonical agent references with runtime-native extensions", () => {
+    const source =
+      "Agent source: canonical/agents/meta-warden.md, canonical/agents/*.md, and canonical/agents/{name}.md";
+
+    assert.equal(
+      applyRuntimePaths(source, "claude"),
+      "Agent source: .claude/agents/meta-warden.md, .claude/agents/*.md, and .claude/agents/{name}.md",
+    );
+    assert.equal(
+      applyRuntimePaths(source, "codex"),
+      "Agent source: .codex/agents/meta-warden.toml, .codex/agents/*.toml, and .codex/agents/{name}.toml",
+    );
+    assert.equal(
+      applyRuntimePaths(source, "cursor"),
+      "Agent source: .cursor/agents/meta-warden.md, .cursor/agents/*.md, and .cursor/agents/{name}.md",
+    );
+    assert.equal(
+      applyRuntimePaths(source, "openclaw"),
+      "Agent source: openclaw/workspaces/meta-warden/SOUL.md, openclaw/workspaces/*/SOUL.md, and openclaw/workspaces/{name}/SOUL.md",
+    );
+  });
+});
+
+describe("sync-runtimes / Codex agents", () => {
+  test("emits Codex TOML nickname candidates for canonical meta agents", () => {
+    const rendered = buildCodexAgent({
+      id: "meta-warden",
+      description: "Coordinates dispatch and final synthesis",
+      body: "Body instructions",
+    });
+
+    assert.match(rendered, /^name = "meta-warden"$/m);
+    assert.match(
+      rendered,
+      /^nickname_candidates = \["Meta Warden", "Warden", "meta-warden"\]$/m,
+    );
+    assert.match(rendered, /^developer_instructions = """$/m);
+    assert.doesNotMatch(rendered, /代码库分析|执行|审查|验证/);
+  });
+
+  test("emits Codex runtime adapter agents for built-in worker and explorer names", () => {
+    const adapterIds = CODEX_RUNTIME_ADAPTER_AGENTS.map((agent) => agent.id);
+    assert.deepEqual(adapterIds, ["worker", "explorer"]);
+
+    for (const agent of CODEX_RUNTIME_ADAPTER_AGENTS) {
+      const rendered = buildCodexRuntimeAdapterAgent(agent);
+      assert.match(rendered, new RegExp(`^name = "${agent.id}"$`, "m"));
+      assert.match(rendered, /^nickname_candidates = \[/m);
+      assert.match(rendered, /runtimeInstanceAlias/);
+      assert.match(rendered, /roleDisplayName/);
+      assert.match(rendered, /not a canonical durable Meta_Kim owner|Do not edit files/);
+    }
+  });
+
+  test("treats generated Codex adapter files as runtime agent projections", () => {
+    assert.equal(
+      inferProjectCategory(p(".codex", "agents", "worker.toml"), REPO),
+      CATEGORIES.F,
+    );
+    assert.equal(
+      inferProjectCategory(p(".codex", "agents", "explorer.toml"), REPO),
+      CATEGORIES.F,
+    );
+  });
 });
 
 describe("sync-runtimes / Cursor agents", () => {
@@ -338,6 +407,8 @@ describe("sync-runtimes / Cursor agents", () => {
       rendered,
       /description: "Coordinates dispatch and final synthesis"\n---\n\n# Meta-Warden/,
     );
+    assert.doesNotMatch(rendered, /nickname_candidates/);
+    assert.doesNotMatch(rendered, /^name = /m);
   });
 });
 

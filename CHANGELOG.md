@@ -6,6 +6,21 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.1.4] - 2026-05-24
+
+### Added
+
+- **Codex readable subagent adapters** — Codex runtime sync now generates `worker.toml` and `explorer.toml` runtime adapters plus `nickname_candidates` for Codex meta-agent TOML projections. These are best-effort Codex display hints and do not become durable Meta_Kim execution owners.
+
+### Fixed
+
+- **Cross-runtime agent format boundaries** — Runtime path rewriting now emits each target's native agent paths: `.codex/agents/*.toml` for Codex, `.claude/agents/*.md` for Claude Code, `.cursor/agents/*.md` for Cursor, and OpenClaw workspace `SOUL.md` files, preventing Codex mirrors from saying `.codex/agents/*.md`.
+- **Runtime alias handling** — Documentation now separates host runtime aliases from Meta_Kim `roleDisplayName`, so task boards and run artifacts keep business-readable names even when Codex Desktop falls back to generic aliases.
+
+### Changed
+
+- **Version metadata** — Bumped the package version to `2.1.4`.
+
 ## [2.1.3] - 2026-05-24
 
 ### Fixed

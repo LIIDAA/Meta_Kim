@@ -10,6 +10,8 @@ export const META_AGENTS = [
   "meta-warden",
 ];
 
+export const CODEX_RUNTIME_ADAPTER_AGENT_IDS = ["worker", "explorer"];
+
 export const OPENCLAW_WORKSPACE_MD = [
   "BOOT.md",
   "BOOTSTRAP.md",

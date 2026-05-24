@@ -73,12 +73,19 @@ After changing canonical sources, sync projections instead of hand-forking runti
 When this repository is opened in Codex:
 
 - `AGENTS.md` is this resident project guide.
-- `.codex/agents/*.toml` contains Codex custom-agent mirrors for the Meta_Kim team.
+- `.codex/agents/*.toml` contains Codex custom-agent mirrors for the Meta_Kim team. Codex is the only target here that uses agent TOML; `worker.toml` and `explorer.toml` are Codex runtime adapters for readable host nicknames, not durable Meta_Kim owners.
 - `.agents/skills/meta-theory/` is the Codex project skill mirror; `.codex/skills/meta-theory/` is kept as a compatibility mirror for older installs.
 - `.codex/hooks.json` and `.codex/hooks/` carry Codex-compatible project hook wiring.
 - `codex/config.toml.example` is generated from `canonical/runtime-assets/codex/config.toml.example`.
 
 Cursor parity is maintained through `.cursor/agents/*.md`, `.cursor/skills/meta-theory/`, `.cursor/hooks.json`, `.cursor/hooks/`, `.cursor/mcp.json`, and `.cursor/capability-index/`.
+
+Cross-runtime format boundary:
+
+- Claude Code agents: `.claude/agents/*.md` with YAML frontmatter.
+- Codex agents: `.codex/agents/*.toml` with `name`, `description`, `developer_instructions`, and optional ASCII `nickname_candidates`.
+- Cursor agents: `.cursor/agents/*.md` with YAML frontmatter plus `.cursor/rules/*.mdc` and `AGENTS.md` context.
+- OpenClaw agents: `openclaw/workspaces/<agent>/` identity/workspace files plus `openclaw/openclaw.template.json`.
 
 ## Capability-First Dispatch
 

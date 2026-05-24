@@ -6,6 +6,21 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.1.4] - 2026-05-24
+
+### 新增
+
+- **Codex 可读子智能体适配器** — Codex 运行时同步现在会生成 `worker.toml` 和 `explorer.toml` runtime adapter，并为 Codex meta-agent TOML 投影加入 `nickname_candidates`。这些只是 Codex 显示名的最佳努力提示，不会变成 Meta_Kim 的长期执行 owner。
+
+### 修复
+
+- **跨运行时 agent 格式边界** — 运行时路径重写现在会输出各目标的原生 agent 路径：Codex 的 `.codex/agents/*.toml`、Claude Code 的 `.claude/agents/*.md`、Cursor 的 `.cursor/agents/*.md`、OpenClaw 的 workspace `SOUL.md`，避免 Codex 镜像继续写成 `.codex/agents/*.md`。
+- **运行时别名处理** — 文档现在明确区分宿主 runtime alias 和 Meta_Kim `roleDisplayName`，即使 Codex Desktop 回退成 generic alias，任务板和 run artifact 仍必须使用业务可读名。
+
+### 变更
+
+- **版本元数据** — 包版本提升到 `2.1.4`。
+
 ## [2.1.3] - 2026-05-24
 
 ### 修复

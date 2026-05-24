@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-23T21:39:16.715Z",
+  "generatedAt": "2026-05-24T10:22:17.262Z",
   "registryName": "meta-kim-capabilities",
   "scope": "repo-canonical",
   "canonicalProjection": "config/capability-index/meta-kim-capabilities.json",
@@ -207,8 +207,8 @@
         "type": "skills",
         "namespace": "canonical",
         "path": "canonical/skills/meta-theory/SKILL.md",
-        "size": 70868,
-        "modified": "2026-05-23T21:24:25.918Z"
+        "size": 71862,
+        "modified": "2026-05-24T10:12:48.350Z"
       },
       "repo:canonical-reference:create-agent": {
         "id": "create-agent",
@@ -225,8 +225,8 @@
         "namespace": "canonical-reference",
         "path": "canonical/skills/meta-theory/references/dev-governance.md",
         "relativePath": "dev-governance.md",
-        "size": 114219,
-        "modified": "2026-05-23T21:20:17.374Z"
+        "size": 115132,
+        "modified": "2026-05-24T10:13:18.152Z"
       },
       "repo:canonical-reference:intent-amplification": {
         "id": "intent-amplification",
@@ -309,7 +309,7 @@
         "path": "canonical/runtime-assets/claude/hooks/spine-state.mjs",
         "relativePath": "spine-state.mjs",
         "size": 27050,
-        "modified": "2026-05-23T15:58:47.232Z"
+        "modified": "2026-05-24T10:01:11.069Z"
       },
       "repo:canonical-runtime-assets:utils.mjs": {
         "id": "utils.mjs",
@@ -345,7 +345,7 @@
         "path": "canonical/runtime-assets/claude/hooks/enforce-agent-dispatch.mjs",
         "relativePath": "enforce-agent-dispatch.mjs",
         "size": 29399,
-        "modified": "2026-05-23T16:03:18.985Z"
+        "modified": "2026-05-24T10:01:11.069Z"
       },
       "repo:canonical-runtime-assets:post-console-log-warn.mjs": {
         "id": "post-console-log-warn.mjs",
@@ -454,7 +454,7 @@
         "namespace": "repo-mcp",
         "path": ".mcp.json",
         "size": 220,
-        "modified": "2026-05-20T05:24:46.853Z"
+        "modified": "2026-05-24T09:40:44.606Z"
       }
     },
     "mcpTools": {
@@ -464,7 +464,7 @@
         "namespace": "repo-mcp",
         "path": ".mcp.json",
         "size": 220,
-        "modified": "2026-05-20T05:24:46.853Z"
+        "modified": "2026-05-24T09:40:44.606Z"
       },
       "repo:repo-mcp:meta-kim-runtime:get_meta_agent": {
         "id": "meta-kim-runtime:get_meta_agent",
@@ -472,7 +472,7 @@
         "namespace": "repo-mcp",
         "path": ".mcp.json",
         "size": 220,
-        "modified": "2026-05-20T05:24:46.853Z"
+        "modified": "2026-05-24T09:40:44.606Z"
       },
       "repo:repo-mcp:meta-kim-runtime:get_meta_runtime_capabilities": {
         "id": "meta-kim-runtime:get_meta_runtime_capabilities",
@@ -480,7 +480,7 @@
         "namespace": "repo-mcp",
         "path": ".mcp.json",
         "size": 220,
-        "modified": "2026-05-20T05:24:46.853Z"
+        "modified": "2026-05-24T09:40:44.606Z"
       }
     },
     "plugins": {},
@@ -501,7 +501,7 @@
         "path": "canonical/runtime-assets/codex/commands/meta-theory.md",
         "relativePath": "meta-theory.md",
         "size": 1542,
-        "modified": "2026-05-23T21:23:58.973Z"
+        "modified": "2026-05-24T10:01:11.070Z"
       }
     }
   },
