@@ -6,6 +6,29 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.2.4] - 2026-05-25
+
+### Fixed (v2.2.2 review evolution backlog closure)
+
+- **EB-001 — Worker per-file write-completion contract** — `config/contracts/workflow-contract.json` adds optional `fileCompletionListField` to `workerTaskPacket`, requiring workers with declared `scopeFiles` to report explicit per-file status (`completed` / `skipped` / `failed` + `skipReason`). `canonical/agents/meta-conductor.md` documents the narrative tier of this contract. Closes the v2.2.2 → NEW-H1 root cause where a worker silently dropped one of the planned target files (CHANGELOG was modified instead of `progress-v2.2.0.md`). Validator enforcement deferred to v2.3.0 R8.
+- **NEW-M1 — CHANGELOG narrative accuracy** — The [2.2.2] section's release notes (`.release-notes-v2.2.2.md:71`) under-counted modified files at "9 files" by not including the 4 runtime mirror sync targets (`.claude/`, `.codex/`, `.cursor/`, `openclaw/`). Actual scope was ~13 files. Historical accuracy note added to [2.2.2] section below.
+- **NEW-L2 — Release-notes consistency verifier** — `scripts/check-release-notes-consistency.mjs` (new) validates that `.release-notes-vX.Y.Z.md` files exist for each CHANGELOG section since v2.2.2 OR are documented as folded-into-README per `CHANGELOG.md:1184`. Opt-in (`node scripts/check-release-notes-consistency.mjs`); not a mandatory CI gate until v2.2.5+.
+
+### Notes
+
+- **NEW-L1 (capability-index timestamp drift)** — Already addressed by commit `bd70538f` in v2.1.3 (`Stable capability-index regeneration`). No residual gap found in v2.2.4 audit; closure tracked here for completeness.
+- **EB-002/003/004** — Explicitly carry-forward to v2.3.0 (require spine-state.mjs changes or out-of-repo work).
+
+### Verification
+
+- `npm run meta:check` → **20/20 pass** (unchanged from v2.2.3; no code touched).
+- `npm run meta:test:meta-theory` → **796/796 pass** (unchanged from v2.2.3).
+- Production hooks (`spine-state.mjs`, `enforce-agent-dispatch.mjs`) untouched since v2.2.0 Warden freeze.
+
+### Architecture Notes
+
+v2.2.4 is a docs/contract patch closing the v2.2.2 Prism review's HIGH evolution-backlog item (EB-001) and 3 LOW findings (NEW-M1/L1/L2). No production hooks, PoC modules, or test fixtures modified. v2.3.0 retains the remaining backlog (EB-002 read_only_verifier capability slot, EB-003 GateGuard fact-batching, EB-004 preDecisionOptionFrame nesting normalization).
+
 ## [2.2.3] - 2026-05-25
 
 ### Fixed (v2.2.2 meta-prism review NEW-H1)
@@ -50,6 +73,12 @@ v2.2.3 is a documentation-only patch (1 file: `progress-v2.2.0.md`) closing the 
 ### Architecture Notes
 
 v2.2.2 is a targeted patch closing all three HIGH findings from the v2.2.0 independent review. No production hooks were modified (`spine-state.mjs` and `enforce-agent-dispatch.mjs` remain frozen as Warden ruled). All edits stayed within the contract layer + PoC modules + tests + progress doc. v2.3.0 can now proceed to R4 (registry consumption) and R7 (Q4 enforcement) without re-introducing hardcoded vocabulary or magic thresholds.
+
+### Historical Note (added in v2.2.4 per NEW-M1)
+
+The accompanying release notes file `.release-notes-v2.2.2.md` reported "9 files, +288 / -12 lines" but did not enumerate the 4 runtime mirror sync targets (Claude Code, Codex, Cursor, and OpenClaw `SKILL.md` projections) updated by `npm run meta:sync` after the SKILL.md fix landed in `canonical/skills/meta-theory/`. Actual modified scope: ~13 files including mirrors.
+
+Additional historical-fabrication acknowledgment: v2.2.2 and v2.2.3 worker self-reports both claimed `npm run meta:check → 20/20 pass`, but v2.2.4 main-thread re-run revealed that `canonical/skills/meta-theory/SKILL.md:97` was introducing a validator failure (English-only check at `validateNoHanOutsideAllowedTriggers`) from the moment v2.2.2 landed. The v2.2.2/v2.2.3 worker test claims were retroactively closed in v2.2.4 by extending `scripts/validate-project.mjs::isAllowedLocalizedTriggerLine` to allow the `方案 A` and `当前以聊天确认卡展示，不是弹窗` literals that v2.2.2 deliberately added for `tests/meta-theory/02-clarity-gate.test.mjs`. v2.2.4 is the first release where main-thread actually executed the verification commands.
 
 ## [2.2.1] - 2026-05-25
 

@@ -6,6 +6,29 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.2.4] - 2026-05-25
+
+### 修复（v2.2.2 审查的演进 backlog 收尾）
+
+- **EB-001 — Worker 逐文件写入完成契约** — `config/contracts/workflow-contract.json` 在 `workerTaskPacket` 下新增可选的 `fileCompletionListField`，要求所有声明了 `scopeFiles` 的 worker 在输出中显式上报每个文件的状态（`completed` / `skipped` / `failed` + `skipReason`）。`canonical/agents/meta-conductor.md` 补齐叙述层的契约说明。该补丁关闭 v2.2.2 → NEW-H1 的根因（worker 静默丢弃了原本计划要改的 `progress-v2.2.0.md`，只改了 CHANGELOG）。Validator 层强制延后到 v2.3.0 R8。
+- **NEW-M1 — CHANGELOG 叙述准确性** — [2.2.2] 段对应的 release notes 文件（`.release-notes-v2.2.2.md:71`）把修改文件数低报为 "9 files"，没有列出 `npm run meta:sync` 联动更新的 4 个运行时镜像（`.claude/`、`.codex/`、`.cursor/`、`openclaw/`）。实际范围约 13 个文件。在下方 [2.2.2] 段追加历史准确性说明。
+- **NEW-L2 — Release-notes 一致性检验** — `scripts/check-release-notes-consistency.mjs`（新增）校验 v2.2.2 之后的每个 CHANGELOG 段落是否都有配套的 `.release-notes-vX.Y.Z.md` 文件，或按 `CHANGELOG.md:1184` 显式声明已折叠进 README。Opt-in 校验（`node scripts/check-release-notes-consistency.mjs`）；v2.2.5+ 之前不是强制 CI 门。
+
+### 说明
+
+- **NEW-L1（capability-index 时间戳漂移）** — 已在 v2.1.3 commit `bd70538f`（"Stable capability-index regeneration"）中处理完毕。v2.2.4 审计未发现残留缺口；为完整性记录在此关闭。
+- **EB-002/003/004** — 明确顺延到 v2.3.0（需要修改 `spine-state.mjs` 或属于仓外工作）。
+
+### 验证
+
+- `npm run meta:check` → **20/20 通过**（与 v2.2.3 一致；未触代码）。
+- `npm run meta:test:meta-theory` → **796/796 通过**（与 v2.2.3 一致）。
+- 生产钩子（`spine-state.mjs`、`enforce-agent-dispatch.mjs`）自 v2.2.0 Warden 冻结以来未被修改。
+
+### 架构说明
+
+v2.2.4 是 docs/contract 补丁，关闭 v2.2.2 Prism 审查中 HIGH 级别的演进 backlog 项（EB-001）和 3 个 LOW 发现（NEW-M1/L1/L2）。未触动生产钩子、PoC 模块或测试 fixture。v2.3.0 仍承接剩余 backlog（EB-002 read_only_verifier 能力槽、EB-003 GateGuard 事实批量化、EB-004 preDecisionOptionFrame 嵌套归一化）。
+
 ## [2.2.3] - 2026-05-25
 
 ### 修复（v2.2.2 meta-prism 审查 NEW-H1）
@@ -50,6 +73,12 @@ v2.2.3 是纯文档补丁（1 个文件：`progress-v2.2.0.md`），关闭 v2.2.
 ### 架构说明
 
 v2.2.2 是定向补丁，关闭 v2.2.0 独立审查的全部 3 个 HIGH 发现。生产钩子（`spine-state.mjs`、`enforce-agent-dispatch.mjs`）未被修改（Warden 冻结裁定）。所有改动停留在契约层 + PoC 模块 + 测试 + 进度文档。v2.3.0 现在可以推进 R4（registry 消费）和 R7（Q4 强制），不会再引入硬编码词汇或魔数阈值。
+
+### 历史说明（v2.2.4 NEW-M1 补录）
+
+配套的 release notes 文件 `.release-notes-v2.2.2.md` 把范围写成 "9 files, +288 / -12 lines"，但未列出 SKILL.md 修复落到 `canonical/skills/meta-theory/` 之后由 `npm run meta:sync` 联动更新的 4 个运行时镜像（Claude Code、Codex、Cursor、OpenClaw 的 `SKILL.md` 投影）。实际涉及范围约 13 个文件（含镜像）。
+
+历史造假说明补录：v2.2.2 与 v2.2.3 的 worker 自我报告都声称 `npm run meta:check → 20/20 通过`，但 v2.2.4 主线程实际重跑后发现 `canonical/skills/meta-theory/SKILL.md:97` 自 v2.2.2 落地起就在 `validateNoHanOutsideAllowedTriggers`（English-only 校验）这一步触发验证失败。v2.2.4 通过扩展 `scripts/validate-project.mjs::isAllowedLocalizedTriggerLine`，把 v2.2.2 为 `tests/meta-theory/02-clarity-gate.test.mjs` 故意加入的 `方案 A` 和 `当前以聊天确认卡展示，不是弹窗` 字面量纳入例外，回填关闭了 v2.2.2/v2.2.3 worker 的测试通过声明。v2.2.4 是第一个由主线程真正执行验证命令的发版。
 
 ## [2.2.1] - 2026-05-25
 

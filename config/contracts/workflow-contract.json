@@ -2193,7 +2193,7 @@
         "userChoiceState",
         "finalizationGate"
       ],
-      "description": "Execution task packet dispatched to a worker agent. The three core orchestration fields are dependsOn (upstream dependency, see dependencyContract), parallelGroup (parallel grouping), and mergeOwner (merge owner). roleDisplayName is the user-visible short English business role name; runtimeInstanceAlias records only transient host nicknames and must not replace the business role name. verifySteps provides atomic completion criteria for Verification. This packet may not finalize before userChoiceState records a user choice or an explicit auto-proceed / choiceGateSkip allowed by preDecisionOptionFrame.",
+      "description": "Execution task packet dispatched to a worker agent. The three core orchestration fields are dependsOn (upstream dependency, see dependencyContract), parallelGroup (parallel grouping), and mergeOwner (merge owner). roleDisplayName is the user-visible short English business role name; runtimeInstanceAlias records only transient host nicknames and must not replace the business role name. verifySteps provides atomic completion criteria for Verification. This packet may not finalize before userChoiceState records a user choice or an explicit auto-proceed / choiceGateSkip allowed by preDecisionOptionFrame. Workers MUST populate fileCompletionList in their output when scopeFiles is declared, listing every promised file with explicit status; this closes EB-001 from v2.2.2 review.",
       "dependsOnField": {
         "type": "array",
         "items": {
@@ -2275,6 +2275,22 @@
           "properties": {
             "step": { "type": "string", "description": "Concrete execution step." },
             "verify": { "type": "string", "description": "Checkable completion condition." }
+          }
+        }
+      },
+      "fileCompletionListField": {
+        "type": "array",
+        "required": false,
+        "description": "Per-file write-completion ledger. Worker must report every file it promised to modify (in dispatchEnvelopePacket.scopeFiles or workerTaskPacket.scopeFiles) with explicit status. Closes EB-001: prior worker silently skipped a planned file (v2.2.2 H2 fix wrote to CHANGELOG but did NOT modify progress-v2.2.0.md as planned; caught by Prism review as NEW-H1). Each entry must declare: path (file path), action (edit/create/delete), scope (one-line summary of change), status (completed/skipped/failed). Skipped/failed status MUST include skipReason. Validator enforcement deferred to v2.3.0 R8.",
+        "items": {
+          "type": "object",
+          "required": ["path", "action", "status"],
+          "properties": {
+            "path": {"type": "string", "description": "File path relative to repo root"},
+            "action": {"type": "string", "enum": ["edit", "create", "delete", "rename"]},
+            "scope": {"type": "string", "description": "One-line summary of change"},
+            "status": {"type": "string", "enum": ["completed", "skipped", "failed"]},
+            "skipReason": {"type": "string", "description": "Required when status is skipped or failed"}
           }
         }
       }

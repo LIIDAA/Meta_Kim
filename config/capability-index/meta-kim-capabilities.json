@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-25T07:21:31.988Z",
+  "generatedAt": "2026-05-25T12:07:23.344Z",
   "registryName": "meta-kim-capabilities",
   "scope": "repo-canonical",
   "canonicalProjection": "config/capability-index/meta-kim-capabilities.json",
@@ -135,8 +135,8 @@
         "type": "agents",
         "namespace": "canonical",
         "path": "canonical/agents/meta-conductor.md",
-        "size": 50971,
-        "modified": "2026-05-24T17:24:59.881Z",
+        "size": 52015,
+        "modified": "2026-05-25T11:55:07.191Z",
         "layer": "meta",
         "executionBlock": true
       },

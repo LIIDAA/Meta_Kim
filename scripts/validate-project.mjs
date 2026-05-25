@@ -2432,7 +2432,9 @@ function isAllowedLocalizedTriggerLine(line) {
     line.includes("`元理论`") ||
     line.includes("`仅分析`") ||
     line.includes("`只读`") ||
-    line.includes('"不需要确认"')
+    line.includes('"不需要确认"') ||
+    line.includes("`方案 A`") ||
+    line.includes("当前以聊天确认卡展示，不是弹窗")
   );
 }
 
