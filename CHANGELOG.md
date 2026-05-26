@@ -6,6 +6,40 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.3.0] - 2026-05-26
+
+### Fixed
+
+- **Item 1 — ECC plugin install failure on macOS (NEW)** — `config/skills.json` defensive spec changed from `ecc@ecc` to `everything-claude-code@ecc` so the install survives the upstream affaan-m/everything-claude-code → ecc plugin rename across legacy + current marketplace caches. `scripts/install-global-skills-all-runtimes.mjs` gains a marketplace refresh loop (`claude plugin marketplace update <id>`) between marketplace registration and plugin install so stale caches get refreshed before resolution. Source-of-truth: local cache evidence at `C:/Users/Kim/.claude/plugins/marketplaces/ecc/.claude-plugin/marketplace.json` (current HEAD, plugin name=ecc, version 2.0.0-rc.1) vs `.../marketplaces/everything-claude-code/.claude-plugin/marketplace.json` (legacy, plugin name=everything-claude-code). The defensive spec works against both states.
+- **EB-008 (HIGH) — workerExecutionEvidence silent-success semantics** — `config/contracts/workflow-contract.json::workerExecutionEvidenceField` adds `successMarkerFormat` enum (`stdout-text` | `exit-code-only` | `json-output`) plus `exitCode` and `commandRanAt` properties. Silent-success commands (`node --check`, `tsc --noEmit`) may now record empty `actualOutput` only when `successMarkerFormat="exit-code-only"` AND `exitCode=0` AND `commandRanAt` set. Closes v2.2.5 `accepted_risk` (W1 honestly disclosed exit codes; placeholder pressure pattern `EXIT_OK\n` retired). `canonical/agents/meta-prism.md::Decision Rule 16` extended in parallel (silent-success extension v2.3.0).
+- **EB-009 (LOW) — release notes claim retracted (dogfood)** — v2.2.5 release notes claimed `validate-project.mjs:15 loadRuntimeProfiles` was unused. Re-verification shows it is actively called at `validate-project.mjs:2808` inside `validateSyncConfiguration()` plus `scripts/meta-kim-sync-config.mjs:271,333`. Import is REQUIRED. v2.2.5 release notes + CHANGELOG entries gained retraction blockquote/sub-bullets across English + Chinese mirrors. No code prune.
+- **EB-010 (MEDIUM) — sibling schema style normalized** — `config/contracts/workflow-contract.json::workerExecutionEvidenceField` reshaped from heterogeneous `fieldType`/`itemSchema`/top-level `enforcement` layout to standard JSON Schema `type`/`items`/`properties` with `_meta` sidecar. Sibling style now matches `verifyStepsField` and `fileCompletionListField`. `_meta.closes` lists `[EB-005, EB-008, EB-010]`.
+
+### Added
+
+- **EB-003 (MEDIUM) — Meta_Kim ECC batching wrapper hook (Option D, user-selected)** — `canonical/runtime-assets/claude/hooks/ecc-batching-wrapper.mjs` (NEW) implements PreToolUse session+file cache key (SHA256(session_id || file_path)) with 5-minute TTL scoped to `os.tmpdir()`. Idempotent + non-fatal cache write failure. Hook not yet wired into `.claude/settings.json` (canonical only); v2.3.x decides registration. See findings: F1 below (`EB-011` backlog).
+
+### Changed
+
+- `package.json` — version `2.2.5 → 2.3.0`.
+- Runtime mirrors re-synced (`.claude/`, `.codex/`, `.cursor/`, `openclaw/`) via `npm run meta:sync`.
+
+### Verification
+
+| Check | Result | Marker |
+|---|---|---|
+| `npm run meta:check` (after meta:sync) | **20/20 pass** | `stdout-text` |
+| W2 (Prism) review | qualityGate=pass; 0 HIGH/MEDIUM, 3 LOW → backlog | n/a |
+| W3 (Warden) meta-review + verification | pass; Rule 16/17 dogfood honored | n/a |
+| Cross-file consistency (`Rule 16` ↔ `successMarkerFormat` enum) | matched enum names + conditions | grep diff |
+
+### Carry-forward to v2.3.1
+
+- **EB-002 (HIGH)** — `read_only_verifier` capability slot. **Spec not yet drafted.** Bug nature confirmed first-hand in v2.3.0 (W2 + W3 reviewer subagents both blocked by `enforce-agent-dispatch.mjs` from running `git diff` / `npm run meta:check` in review/meta_review stages). Requires `spine-state.mjs` changes (frozen). v2.3.1 RFC must define: acceptance criteria, allowed command whitelist, scope contract, test plan.
+- **EB-004 (LOW)** — `preDecisionOptionFrame` nesting normalization. **Spec not yet drafted.** Bug surfaced in v2.3.0 (`choiceSurfaceState` had to be set BOTH at spine top-level AND inside `preDecisionOptionFrame` to satisfy the hook's `state.choiceSurfaceState` lookup — confusing field placement). Requires `spine-state.mjs` changes. v2.3.1 RFC must define: canonical field location, migration plan, validator gate.
+- **EB-011 (LOW, new in v2.3.0)** — `ecc-batching-wrapper.mjs` docstring claims "batch the related ECC plugin install side-effects" but implementation only writes a per-(session,file) cache marker + returns `permissionDecision=allow` on cache hits (does not suppress/defer tool calls). v2.3.x decision: rename to `ecc-permission-cache-wrapper.mjs` OR strengthen behavior to actually deny/skip duplicate side-effecting calls within TTL.
+- **Hook infra bug (new finding, v2.3.0)** — Agent dispatches in `review` / `meta_review` / `verification` stages do not auto-append `ownerAgent` to `dispatchChain.<stage>`. Main thread must hand-edit spine state to record the dispatch. Tracked alongside EB-002 (same root cause: read-only reviewer cannot run verify commands; same fix surface: `spine-state.mjs`).
+
 ## [2.2.5] - 2026-05-25
 
 ### Fixed
@@ -32,6 +66,7 @@ When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the
 - EB-003 (MEDIUM): user decision required on options A-D
 - **EB-008 (HIGH, surfaced by v2.2.5 W2 review)**: `workerExecutionEvidence.actualOutput` ambiguity for silent-success commands (e.g., `node --check`, `JSON.parse`). Schema needs `successMarkerFormat` clarification field. v2.2.5 accepts the first-application drift as `accepted_risk` per W2 ruling (alternative was punishing rule self-application on day 1).
 - **EB-009 (LOW, surfaced by v2.2.5 W2 review)**: `scripts/validate-project.mjs:15` imports `loadRuntimeProfiles` not referenced by the new `loadLocalizedTriggerExceptions` path. Pre-existing condition; verify and prune if unused.
+  - **v2.3.0 retraction:** Claim was incorrect — `validate-project.mjs:2808` actively uses `loadRuntimeProfiles` inside `validateSyncConfiguration()`. Import is required. EB-009 closed as docs-only correction.
 - **EB-010 (MEDIUM, surfaced by v2.2.5 W2 review)**: Sibling schema style heterogeneity in `protocols.workerTaskPacket.*` — `verifyStepsField` / `fileCompletionListField` / `workerExecutionEvidenceField` use mixed conventions (`type: "array"` vs `fieldType: "array"`). Normalize.
 - Validator-level enforcement of `workerExecutionEvidenceField` (currently narrative-tier + Rule 16)
 

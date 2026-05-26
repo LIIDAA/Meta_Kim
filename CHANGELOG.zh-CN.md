@@ -6,6 +6,40 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.3.0] - 2026-05-26
+
+### 修复
+
+- **Item 1 — ECC plugin macOS 安装失败（新）** — `config/skills.json` 防御性规范由 `ecc@ecc` 改为 `everything-claude-code@ecc`，以兼容上游 affaan-m/everything-claude-code → ecc 插件改名跨新旧 marketplace 缓存。`scripts/install-global-skills-all-runtimes.mjs` 在 marketplace 注册和插件安装之间加入刷新循环（`claude plugin marketplace update <id>`），以确保解析前缓存已更新。来源证据：本地缓存 `C:/Users/Kim/.claude/plugins/marketplaces/ecc/.claude-plugin/marketplace.json`（当前 HEAD，插件名=ecc，版本 2.0.0-rc.1）vs `.../marketplaces/everything-claude-code/.claude-plugin/marketplace.json`（旧版，插件名=everything-claude-code）。防御性规范对两种状态都生效。
+- **EB-008（HIGH）— workerExecutionEvidence 静默成功语义** — `config/contracts/workflow-contract.json::workerExecutionEvidenceField` 新增 `successMarkerFormat` enum (`stdout-text` | `exit-code-only` | `json-output`) 及 `exitCode`、`commandRanAt` 属性。静默成功命令（`node --check`、`tsc --noEmit`）只有在 `successMarkerFormat="exit-code-only"` 且 `exitCode=0` 且 `commandRanAt` 已记录时才允许 `actualOutput` 为空。关闭 v2.2.5 `accepted_risk`（W1 诚实披露 exit codes；占位符压力模式 `EXIT_OK\n` 退役）。`canonical/agents/meta-prism.md::Decision Rule 16` 同步扩展（silent-success extension v2.3.0）。
+- **EB-009（LOW）— 公开撤回错判（dogfood）** — v2.2.5 release notes 声称 `validate-project.mjs:15 loadRuntimeProfiles` 未被使用。重新验证显示其在 `validate-project.mjs:2808` 的 `validateSyncConfiguration()` 内被实际调用，且 `scripts/meta-kim-sync-config.mjs:271,333` 也定义和使用。该 import 必需保留。v2.2.5 release notes + CHANGELOG 中英双语条目均加入撤回引用/子条目。不做代码裁剪。
+- **EB-010（MEDIUM）— 同级 schema 风格归一化** — `config/contracts/workflow-contract.json::workerExecutionEvidenceField` 由异构 `fieldType`/`itemSchema`/顶层 `enforcement` 布局重塑为标准 JSON Schema `type`/`items`/`properties` + `_meta` 边带元数据。同级风格现在与 `verifyStepsField`、`fileCompletionListField` 一致。`_meta.closes` 列出 `[EB-005, EB-008, EB-010]`。
+
+### 新增
+
+- **EB-003（MEDIUM）— Meta_Kim ECC 批处理包装钩子（Option D，用户选定）** — `canonical/runtime-assets/claude/hooks/ecc-batching-wrapper.mjs`（新增）实现 PreToolUse 会话+文件缓存键（SHA256(session_id || file_path)），TTL 5 分钟，存储位置限定 `os.tmpdir()`。幂等 + 缓存写失败非致命。钩子尚未在 `.claude/settings.json` 中注册（仅 canonical），v2.3.x 决定是否注册。详见 F1（`EB-011` backlog）。
+
+### 变更
+
+- `package.json` — 版本 `2.2.5 → 2.3.0`。
+- 运行时镜像（`.claude/`、`.codex/`、`.cursor/`、`openclaw/`）经 `npm run meta:sync` 重新同步。
+
+### 验证
+
+| 检查 | 结果 | 标记 |
+|---|---|---|
+| `npm run meta:check`（meta:sync 后） | **20/20 通过** | `stdout-text` |
+| W2（Prism）审查 | qualityGate=pass；0 HIGH/MEDIUM，3 LOW → backlog | 无 |
+| W3（Warden）元审查 + 验证 | pass；Rule 16/17 dogfood 履行 | 无 |
+| 跨文件一致性（`Rule 16` ↔ `successMarkerFormat` enum） | enum 名 + 条件匹配 | grep 比对 |
+
+### 顺延到 v2.3.1
+
+- **EB-002（HIGH）** — `read_only_verifier` 能力槽。**RFC 尚未起草。** v2.3.0 亲身验证 bug 真实存在（W2 + W3 reviewer 子智能体都被 `enforce-agent-dispatch.mjs` 在 review/meta_review 阶段阻止运行 `git diff` / `npm run meta:check`）。需要修改 `spine-state.mjs`（冻结面）。v2.3.1 RFC 必须定义：验收标准、允许命令白名单、scope 契约、测试计划。
+- **EB-004（LOW）** — `preDecisionOptionFrame` 嵌套归一化。**RFC 尚未起草。** v2.3.0 暴露 bug（`choiceSurfaceState` 必须同时在 spine 顶层和 `preDecisionOptionFrame` 内设置才能满足 hook 的 `state.choiceSurfaceState` 查找——字段位置令人困惑）。需要修改 `spine-state.mjs`。v2.3.1 RFC 必须定义：字段规范位置、迁移计划、validator 关卡。
+- **EB-011（LOW，v2.3.0 新发现）** — `ecc-batching-wrapper.mjs` docstring 声称"批处理 ECC 插件安装副作用"，但实现只是写每个（会话,文件）缓存标记 + 缓存命中时返回 `permissionDecision=allow`（不实际阻止/延迟工具调用）。v2.3.x 决定：要么改名为 `ecc-permission-cache-wrapper.mjs`，要么加强行为以实际在 TTL 内拒绝/跳过重复有副作用的调用。
+- **Hook 基础设施 bug（v2.3.0 新发现）** — 在 `review`/`meta_review`/`verification` 阶段的 Agent 分派不会自动把 `ownerAgent` 追加到 `dispatchChain.<stage>`。主线必须手编 spine state 来记录分派。与 EB-002 同源（同一 root cause：只读 reviewer 无法运行 verify 命令；同一修复面：`spine-state.mjs`）。
+
 ## [2.2.5] - 2026-05-25
 
 ### 修复
@@ -32,6 +66,7 @@
 - EB-003（MEDIUM）：等用户选择 A-D 选项
 - **EB-008（HIGH，v2.2.5 W2 审查暴露）**：`workerExecutionEvidence.actualOutput` 在静默成功命令（如 `node --check`、`JSON.parse`）下的语义二义性。schema 需要 `successMarkerFormat` 澄清字段。v2.2.5 按 W2 裁决将首次应用偏差记为 `accepted_risk`（第二选项是惩罚规则首日自适用）。
 - **EB-009（LOW，v2.2.5 W2 审查暴露）**：`scripts/validate-project.mjs:15` 引入的 `loadRuntimeProfiles` 不被新的 `loadLocalizedTriggerExceptions` 路径引用。已有的遗留条件；确认未使用后清理。
+  - **v2.3.0 撤回：** 原判定错误——`validate-project.mjs:2808` 在 `validateSyncConfiguration()` 中实际使用了 `loadRuntimeProfiles`。该 import 必需保留。EB-009 仅作文档修正闭环。
 - **EB-010（MEDIUM，v2.2.5 W2 审查暴露）**：`protocols.workerTaskPacket.*` 同级 schema 风格异构 — `verifyStepsField` / `fileCompletionListField` / `workerExecutionEvidenceField` 混用 `type: "array"` 与 `fieldType: "array"` 约定。需统一。
 - `workerExecutionEvidenceField` 的 validator 强制（当前为叙述层 + Rule 16）
 
