@@ -13,10 +13,6 @@
 - **DOC-001 (MEDIUM) — 数据结构契约文档缺失** — 在 `SKILL.md` 中新增"Data Structure Contract"部分，说明每个阶段的必需输出字段、Choice Surface State 生命周期和验证钩子。
 - **DOC-002 (LOW) — 状态管理归属不明确** — 在 `meta-warden.md` 中新增"State Management Responsibilities"部分，在 `meta-conductor.md` 中新增"Choice Surface State Management"部分。
 
-### 移除
-
-- 敏感支付/联系二维码（`docs/images/alipay.jpg`、`docs/images/contact-qr.png`、`docs/images/wechat-pay.jpg`）— 个人支付信息不应存在于公共仓库中。
-
 ## [2.3.1] - 2026-05-26
 
 ### 修复

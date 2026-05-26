@@ -13,10 +13,6 @@ When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the
 - **DOC-001 (MEDIUM) — Data structure contract documentation gap** — Added "Data Structure Contract" section to `SKILL.md` explaining each stage's required output fields, Choice Surface State lifecycle, and validation hooks.
 - **DOC-002 (LOW) — State management ownership unclear** — Added "State Management Responsibilities" section to `meta-warden.md` and "Choice Surface State Management" section to `meta-conductor.md`.
 
-### Removed
-
-- Sensitive payment/contact QR codes (`docs/images/alipay.jpg`, `docs/images/contact-qr.png`, `docs/images/wechat-pay.jpg`) — personal payment information should not be in public repository.
-
 ## [2.3.1] - 2026-05-26
 
 ### Fixed
