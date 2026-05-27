@@ -105,13 +105,48 @@ function minimalNodeBindings() {
     workerTaskPackets: [
       {
         taskPacketId: "task-backend-001",
+        ownerMode: "existing-owner",
         ownerAgent: "meta-conductor",
+        owner: "meta-conductor",
         businessRoleId: "backend",
         roleDisplayName: "backend",
         roleInstanceId: "backend#1",
+        runtimeInstanceAlias: "host-backend-1",
+        coreProblem: "close the backend implementation gap before execution",
         todayTask: "implement bounded backend change",
+        nonGoals: ["do not broaden scope beyond backend"],
         output: "patch and verification notes",
+        acceptanceCriteria: ["backend change is implemented and verified"],
+        deliverableLink: "auth-refresh-hardening",
+        scopeFiles: ["src/backend/auth.ts"],
+        qualityBar: "code=layering+contract+tests",
+        workType: "code",
+        expertLensRefs: ["code"],
+        evidenceRefs: ["fetchRecord.capabilityMatches[0]"],
+        capabilityRequirements: ["backend implementation"],
+        toolRequirements: ["npm run meta:test:meta-theory"],
+        referenceDirection: "use Fetch evidence and local contract only",
+        handoffTarget: "meta-prism",
+        handoffContract: {
+          handoffTo: "meta-prism",
+          handoffWhen: "after implementation evidence is ready",
+          handoffPayload: "changed files, verification output, and open risks",
+          acceptanceSignal: "reviewPacket can verify acceptance criteria",
+        },
+        lengthExpectation: "concise patch plus verification notes",
+        visualOrAssetPlan: "not applicable for backend code",
+        dependsOn: [],
+        parallelGroup: "backend",
+        mergeOwner: "meta-warden",
+        shardKey: "backend",
+        shardScope: ["src/backend/auth.ts"],
+        workspaceIsolation: "same_worktree_with_file_lock",
+        artifactNamespace: "auth-refresh-hardening/backend",
+        collisionPolicy: "block_on_overlap",
         verifySteps: ["focused test passes"],
+        preDecisionOptionFrameRef: "preDecisionOptionFrame",
+        userChoiceState: "explicit_auto_proceed",
+        finalizationGate: "user choice recorded before dispatch",
       },
     ],
   };
@@ -1052,7 +1087,88 @@ describe("Part F2: choice surface runtime gate", async () => {
     assert.ok(result.missing.includes("workerTaskPackets[0].agentBlueprintRoleBinding"));
   });
 
-  test("allows explicit choiceGateSkip as an auditable non-interactive path", () => {
+  test("blocks Execution when worker task work order evidence is incomplete", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      ...minimalNodeBindings(),
+    };
+    state.workerTaskPackets[0].evidenceRefs = [];
+    delete state.workerTaskPackets[0].handoffContract;
+    delete state.workerTaskPackets[0].workType;
+
+    const result = checkCapabilityNodeBindings(state);
+    assert.equal(result.met, false);
+    assert.ok(result.missing.includes("workerTaskPackets[0].evidenceRefs"));
+    assert.ok(result.missing.includes("workerTaskPackets[0].handoffContract"));
+    assert.ok(result.missing.includes("workerTaskPackets[0].workType"));
+  });
+
+  test("Critical stage allows read-only worktree inspection before editing", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "critical",
+    };
+
+    const result = runEnforceHook(state, {
+      tool_name: "Bash",
+      tool_input: {
+        command: "git status --short",
+      },
+    });
+
+    assert.equal(result.status, 0);
+    assert.doesNotMatch(result.stdout, /permissionDecision/);
+  });
+
+  test("Fetch stage allows targeted read-only source search before editing", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "fetch",
+    };
+
+    const result = runEnforceHook(state, {
+      tool_name: "Bash",
+      tool_input: {
+        command: "rg ownerMode canonical/skills/meta-theory/SKILL.md",
+      },
+    });
+
+    assert.equal(result.status, 0);
+    assert.doesNotMatch(result.stdout, /permissionDecision/);
+  });
+
+  test("Critical and Fetch stages still deny mutation commands", () => {
+    for (const stage of ["critical", "fetch"]) {
+      const state = {
+        ...createInitialState({
+          taskClassification: "meta_theory_auto",
+          triggerReason: "test",
+        }),
+        currentStage: stage,
+      };
+
+      const result = runEnforceHook(state, {
+        tool_name: "Bash",
+        tool_input: {
+          command: "npm install left-pad",
+        },
+      });
+
+      assert.equal(result.status, 0);
+      assert.match(result.stdout, /permissionDecision/);
+    }
+  });
+
+  test("rejects vague choiceGateSkip objects as non-decisions", () => {
     const state = {
       ...createInitialState({
         taskClassification: "meta_theory_auto",
@@ -1064,6 +1180,27 @@ describe("Part F2: choice surface runtime gate", async () => {
         choiceGateSkip: {
           reason: "non-interactive runtime fallback",
         },
+      },
+      choiceSurfaceState: "not_allowed",
+    };
+
+    const result = checkChoiceSurfaceGate(state);
+    assert.equal(result.met, false);
+  });
+
+  test("allows strict choiceGateSkip only with source and safety rationale", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "execution",
+      fetchRecord: { capabilityMatches: ["frontend"] },
+      preDecisionOptionFrame: {
+        choiceGateSkip: "explicit_auto_proceed",
+        skipSource: "user_explicit_auto_proceed",
+        skipSafetyRationale:
+          "User explicitly authorized auto-proceed after Fetch evidence and candidate options were recorded.",
       },
       choiceSurfaceState: "not_allowed",
     };
@@ -1110,6 +1247,34 @@ describe("Part F2: choice surface runtime gate", async () => {
 
     assert.equal(result.status, 0);
     assert.match(result.stdout, /Capability node binding violation/);
+  });
+
+  test("Agent hook denies execution dispatch with incomplete worker work order", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      ...completePreExecutionBindings(),
+      currentStage: "execution",
+    };
+    state.workerTaskPackets[0].evidenceRefs = [];
+    delete state.workerTaskPackets[0].handoffContract;
+    delete state.workerTaskPackets[0].workType;
+
+    const result = runEnforceHook(state, {
+      tool_name: "Agent",
+      tool_input: {
+        description: "meta-conductor backend execution",
+        prompt: "Run task-backend-001 for role backend#1",
+      },
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /Capability node binding violation/);
+    assert.match(result.stdout, /workerTaskPackets\[0\]\.evidenceRefs/);
+    assert.match(result.stdout, /workerTaskPackets\[0\]\.handoffContract/);
+    assert.match(result.stdout, /workerTaskPackets\[0\]\.workType/);
   });
 
   test("spawn_agent hook denies execution dispatch before capability search", () => {

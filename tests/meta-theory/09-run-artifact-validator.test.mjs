@@ -238,6 +238,175 @@ describe("validate-run-artifact.mjs", () => {
     );
   });
 
+  test("rejects shallow Fetch evidence that cannot change a decision", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.contentEvidencePacket.decisionImpactMap = [];
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /decisionImpactMap.*decision-grade evidence/,
+    );
+  });
+
+  test("rejects missing Critical production-correctness intent fields", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      delete artifact.intentPacket.realIntent;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /intentPacket.*realIntent/,
+    );
+  });
+
+  test("rejects Fetch packets without capability discovery", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.contentEvidencePacket.capabilityDiscovery = [];
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /capabilityDiscovery/,
+    );
+  });
+
+  test("rejects worker work orders missing work type", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      delete artifact.workerTaskPackets[0].workType;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /workType/,
+    );
+  });
+
+  test("rejects temporary fallback owner modes in worker work orders", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.workerTaskPackets[0].ownerMode = "temporary-fallback-owner";
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /ownerMode/,
+    );
+  });
+
+  test("rejects worker work orders missing evidence references", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.workerTaskPackets[0].evidenceRefs = [];
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /evidenceRefs/,
+    );
+  });
+
+  test("rejects worker work orders missing handoff contracts", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      delete artifact.workerTaskPackets[0].handoffContract;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /handoffContract/,
+    );
+  });
+
+  test("rejects skipped choice gates without a safety rationale", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      delete artifact.preDecisionOptionFrame.skipSafetyRationale;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /skipSafetyRationale/,
+    );
+  });
+
+  test("rejects worker completion without per-file proof", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      delete artifact.workerResultPackets[0].fileCompletionList;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /fileCompletionList/,
+    );
+  });
+
+  test("rejects fabricated worker verification evidence", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.workerResultPackets[0].workerExecutionEvidence[0].status =
+        "fabricated";
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /must not fabricate verification/,
+    );
+  });
+
+  test("rejects public-ready runs with open worker todos by default", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.workerTaskPackets[0].taskTodoState = "open";
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /taskTodoState=open/,
+    );
+  });
+
+  test("rejects public-ready runs without comment review acknowledgment", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      delete artifact.summaryPacket.commentReviewAcknowledged;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /commentReviewAcknowledged/,
+    );
+  });
+
   test("rejects runtime-generated agent ids as user-visible role names", async (t) => {
     const tempFixture = await writeTempFixture(t, (artifact) => {
       artifact.dispatchEnvelopePacket.roleDisplayName = "agent-019e56a9";

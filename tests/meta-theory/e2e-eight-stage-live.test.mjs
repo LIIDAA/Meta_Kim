@@ -119,18 +119,20 @@ describe("Thinking → Execution: Unified Confirmation", () => {
     assert.match(skillContent, /DO NOT.*Critical\/Fetch\/Thinking\/Review/s);
   });
 
-  test("确认卡包含4+问题，每题3-4个产品化选项", () => {
+  test("确认卡只包含会改变结果分叉的产品化问题", () => {
     const block = skillContent.slice(
-      skillContent.indexOf("1. Outcome Confirmation"),
+      skillContent.indexOf("Possible question dimensions:"),
       skillContent.indexOf("Wait for user response before proceeding to Execution."),
     );
-    const questions = [...block.matchAll(/^\d+\.\s+.+Confirmation$/gm)];
-    assert.ok(questions.length >= 4, `Need 4+ questions, got ${questions.length}`);
+    const questions = [...block.matchAll(/^\d+\.\s+.+Confirmation - ask only when.+$/gm)];
+    assert.ok(questions.length >= 1, "Need outcome-branching question examples");
+    assert.match(skillContent, /no question quota/i);
+    assert.match(skillContent, /Each visible question must change an execution branch/i);
     for (let i = 0; i < questions.length; i++) {
       const start = questions[i].index ?? 0;
       const end = i + 1 < questions.length ? (questions[i + 1].index ?? block.length) : block.length;
       const options = [...block.slice(start, end).matchAll(/^\s+- Option [A-D]:/gm)];
-      assert.ok(options.length >= 3 && options.length <= 4);
+      assert.ok(options.length >= 2);
     }
     assert.match(skillContent, /understandable to non-technical users/i);
   });

@@ -64,7 +64,7 @@ trigger: "Agent creation, skill gaps, when an agent needs new capabilities, or w
 Before applying the full station workflow, Artisan must name the `coreProblem` in one sentence: what capability gap, platform mismatch, or loadout decision must be resolved for the user to move forward.
 
 - If the core problem is not a skill/tool/loadout issue, return a handoff recommendation instead of expanding Artisan's scope.
-- If missing information blocks a responsible loadout decision, ask the smallest blocking clarification; otherwise proceed with explicit assumptions.
+- If missing information blocks a responsible loadout decision, ask the fewest outcome-branching questions whose answers change owner fit, capability choice, permission/risk, or acceptance. Otherwise proceed with explicit assumptions.
 - If the decision depends on current external facts, third-party tool behavior, or ecosystem health, require Fetch/Scout evidence before recommending adoption.
 - Artisan may perform read-only inspection and non-destructive verification needed for loadout evidence, but must not implement the downstream business task.
 - If the finding should improve Meta_Kim permanently, emit a Warden-gated `writebackSuggestion`; do not directly edit canonical sources during ordinary analysis.
@@ -76,6 +76,7 @@ Before applying the full station workflow, Artisan must name the `coreProblem` i
 3. IF two candidate skills overlap > 50% in functionality → keep only the higher ROI one
 4. IF a core task has zero skill coverage → mark as Capability Gap and notify Scout
 5. IF target platform does not support a skill → exclude from recommendation, even if ROI is otherwise high
+6. IF proceeding would require a generic owner, temporary owner, or `use_fallback` for missing capability → emit a capability gap and return to Thinking; runtime compatibility plans may keep the host usable but do not satisfy governance quality.
 
 ## Workflow
 
@@ -195,11 +196,11 @@ Artisan must output concrete capability deliverables for the agent being created
 
 - **Skill Loadout** — ranked skill recommendations with ROI scores and rationale
 - **MCP / Tool Loadout** — the MCPs, tools, or subagent types the agent should use
-- **Fallback Plan** — what to use when the preferred capability is unavailable
+- **Runtime Compatibility Plan** — how the host remains usable when a surface is unavailable, without replacing owner/capability evidence
 - **Capability Gap List** — uncovered holes that need Scout or Genesis follow-up
 - **Adoption Notes** — concrete install/adoption notes another operator can execute
 
-Rule: the deliverables must answer "what is the best capability stack for this agent, and what is plan B?".
+Rule: the deliverables must answer "what is the best capability stack for this agent, and what runtime degradation is acceptable without hiding a capability gap?".
 
 ## Meta-Skills
 

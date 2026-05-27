@@ -55,13 +55,17 @@ describe("Clarity Gate unified execution confirmation", async () => {
     }
   });
 
-  test("confirmation has at least 4 questions and each question has 3-4 options", () => {
+  test("confirmation asks only outcome-branching questions and rejects quotas", () => {
     const confirmationBlock = skillContent.slice(
-      skillContent.indexOf("1. Outcome Confirmation"),
+      skillContent.indexOf("Possible question dimensions:"),
       skillContent.indexOf("Wait for user response before proceeding to Execution."),
     );
-    const questions = [...confirmationBlock.matchAll(/^\d+\.\s+.+Confirmation$/gm)];
-    assert.ok(questions.length >= 4, `expected 4+ questions, got ${questions.length}`);
+    const questions = [...confirmationBlock.matchAll(/^\d+\.\s+.+Confirmation - ask only when.+$/gm)];
+    assert.ok(questions.length >= 1, "expected question dimension examples");
+    assert.match(skillContent, /no question quota/i);
+    assert.match(skillContent, /Each visible question must change an execution branch/i);
+    assert.match(skillContent, /Do not add filler options to satisfy a count/i);
+    assert.doesNotMatch(skillContent, /4\+ questions|4-6 questions|minimum 4 questions/i);
 
     for (let i = 0; i < questions.length; i++) {
       const start = questions[i].index ?? 0;
@@ -69,8 +73,8 @@ describe("Clarity Gate unified execution confirmation", async () => {
       const questionBlock = confirmationBlock.slice(start, end);
       const options = [...questionBlock.matchAll(/^\s+- Option [A-D]:/gm)];
       assert.ok(
-        options.length >= 3 && options.length <= 4,
-        `${questions[i][0]} must have 3-4 options, got ${options.length}`,
+        options.length >= 2,
+        `${questions[i][0]} must have at least 2 materially different options`,
       );
     }
   });
@@ -88,9 +92,10 @@ describe("Clarity Gate unified execution confirmation", async () => {
     assert.match(skillContent, /understandable to non-technical users/i);
   });
 
-  test("templates enforce 3-4 options and product-readable dimensions", () => {
+  test("templates enforce outcome-branching choices and product-readable dimensions", () => {
     const combined = `${decisionTemplate}\n${batchTemplate}`;
-    assert.match(combined, /3-4 options/);
+    assert.match(combined, /Ask only questions whose answer changes execution, scope, risk, owner, or acceptance/);
+    assert.match(combined, /Do not add filler questions or filler options to satisfy a count/);
     assert.match(combined, /Expected result/);
     assert.match(combined, /non-technical users/);
     assert.doesNotMatch(combined, /\*\*Your choice:\*\* \[ \] A \[ \] B\s*$/m);
@@ -260,8 +265,10 @@ describe("Clarity Gate unified execution confirmation", async () => {
     assert.match(skillContent, /explicit output-language choice/i);
     assert.match(skillContent, /latest input/i);
     assert.match(skillContent, /Option A.*placeholders|placeholders.*Option A/s);
-    assert.match(skillContent, /方案 A/);
-    assert.match(skillContent, /当前以聊天确认卡展示，不是弹窗/);
+    assert.match(skillContent, /resolved user-facing language/i);
+    assert.match(skillContent, /instead of hardcoding any single human language/i);
+    assert.doesNotMatch(skillContent, /方案 A/);
+    assert.doesNotMatch(skillContent, /当前以聊天确认卡展示，不是弹窗/);
     assert.match(skillContent, /Claude Code native question tool remains unchanged/i);
 
     const codexPolicy =

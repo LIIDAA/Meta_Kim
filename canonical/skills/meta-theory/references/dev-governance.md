@@ -134,11 +134,11 @@ The `hardNoEdits` policy (no production hook edits during a run) has narrow exce
 
 **Boundary C — No worker-facing schema change**: The amendment must not introduce new required fields or alter the shape of any contract that workers/runtimes consume. Allowlist additions, exception literals, and validator scope tweaks are permissible; new required schema fields are not.
 
-**Boundary D — Post-hoc governance record**: The amendment must be recorded in `evolutionWritebackPacket.amendmentsAppliedInFlight` with `boundary: "narrow-amendment-v2.2.5"`, `affectedFile`, `rationale`, and `evidence` (the failure that prompted the amendment). Skipping this record violates the protocol regardless of whether boundaries A–C held.
+**Boundary D — Pre-amendment approval record**: The amendment must be approved before the change is made and recorded in `evolutionWritebackPacket.amendmentsAppliedInFlight` with `boundary: "narrow-amendment-v2.2.5"`, `affectedFile`, `rationale`, and `evidence` (the failure that prompted the amendment). If approval did not exist before the amendment, record it as a scar/backlog item, not as closure evidence.
 
 If ANY boundary fails, the amendment is OUT-OF-SCOPE for the current run. Stop, complete the in-flight work without the amendment, and capture the need as evolution backlog for the next release.
 
-Rationale: v2.2.4 main-thread extended `isAllowedLocalizedTriggerLine` mid-run to close a historical fabrication (SKILL.md:97 had been failing since v2.2.2). That amendment satisfied A/B/C but was recorded post-hoc only in CHANGELOG. v2.2.5 documents the protocol so future amendments cite it explicitly.
+Rationale: v2.2.4 main-thread extended `isAllowedLocalizedTriggerLine` mid-run to close a historical fabrication (SKILL.md:97 had been failing since v2.2.2). That amendment is now treated as a scar: useful evidence for improving the protocol, not a pattern to repeat.
 
 ---
 
@@ -156,9 +156,9 @@ Stop when `validate:run` passes **or** the user explicitly accepts risk with doc
 
 **Session recovery (API / compact / tool failure):** Check `.meta-kim/state/{profile}/run-index.sqlite` first for the latest validated governed run, then load the governed artifact as the source of truth. After an interrupted session, reload at minimum: `runHeader`, `taskClassification`, `intentPacket`, `intentGatePacket` (when required), `cardPlanPacket`, `dispatchEnvelopePacket`, `orchestrationTaskBoardPacket`, `capabilityGapPacket` / `executionAgentCard` (when applicable), `dispatchBoard`, `workerTaskPackets` / `workerResultPackets`, `reviewPacket`, `verificationPacket`, `summaryPacket`, `evolutionWritebackPacket`. If a local `compactionPacket` exists, use it only as continuity aid; it never replaces the governed artifact. Re-run `npm run meta:validate:run -- <artifact.json>` before claiming closure. The same packet list is printed by `npm run prompt:next-iteration -- <artifact.json>` under **Minimal context reload**.
 
-Optional **soft todo gate** (off by default): set `META_KIM_SOFT_PUBLIC_READY_GATES=1` when running `validate:run`. If `summaryPacket.publicReady` is true, no `workerTaskPacket` may have `taskTodoState: "open"`. Omit `taskTodoState` if not tracking todos. See `config/contracts/workflow-contract.json` → `runDiscipline.runArtifactValidation.softPublicReadyTodoGate`.
+Hard **public-ready todo gate**: if `summaryPacket.publicReady` is true, no `workerTaskPacket` may have `taskTodoState: "open"`. Omit `taskTodoState` only when todos are not tracked; do not use environment variables to relax normal validation.
 
-Optional **soft comment-review gate**: set `META_KIM_SOFT_COMMENT_REVIEW=1` when running `validate:run`. If `summaryPacket.publicReady` is true, `summaryPacket.commentReviewAcknowledged` must be `true`. See `runDiscipline.runArtifactValidation.softCommentReviewGate`.
+Hard **public-ready comment-review gate**: if `summaryPacket.publicReady` is true, `summaryPacket.commentReviewAcknowledged` must be `true` unless the deliverable type has no comment/doc surface. Migration-only compatibility flags may exist in isolated tests, but they must not affect ordinary artifact validation.
 
 Optional Claude **Stop hook** (project default off): `META_KIM_STOP_COMPLETION_GUARD=hint` logs a stderr reminder when the last assistant message claims completion without governance cues; `=block` returns `{"decision":"block",...}` so the model continues. See `.claude/hooks/stop-completion-guard.mjs`.
 
@@ -168,16 +168,16 @@ Optional Claude **Stop hook** (project default off): `META_KIM_STOP_COMPLETION_G
 
 ## 2. CORE 8-STAGE EXECUTION SPINE (Detailed)
 
-| Stage | Name | Key Question |
-|-------|------|-------------|
-| 1 | **Critical** | What is the task? Is it clear? |
-| 2 | **Fetch** | Who can do this? |
-| 3 | **Thinking** | How should we approach it? |
-| 4 | **Execution** | Delegate to agents |
-| 5 | **Review** | Is the result correct? |
-| 6 | **Meta-Review** | Are the review standards themselves sound? |
-| 7 | **Verification** | Did the fixes actually solve the issues? |
-| 8 | **Evolution** | What structural learning should carry forward? |
+| Stage | Name | Product Question | Output Contract |
+|-------|------|------------------|-----------------|
+| 1 | **Critical** | What real outcome, pain/value, audience, success standard, and non-goals must be locked before the system can act? | `coreProblem`, success criteria, non-goals, risk boundary, and only questions that change deliverable, owner, permission, risk, or acceptance |
+| 2 | **Fetch** | What evidence, current state, constraints, available capabilities, and failure modes change the decision? | Evidence inventory with decision impact, candidate capabilities/owners/tools, contradictions, assumptions, and capability gaps |
+| 3 | **Thinking** | What is the smallest complete plan that can create a ten-times-better result, and which paths should be rejected? | Expert lenses, candidate paths, business lanes, owner resolution, capability bindings, dependency/merge plan, and worker work orders |
+| 4 | **Execution** | Can each worker execute from a clear work order without guessing? | Delegated work using the selected run-scoped capabilities and the locked work orders |
+| 5 | **Review** | Did the upstream work make the result worth shipping, not merely pass a checklist? | Findings that identify the failed stage and return missing intent/evidence/design/owner/task quality to the earliest responsible stage |
+| 6 | **Meta-Review** | Were the Review standards strong enough to catch a product-wrong but process-compliant result? | Assertion-quality audit, drift check, and revision instructions |
+| 7 | **Verification** | Did fresh evidence prove the specific findings are closed? | Re-run evidence, closeFindings, and public-ready gate status |
+| 8 | **Evolution** | What durable rule, owner boundary, or capability pattern should carry forward? | Warden-approved writeback or explicit no-writeback decision |
 
 ### Hidden Skeleton State Model
 
@@ -203,7 +203,7 @@ Stage names remain canonical English protocol labels (`Critical`, `Fetch`, `Thin
 **Decision vs Notice Bifurcation**:
 
 - **Notice (no popup)**: Informational updates, stage transitions, progress reports. Output directly to conversation, no response required. See `canonical/templates/user-interaction/notice-template.md`
-- **Decision (popup)**: Use the runtime's native confirmation mechanism when multiple viable options exist. Each option must include 4 dimensions. See `canonical/templates/user-interaction/decision-template.md`
+- **Decision (popup)**: Use the runtime's native confirmation mechanism when multiple viable options exist. Each option must explain what changes, what problem it solves, the expected result, advantages, and disadvantages. See `canonical/templates/user-interaction/decision-template.md`
 
 **Run status envelope**: every governed run must maintain a public status envelope in `.meta-kim/state/{profile}/active-run.json` and `.meta-kim/state/{profile}/runs/{runId}/status.json`. This envelope is the cross-runtime answer to "has meta started, how far is it, which stage is current, what is next, and is it blocked?" It is written by the runtime spine-state adapter using Node path APIs so Windows, macOS, Linux, Claude Code, Codex, Cursor, and OpenClaw all share the same state shape. The public notice reads from this envelope and must not expose `Preflight`, `nativeChoiceSurface`, `conversation_fallback`, packet ids, or protocol traces unless the user explicitly asks for debug/audit/protocol output.
 
@@ -239,6 +239,83 @@ Default public notice shape:
 
 Popup or interaction testing is a requirement to route through the normal flow, not permission to skip to a native choice surface. If no evidence-backed candidate paths exist, the execution confirmation is premature. If Fetch evidence is missing, Thinking is incomplete. If Thinking is incomplete, pre-Execution confirmation is forbidden.
 
+### Production-Correctness Source Rule
+
+The source rule lives here and in `SKILL.md`: design the work correctly before execution. `workflow-contract.json`, hooks, and validators enforce the rule after it exists; they do not invent the product standard.
+
+#### Read-Before-Edit Source Rule
+
+Before any file edit, the run must read the current worktree state and the files it will modify. Required local inspection includes the relevant equivalent of `git status --short`, `git diff --stat`, targeted diffs for touched source files, and source reads/searches for each planned edit surface. This inspection belongs to `Critical`/`Fetch`; it is not a workaround, and it must not be skipped because a hook blocks it.
+
+Hooks must classify operations before blocking them:
+
+| Operation class | Critical/Fetch policy | Examples |
+|---|---|---|
+| `local_readonly_inspection` | allow | worktree status, diffs, file reads, repo-scoped search |
+| `capability_discovery` | allow when bounded | capability index reads, agent/skill inventory, package script reads |
+| `secret_read` | block | `.env`, keys, tokens, credential stores |
+| `mutation` | block until Thinking readiness | edits, generated mirrors, moves, deletes |
+| `network` | block unless Fetch explicitly requires current external facts | install/update, deploy, unbounded fetch |
+| `execution` | block until worker work orders exist | tests/builds with side effects, project commands that mutate artifacts |
+| `dispatch` | allow only when the stage owner and worker work order are clear | execution-intent subagent dispatch |
+
+Runtime compatibility fallback can keep a host usable, but it is not governance clearance. A compatibility fallback must record `fallbackKind`, `fallbackReason`, `sourceRule`, `operationClass`, `owner`, `verificationEvidence`, and `compatibilityLimitations` when it affects a run. It cannot satisfy missing intent, evidence, owner, capability, design, dependency, or worker task quality.
+
+Before Stage 4, the run must already answer:
+
+| Work type | Abstract lens | Plain meaning |
+|---|---|---|
+| content | emotion value + core pain/desire + human voice + proof + shareability | Know what feeling the content gives, what pain it solves, why it sounds alive, why it is believable, and why someone would share it |
+| product | growth loop + conversion + willingness to pay + retention + referral | Know how users arrive, act, pay, return, and spread it |
+| code | layering + modularity + config + i18n + extensibility + decoupling + concurrency/reliability when relevant | Know the boundary, how it changes safely, and what scale or reliability concerns matter |
+| research | claim + source quality + counterexample + decision impact | Know what decision the evidence changes, not just which links were collected |
+| design | audience + job-to-be-done + first impression + friction + trust | Know who it serves, what job it does, what users feel first, what blocks action, and what earns trust |
+| security | trust boundary + permission scope + secret handling + abuse path + rollback | Know what is protected, who is allowed, what can leak, how it can be abused, and how to contain damage |
+| performance | load shape + bottleneck + concurrency model + graceful degradation + observability | Know expected load, bottleneck, concurrency risk, fallback under pressure, and how to observe it |
+| operations | install path + release risk + rollback + monitoring + support handoff | Know how it ships, what can fail, how to roll back, what to monitor, and who owns support |
+
+Use compact internal notation when it improves execution clarity: `goal=`, `why=`, `done=`, `no=`, `use=`, `lens=`, `handoff=`, `check=`. User-facing summaries must translate that back into plain product language.
+
+#### Required Pre-Execution Packets
+
+`Critical` must write:
+
+- `realIntent`: the actual outcome the user wants, not a restated command
+- `successCriteria`: how the user/system will know the result is done
+- `nonGoals`: what is intentionally out of scope
+- `blockingUnknowns`: only unknowns that change execution, risk, owner, or acceptance
+- `noQuotaClarification`: either the exact core-blocking question or an explicit "no core-blocking question" note
+
+`Fetch` must write:
+
+- `evidence`: sources or local state that matter to this run
+- `decisionImpactMap`: for each key evidence item, what decision changed
+- `capabilityDiscovery`: candidate owners, tools, skills, commands, and capability indexes checked
+- `capabilityGap`: missing capability or `none`
+- `contradictionLog`: conflicting evidence, stale assumptions, or uncertainty
+
+`Thinking` must write:
+
+- `designFrame`: the overall shape of the solution
+- `workType`: the type of work being optimized
+- `expertLens`: the small set of top-expert standards relevant to that work type
+- `consideredLanes`: business, technical, experience, test, release, rollback, and evolution lanes considered
+- `omittedLanesWithReason`: omitted lanes plus human-readable reasons; optional lanes are not a hiding place
+- `workerTaskPackets`: complete worker work orders
+- `dependencyPolicy`: what happens when dependencies fail
+
+`dependencyPolicy` may use only `block`, `wait`, or `return_to_stage` for critical dependencies. `use_fallback`, generic artifacts, and guessed dependency results are forbidden.
+
+Each `workerTaskPacket` must be able to start a worker without guessing: core problem, non-goals, final deliverable, acceptance criteria, evidence refs, required capability/tooling, handoff target, verification steps, and the selected `workType`/`expertLens`.
+
+`Review` must check the upstream process before output polish:
+
+- Critical locked the real user need before execution
+- Fetch gathered evidence that changed decisions
+- Thinking created complete worker work orders before dispatch
+- no missing owner, capability, design, or dependency was hidden by fallback
+- the final output matches the selected `workType`/`expertLens`
+
 **Decision Triggers** (from `config/contracts/workflow-contract.json` → `userInteractionPolicy`):
 
 1. `non_trivial_executable_decision`: executable work is not trivial and no explicit auto-proceed exists
@@ -246,16 +323,17 @@ Popup or interaction testing is a requirement to route through the normal flow, 
 3. `product_direction_required`: Business clarification needed
 4. `security_or_rollback_risk`: Explicit acknowledgment required
 
-**Option Quality Standard** (4-dimension rule):
+**Option Quality Standard**:
 
 | Dimension | Required |
 |-----------|----------|
 | `what_changes` | ✅ Specific scope of modification |
 | `problem_solved` | ✅ Corresponding requirement or pain point |
+| `expected_result` | ✅ What the user gets after choosing it |
 | `advantages` | ✅ Why choose this approach |
 | `disadvantages` | ✅ Costs or risks |
 
-The decision context must cite `contentEvidencePacket` and `preDecisionOptionFrame`: what was inspected or searched, what remains uncertain, which paths are viable, and why the recommended path is best.
+Every visible question must change an execution branch. If a question does not change deliverable, owner, scope, risk, or acceptance, remove it and record the assumption instead. The decision context must cite `contentEvidencePacket` and `preDecisionOptionFrame`: what was inspected or searched, what remains uncertain, which paths are viable, and why the recommended path is best.
 
 **Batch Decision Mode**:
 
@@ -628,9 +706,9 @@ For executable deliverables, infer the likely `deliverableType` and expand it in
 |---|---|
 | `web_app` / `dashboard` | product, UX, UI, frontend, backend/API, database/data, auth/security, motion, accessibility, test automation, browser QA, performance, release, feedback, evolution |
 | `landing_page` | product offer, UX, UI, visual assets, frontend, motion, accessibility, SEO/analytics, browser QA, performance, release |
-| `api_service` | internal interface contract, third-party integration contract, API contract, backend, database, auth/security, contract tests, observability/fallback, performance, docs, release |
+| `api_service` | internal interface contract, third-party integration contract, API contract, backend, database, auth/security, contract tests, observability/degradation, performance, docs, release |
 | `internal_api_integration` | producer, consumer, schema/version compatibility, request/response field ledger, error model, contract tests, rollout/rollback |
-| `third_party_integration` | provider facts, official docs/SDK/sandbox evidence, auth/signature, idempotency, callback/webhook, rate limits, timeout/retry, error model, observability/fallback, human approval |
+| `third_party_integration` | provider facts, official docs/SDK/sandbox evidence, auth/signature, idempotency, callback/webhook, rate limits, timeout/retry, error model, observability/degradation, human approval |
 | `data_pipeline` | data source, schema, transform, storage, observability, quality tests, privacy/security, release |
 | `custom` | infer lanes from the user's outcome and justify omissions |
 
@@ -656,7 +734,7 @@ Each lane becomes a capability slot with:
   "selectedSkill": null,
   "selectedOwner": null,
   "selectionReason": "why this owner best covers the lane",
-  "coverageStatus": "covered | partial | missing | omitted_with_reason",
+  "coverageStatus": "covered | partial | missing",
   "toolsOrMcp": [],
   "parallelPolicy": "single | shardable | same-agent-multi-instance | exclusive",
   "dependsOn": [],
@@ -666,7 +744,7 @@ Each lane becomes a capability slot with:
 }
 ```
 
-The Fetch record must show which lanes were selected for this run, which lanes were explicitly omitted, and why. Each required or optional lane must preserve the global scan evidence (`capabilitySearchQuery`, `candidateOwners`, `matchedCapabilities`, `capabilityBindings`, `selectedOwner`, `selectionReason`, `coverageStatus`) so Review can tell whether the owner was selected capability-first. Legacy `candidateSkills` may appear only as compatibility evidence. Omitted lanes without reasons fail the Review stage, but Review must not require every example dimension to appear in every run.
+The Fetch record must show which lanes were selected for this run, which lanes were explicitly omitted, and why. Each required or selected optional lane must preserve the global scan evidence (`capabilitySearchQuery`, `candidateOwners`, `matchedCapabilities`, `capabilityBindings`, `selectedOwner`, `selectionReason`, `coverageStatus`) so Review can tell whether the owner was selected capability-first. A lane that is considered but not used belongs in `omittedLanes` with a plain-language reason and `coverageStatus = omitted_with_reason`. Legacy `candidateSkills` may appear only as compatibility evidence. Omitted lanes without reasons fail the Review stage, but Review must not require every example dimension to appear in every run.
 
 ### Interface Integration Contract Layer
 
@@ -674,7 +752,7 @@ If the run touches an internal service boundary or a third-party provider, Fetch
 
 Internal interface work must identify the producer, consumer, schema or contract artifact, versioning / breaking-change policy, request fields, response fields, error model, and consumer contract tests.
 
-Third-party integration work must identify the provider, official evidence sources, SDK/API version, auth or signature policy reference, sandbox/prod distinction, rate limits, timeout/retry behavior, idempotency key, callback/webhook semantics, error-code mapping, data retention, observability, fallback, and rollback plan.
+Third-party integration work must identify the provider, official evidence sources, SDK/API version, auth or signature policy reference, sandbox/prod distinction, rate limits, timeout/retry behavior, idempotency key, callback/webhook semantics, error-code mapping, data retention, observability, degradation behavior, and rollback plan.
 
 Field handling must use an evidence-backed field ledger:
 
@@ -907,7 +985,7 @@ Search the Skills.sh ecosystem for the missing capability
 Record what was searched and what was found
 ```
 
-**Step 4 — Specialist ecosystem fallback** (if the external search still finds no clean winner):
+**Step 4 — Specialist ecosystem search** (if the external search still finds no clean winner):
 ```
 Search known specialist ecosystems already integrated by Meta_Kim:
 - everything-claude-code agents
@@ -991,10 +1069,10 @@ Tier selection rule:
 IF complexity = "simple" AND candidate has lightweight variant
   → Prefer the lightweight variant (saves context, faster)
 ELSE
-  → Use the default agent as matched
+  → Use the already matched owner/capability at its default resource tier
 ```
 
-This is a **preference**, not a hard rule — if the lightweight agent escalates (see Escalation Signals), re-dispatch to the full-weight version.
+This is a **resource preference**, not an owner fallback. If no matched owner/capability exists, emit a capability gap instead of assigning a generic default agent. If the lightweight variant escalates (see Escalation Signals), re-dispatch the same matched owner/capability at the full-weight tier.
 
 ### Fetch Stage Output
 
@@ -1033,10 +1111,10 @@ This is a **preference**, not a hard rule — if the lightweight agent escalates
   ],
   "selected": { "name": "code-reviewer", "score": 3 },
   "capabilityGap": null,
-  "ownerMode": "reuse_existing_owner",
+  "ownerMode": "existing-owner",
   "createOwnerRecommended": false,
-  "temporaryOwnerJustification": null,
-  "fallbackUsed": false
+  "capabilityGapAction": null,
+  "runtimeDegradationUsed": false
 }
 ```
 
@@ -1071,6 +1149,8 @@ Before invoking a runtime question tool, native choice, or conversation fallback
         "expectedResult": "what the user gets",
         "advantages": ["why choose it"],
         "disadvantages": ["cost or risk"],
+        "evidenceRefs": ["contentEvidencePacket.decisionImpactMap[0]"],
+        "decisionImpact": "which route, scope, owner, risk, or acceptance decision changes because of this option",
         "candidateOwners": ["capability-matched owners from Fetch"],
         "candidateTaskShape": ["candidate lanes or task packets, not finalized workerTaskPackets"]
       }
@@ -1127,14 +1207,26 @@ Break Stage 1's task into independent sub-tasks:
   "subTasks": [
     {
       "id": 1,
-      "description": "what specifically to do",
+      "description": "compact work order for the worker",
+      "goal": "one concrete outcome",
+      "why": "core pain/value and relationship to primary deliverable",
+      "done": ["observable acceptance criteria"],
+      "no": ["explicit non-goals"],
+      "use": ["evidence, files, tools, commands, skills, MCP capabilities, or runtime tools allowed"],
+      "lens": ["selected expert lens such as code=layering+config+i18n"],
+      "handoff": {
+        "to": "who receives the result",
+        "payload": "what they need",
+        "acceptanceSignal": "what closes the handoff"
+      },
+      "check": ["verification steps"],
       "owner": "short business role display name",
       "ownerAgent": "ownerAgent from Thinking agentBlueprintPacket role binding",
       "businessRoleId": "frontend",
       "roleDisplayName": "frontend",
       "roleInstanceId": "frontend#home-page",
       "runtimeInstanceAlias": "optional host nickname only",
-      "ownerMode": "reuse_existing_owner | upgrade_existing_owner | create_owner_first",
+      "ownerMode": "existing-owner | create-owner-first",
       "parallel": true,
       "parallelGroup": "group-a",
       "dependsOn": [],
@@ -1300,18 +1392,21 @@ After the decision gate closes, Thinking must lock down the execution protocol b
     ],
     "optionalLanes": [
       {
-        "laneId": "lane-motion",
-        "businessLane": "motion",
-        "capabilityNeed": "interaction animation",
-        "capabilitySearchQuery": "motion interaction owner",
-        "candidateOwners": [],
-        "candidateSkills": [],
-        "selectedOwner": null,
-        "selectionReason": "No motion requirement in user outcome",
-        "coverageStatus": "omitted_with_reason"
+        "laneId": "lane-docs",
+        "businessLane": "docs",
+        "capabilityNeed": "user-facing release note",
+        "capabilitySearchQuery": "docs owner + release note skill",
+        "candidateOwners": ["meta-conductor"],
+        "candidateSkills": ["document-release"],
+        "selectedOwner": "meta-conductor",
+        "selectionReason": "Release note is not core to the feature but is included for handoff clarity",
+        "coverageStatus": "covered"
       }
     ],
-    "omittedLanes": [{ "lane": "database", "reason": "static-only site with no persisted user data" }],
+    "omittedLanes": [
+      { "lane": "database", "reason": "static-only site with no persisted user data", "coverageStatus": "omitted_with_reason" },
+      { "lane": "motion", "reason": "no interaction animation requirement in the user outcome", "coverageStatus": "omitted_with_reason" }
+    ],
     "laneDependencies": [{ "from": "ux", "to": "frontend", "type": "handoff" }],
     "coverageJudgment": "complete | incomplete | intentionally_reduced",
     "blueprintSource": "canonical_template | inferred | user_supplied",
@@ -1378,7 +1473,23 @@ After the decision gate closes, Thinking must lock down the execution protocol b
       "roleDisplayName": "frontend",
       "roleInstanceId": "frontend#home-page",
       "runtimeInstanceAlias": "optional host nickname only",
-      "ownerMode": "reuse_existing_owner",
+      "ownerMode": "existing-owner",
+      "coreProblem": "one concrete outcome this task closes",
+      "todayTask": "type of work to perform",
+      "nonGoals": ["what this worker must not do"],
+      "output": "artifact or result shape",
+      "acceptanceCriteria": ["observable done conditions"],
+      "qualityBar": "selected standard for this work type",
+      "expertLensRefs": ["code=layering+config+i18n"],
+      "evidenceRefs": ["contentEvidencePacket.decisionImpactMap[0]"],
+      "capabilityRequirements": ["capability slots required before this worker starts"],
+      "toolRequirements": ["commands, MCP tools, runtime tools, file sets, or skills allowed"],
+      "handoffContract": {
+        "handoffTo": "meta-prism",
+        "handoffWhen": "after fileCompletionList and workerExecutionEvidence are ready",
+        "handoffPayload": "changed artifact list, evidence, and verification results",
+        "acceptanceSignal": "reviewPacket can verify the promised work"
+      },
       "dependsOn": [],
       "parallelGroup": "group-a",
       "mergeOwner": "meta-warden",
@@ -1627,7 +1738,7 @@ Before content quality review begins, check the execution contract itself:
 - [ ] If the choice gate was skipped, was `choiceGateSkip` limited to trivial, pure read-only/queryBypass, or explicit auto-proceed with rationale?
 - [ ] Were `dispatchEnvelopePacket`, `dispatchBoard`, and `workerTaskPackets` finalized only after user choice or valid skip?
 - [ ] Did every executable sub-task have an explicit owner?
-- [ ] If temporary fallback owner was used, is the justification explicit?
+- [ ] If owner fit was missing, did the run block/defer with `capabilityGapPacket` instead of assigning a temporary fallback owner?
 - [ ] Do all `WorkerResultPackets` map back to the `dispatchBoard` and primary deliverable?
 - [ ] Is there a declared `mergeOwner` for every parallel group?
 - [ ] Did the run maintain one consolidated deliverable rather than drifting into detached outputs?
@@ -1711,7 +1822,7 @@ If files involve UI/components:
   "revisionRound": 1,
   "sourceProjects": ["project-abc123def456"],
   "crossProjectContaminationCheck": "pass",
-  "temporaryOwnerFollowUp": [],
+  "ownerGapFollowUp": [],
   "reviews": [
     { "type": "code-quality", "agent": "code-reviewer", "result": "PASS", "issues": [] },
     { "type": "security", "agent": "security-reviewer", "result": "FAIL", "issues": ["hardcoded API key in config.ts"] }
@@ -1734,19 +1845,20 @@ If files involve UI/components:
 
 Every non-pass issue must become a **review finding object**. Free-form issue lists are insufficient once revision and verification start.
 
-**Quality Gate rules — Auto-Fix Loop**:
+**Quality Gate rules — Upstream Return Loop**:
 
 ```
 Round 1: Review agent reports issues
-  → Auto-dispatch fix to the original governance owner with issue list and run-scoped matchedCapabilities/capabilityBindings as constraints
+  → Return the finding to the earliest responsible stage: Critical, Fetch, Thinking, or Execution
+  → The owner fixes the missing intent, evidence, design, capability, or completion proof before more work proceeds
   → Re-run Review on the fixed output
-Round 2: If still FAIL → auto-fix again with accumulated context
+Round 2: If still FAIL → return again with accumulated context and a clearer blocker
   → Re-run Review
 Round 3: If still FAIL → STOP, notify user for manual decision
   → Include: all 3 rounds of issues, what was tried, what remains unfixed
 ```
 
-Key difference from simple "max 2 rounds": the fix is **automatic** — the Review agent dispatches the fix back to the responsible governance owner without waiting for user input. Only escalate to user after 3 failed auto-fix attempts.
+Key difference from rescue-style review: Review does not patch over missing upstream work. It names the failed stage and sends the run back there. Only Execution defects go back to Execution; missing intent, evidence, design, or owner fit must return to the stage that should have made them correct before work began.
 
 ---
 
@@ -1908,10 +2020,10 @@ Review (Stage 5) and Meta-Review (Stage 6) use each agent's self-test as an expl
 Every completed run must ask:
 
 1. Did an existing owner prove sufficient?
-2. Did a temporary fallback owner reveal a recurring capability gap?
+2. Did a blocked/deferred capability gap reveal a recurring owner gap?
 3. Should an agent boundary, SOUL, skill loadout, or workflow contract be updated?
 
-If the run used a temporary owner more than once for the same capability family, Evolution should default to **Type B or owner-boundary adjustment**, not repeated temporary fallback.
+If the same capability family blocks more than once, Evolution should default to **owner-boundary adjustment or project-local owner creation**, not repeated deferral.
 
 ### Scars Structured Recording
 

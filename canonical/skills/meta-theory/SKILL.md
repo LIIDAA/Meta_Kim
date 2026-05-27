@@ -96,9 +96,9 @@ The goal is to inform, not to override. Users may have reasons for their choices
 
 Normal user-facing output must be a clean choice card, not a protocol dump. Do not show a `Preflight` block, `nativeChoiceSurface`, `conversation_fallback`, `Multi-Option Snapshot`, or other internal packet fields unless the user explicitly asks for debug, audit, protocol, or governance trace output. If a fallback matters to the user's expectation, say it in plain language, for example: "This is a chat confirmation card, not a popup."
 
-The choice card must be short and must show at least two viable options for the current decision. It must follow the runtime/tool selected output language first, then the user's explicit output-language choice, then the user's latest input language when no stronger language source exists. Keep only protocol identifiers such as `Critical`, `Fetch`, `Thinking`, and `Execution` in their canonical form when they are truly needed. Example labels such as `Option A` are placeholders; localize them in the actual response, for example `方案 A` when the selected or inferred language is Chinese.
+The choice card must be short and must show at least two viable options for the current decision. It must follow the runtime/tool selected output language first, then the user's explicit output-language choice, then the user's latest input language when no stronger language source exists. Keep only protocol identifiers such as `Critical`, `Fetch`, `Thinking`, and `Execution` in their canonical form when they are truly needed. Example labels such as `Option A` are placeholders; adapt labels and surrounding prose to the resolved user-facing language instead of hardcoding any single human language.
 
-Do not describe a Codex fallback card as a popup. In Codex, `conversation_fallback` means a chat card in the conversation. Call it a native popup only when `request_user_input` is available and has actually been invoked. 当前以聊天确认卡展示，不是弹窗。
+Do not describe a Codex fallback card as a popup. In Codex, `conversation_fallback` means a chat card in the conversation. Call it a native popup only when `request_user_input` is available and has actually been invoked. When a chat card is used, say in the resolved user-facing language that it is a chat confirmation card, not a popup.
 
 Normal public shape:
 
@@ -136,7 +136,7 @@ Distinguish early: **Meta Architecture** (agent governance, collaboration relati
 
 ## Clarity Gate (UNIFIED CONFIRMATION AFTER THINKING)
 
-**RULE**: For non-trivial non-query work, do not invoke a runtime question tool, native choice, or conversation fallback from intuition. First complete Fetch/content evidence, then Thinking/pre-decision option framing. That frame must explicitly list unresolved questions, candidate solution paths, and `solutionChoiceState`. Only after that may the run invoke a SINGLE comprehensive confirmation with 4+ questions, each with 3-4 options.
+**RULE**: For non-trivial non-query work, do not invoke a runtime question tool, native choice, or conversation fallback from intuition. First complete Fetch/content evidence, then Thinking/pre-decision option framing. That frame must explicitly list unresolved questions, candidate solution paths, and `solutionChoiceState`. Only after that may the run invoke one consolidated confirmation, and only for questions whose answer changes the deliverable, audience/value, acceptance, owner/capability, permission/risk, or non-goal.
 
 **Timing**: At the transition from Thinking → Execution, after:
 - Critical stage (task classification)
@@ -146,42 +146,44 @@ Distinguish early: **Meta Architecture** (agent governance, collaboration relati
 
 `preDecisionOptionFrame` is not a dispatch contract. It may name candidate owners, candidate lanes, and candidate task shapes so the user can choose. It must not lock the solution or produce detailed orchestration yet. Final `dispatchEnvelopePacket`, `dispatchBoard`, and `workerTaskPackets` are produced only after the user chooses an option or an allowed skip is recorded in `solutionChoiceState`.
 
-**Confirmation format** — minimum 4 questions, each with 3-4 options. Do not ask the user to choose between Type A/B/C/D/E directly; the system classifies the Type and shows it as context, then asks product-facing execution questions:
+**Confirmation format** - no question quota. Ask the smallest complete set of outcome-branching questions. Do not ask the user to choose between Type A/B/C/D/E directly; the system classifies the Type and shows it as context, then asks product-facing execution questions only when the answer changes execution.
 
 ```
 After Thinking completes, BEFORE any Execution:
-  → Invoke native question tool with 4-6 questions:
+  → Invoke native question tool only for unresolved outcome-branching choices.
 
 Context shown before the questions:
    - AI understanding: what the user wants and what result will be delivered
    - AI additions: missing details the system inferred or still needs
    - Evidence basis: content inspected, retrieval capabilities discovered, searches performed, constraints found, and remaining uncertainty
-   - Unresolved questions: what still needs user choice, or an explicit empty list plus skip reason
+   - Unresolved questions: outcome-branching choices that still need the user, or an explicit empty list plus skip reason
    - Capability route: which agent/skill owner appears best after Fetch
    - Candidate paths / Candidate solution paths: at least 2 viable ways to proceed
 
-1. Outcome Confirmation
+Possible question dimensions:
+
+1. Outcome Confirmation - ask only when the final result could legitimately differ.
    - Option A: Keep the fix narrow — change only the part that blocks the requested result. Result: fastest delivery. Advantage: low disruption. Disadvantage: related rough edges may remain.
    - Option B: Fix the full user journey — include directly connected files so the experience works end to end. Result: more complete release. Advantage: fewer follow-up surprises. Disadvantage: more files need review.
    - Option C: Audit before changing — produce a written issue list first, then change only approved items. Result: strongest control. Advantage: safest for sensitive repos. Disadvantage: slower.
 
-2. Scope Confirmation
+2. Scope Confirmation - ask only when scope affects risk, cost, or acceptance.
    - Option A: Mentioned items only — touch only files or behavior named by the user. Result: small patch. Advantage: easiest rollback. Disadvantage: hidden dependencies may stay broken.
    - Option B: Direct dependencies — include files that the named items immediately rely on. Result: practical working fix. Advantage: best balance for most work. Disadvantage: moderate test effort.
    - Option C: Full connected flow — include install, sync, docs, tests, and runtime projections. Result: release-ready change. Advantage: stronger confidence. Disadvantage: larger review surface.
    - Option D: Custom boundary — user names exact inclusions and exclusions. Result: precise control. Advantage: fits special constraints. Disadvantage: may omit necessary support files.
 
-3. Execution Style Confirmation
+3. Execution Style Confirmation - ask only when collaboration rhythm changes the user's control or risk.
    - Option A: One clean pass — apply the planned change once, then verify. Result: quick completion. Advantage: simple timeline. Disadvantage: less mid-course feedback.
    - Option B: Small reviewed steps — change one slice, test it, then continue. Result: visible progress checkpoints. Advantage: easier to catch mistakes. Disadvantage: takes longer.
    - Option C: Specialist handoff — route each slice to the best matching agent/skill owner. Result: clearer ownership. Advantage: better for cross-platform or multi-domain work. Disadvantage: coordination overhead.
 
-4. Risk And Rollback Confirmation
+4. Risk And Rollback Confirmation - ask only when rollback or release safety has multiple acceptable paths.
    - Option A: Low-risk patch — make reversible text/config changes with focused tests. Result: simple rollback. Advantage: safe for routine fixes. Disadvantage: may not cover systemic drift.
    - Option B: Release-safe patch — include generated mirrors, install checks, and packaging checks. Result: safer for public users. Advantage: catches platform drift. Disadvantage: more validation time.
    - Option C: Staged rollout — keep risky changes behind a clear follow-up or manual release step. Result: avoids surprise breakage. Advantage: safest when behavior is uncertain. Disadvantage: leaves some work deferred.
 
-5. Priority Confirmation
+5. Priority Confirmation - ask only when the user's value priority is genuinely ambiguous.
    - Option A: User experience first — optimize prompts, explanations, and choice quality. Result: clearer decisions for non-technical users. Advantage: better adoption. Disadvantage: implementation may wait.
    - Option B: Runtime correctness first — fix hooks, sync, tests, and package health. Result: fewer broken installs. Advantage: stronger reliability. Disadvantage: less visible product polish.
    - Option C: Balanced release — do enough UX and runtime work to ship one coherent update. Result: complete practical release. Advantage: best all-around path. Disadvantage: broader patch.
@@ -190,7 +192,8 @@ Wait for user response before proceeding to Execution.
 ```
 
 **Option quality requirements**:
-- Each question must have 3-4 distinct options
+- Each visible question must change an execution branch. If it does not, remove it.
+- Each visible question must have at least two materially different options. Do not add filler options to satisfy a count.
 - Each option must specify:
   - What changes (specific scope)
   - What problem it solves (requirement/pain point)
@@ -235,14 +238,14 @@ For `clarify`, `option_select`, and `confirm_execution` cards, prefer the curren
 ```
 When meta-theory is activated on Claude Code:
   → Use native question tool for Critical clarification only when the request is too unclear or risky to Fetch.
-  → After Fetch + Thinking, invoke one execution confirmation with 4-6 questions.
+  → After Fetch + Thinking, invoke one execution confirmation only for remaining outcome-branching choices.
   → Wait for user response before Execution dispatch or file modification.
 ```
 
 **Fallback Implementation (Other Platforms)**:
 ```
 When native surface is unavailable:
-  → Emit localized confirmation card in user's language:
+  → Emit a confirmation card in the resolved user-facing language:
     ## Task Confirmation
     - Type: [A/B/C/D/E with description]
     - Scope: [specific scope description]
@@ -291,6 +294,79 @@ Before expanding workflow, write a one-sentence `coreProblem` internally:
 If a protocol step does not improve `coreProblem` resolution, evidence quality, safety, or writeback quality, compress it into an internal note. Do not expose process unless the user asks for governance/debug trace.
 
 For read-only analysis, prefer a direct answer with evidence and patchable recommendations over full orchestration ceremony.
+
+## Production-Correctness Contract
+
+The skill and governance agents define behavior first; contracts and validators only enforce it later. Do not let schema shape become the product design source.
+
+Meta-theory's quality bar is **production correctness before execution**:
+
+| Stage | Product question | Required output before next stage | Block / return condition |
+|---|---|---|---|
+| `Critical` | What real user outcome, pain, value, audience, success standard, and non-goal must be locked? | `coreProblem`, success criteria, non-goals, risk boundary, and only core-blocking questions | If the missing answer changes deliverable, owner, permission, risk, or acceptance, ask; otherwise proceed with explicit assumptions |
+| `Fetch` | What evidence, current state, constraints, available capabilities, and failure modes change the decision? | Evidence inventory with decision impact, capability candidates, owner/tool candidates, gaps, contradictions, and assumptions | If evidence cannot change a decision, it is source collection, not Fetch; gather better evidence or mark blocked |
+| `Thinking` | Which smallest complete plan can create a ten-times-better result, and which paths should be rejected? | Expert lenses, candidate paths, trade-offs, business-flow lanes, owner resolution, capability bindings, dependency/merge plan, and worker work orders | If owner, capability, lane coverage, or worker input is missing, return to Thinking or emit `capabilityGapPacket`; do not start Execution |
+| `Review` | Did the upstream work make the result worth shipping, not merely pass a checklist? | Review findings that name the failed stage (`Critical`, `Fetch`, `Thinking`, or `Execution`) and the earliest return point | If intent, evidence, design, owner fit, or worker task quality was missing before Execution, fail Review and return upstream |
+
+### Read-Before-Edit Rule
+
+Before changing files, inspect the current worktree and the source files that will be modified. This is design evidence, not hook fallback. During `Critical` and `Fetch`, local read-only inspection is allowed even before execution readiness: `git status`, `git diff`, targeted file reads, directory listings, and search commands scoped to the repository. Mutations, installs, generated mirrors, secret reads, network side effects, and execution-intent dispatch remain blocked until Thinking produces the required work orders.
+
+If a runtime hook blocks read-only source inspection, record that as a governance defect and return to Sentinel/Conductor policy. Do not skip inspection because the hook made it inconvenient.
+
+### Stage Output Minimums
+
+`Critical` must produce `realIntent`, `successCriteria`, `nonGoals`, `blockingUnknowns`, and `noQuotaClarification`. If there are no core-blocking questions, record that explicitly instead of inventing questions.
+
+`Fetch` must produce `evidence`, `decisionImpactMap`, `capabilityDiscovery`, `capabilityGap`, and `contradictionLog`. Every decision-grade evidence item must say what it changes: scope, route, owner, risk, acceptance, block status, or return stage.
+
+`Thinking` must produce `designFrame`, `workType`, `expertLens`, `consideredLanes`, `omittedLanesWithReason`, `workerTaskPackets`, and `dependencyPolicy`. `dependencyPolicy` may use `block`, `wait`, or `return_to_stage`; it must not use `use_fallback` or substitute guessed artifacts for failed dependencies.
+
+`Review` must check Critical, Fetch, and Thinking before judging final output polish. It fails if missing intent, evidence, design, owner, capability, worker work order, or dependency readiness was hidden by a later Review/Verification pass.
+
+### Core-Blocking Question Rule
+
+Clarification is not a quota. Ask only questions whose answer changes at least one of:
+
+- `deliverable` — what will be produced
+- `audience/value` — who it serves and what pain or desire it solves
+- `acceptance` — how success will be judged
+- `owner/capability` — who or what can do it well
+- `permission/risk` — what is safe or allowed
+- `scope/non-goal` — what must stay out
+
+If the answer would only make the assistant sound more careful, do not ask it. Fetch first when local evidence can reduce uncertainty.
+
+### Expert Lens Rule
+
+Before worker packets, Thinking selects the relevant abstract lens and writes it compactly. Use only lenses that matter for the deliverable:
+
+- `content = emotion value + core pain/desire + human voice + proof + shareability`
+- `product = growth loop + conversion + willingness to pay + retention + referral`
+- `code = layering + modularity + config + i18n + extensibility + decoupling + concurrency/reliability when relevant`
+- `research = claim + source quality + counterexample + decision impact`
+- `design = audience + job-to-be-done + first impression + friction + trust`
+- `security = trust boundary + permission scope + secret handling + abuse path + rollback`
+- `performance = load shape + bottleneck + concurrency model + graceful degradation + observability`
+- `operations = install path + release risk + rollback + monitoring + support handoff`
+
+These are not fixed task lists. They are thinking lenses. The planner may remix them for the work type, but must be able to explain why each selected lens changes execution.
+
+### Worker Work Order Rule
+
+Every execution worker starts from a work order, not a vague prompt. It must include:
+
+`goal=` one concrete outcome; `why=` core pain/value; `done=` observable acceptance; `no=` non-goals; `use=` evidence/tools/capabilities allowed; `lens=` selected expert lens; `handoff=` who receives the result; `check=` verification.
+
+Internal prompts may use compact notation like `goal=` and `done=`. User-facing explanations stay in plain product language.
+
+### Fallback Boundary
+
+Compatibility fallback may keep the runtime usable: chat card instead of popup, read-only degraded analysis when no subagent tool exists, user-supplied sources when external retrieval is blocked.
+
+Governance-quality fallback is forbidden: no generic owner for missing expertise, no guessed evidence, no temporary owner as normal path, no Review/Verification rescuing missing Critical/Fetch/Thinking work. Missing quality blocks execution, returns to the responsible earlier stage, or creates a capability gap packet.
+
+Use plain product words when reporting this to users: fallback = temporary fallback path, validator = final regression check, contract = machine-readable rule, source-of-truth = source rule, worker task packet = worker work order.
 
 ## Complexity Path Selection
 
@@ -396,7 +472,7 @@ If you are about to produce **>3 sentences** of execution-layer analysis, review
 ### Decision vs Notice Bifurcation
 
 **Notice (no popup)**: Inform the user of current progress and next steps. Output directly to conversation, no response required.
-**Decision (popup)**: Use the runtime's native confirmation mechanism when multiple viable options exist with distinct trade-offs. Each option must specify 4 dimensions.
+**Decision (popup)**: Use the runtime's native confirmation mechanism when multiple viable options exist with distinct trade-offs. Each option must specify what changes, what problem it solves, the expected result, advantages, and disadvantages.
 
 ### When to Use Native Confirmation (Decision Triggers)
 
@@ -481,14 +557,14 @@ Do not use this Notice as a Decision surface. If the user must choose among mult
 
 **Hardcoded agent names are FORBIDDEN.** Describe the needed capability and let Thinking resolve the run-scoped owner/loadout from the Fetch evidence inventory.
 
-Capability index layers: (1) repo canonical (2) runtime mirrors (3) local global inventory. Codex fallback: `spawn_agent` with `agent_type: "default"` + discovered profile prompt as degradation.
+Capability index layers: (1) repo canonical (2) runtime mirrors (3) local global inventory. If Codex lacks a named custom-agent surface, `spawn_agent` with `agent_type: "default"` is only runtime compatibility degradation: the durable `ownerAgent`, capability evidence, and review/verification owner still come from Thinking. It must never become a generic governance owner or hide a capability gap.
 
 **Runtime agent format boundary (hard rule)**: do not copy one platform's agent file format into another runtime.
 
 | Runtime | Agent projection | Naming/display behavior |
 |---|---|---|
 | Claude Code | `.claude/agents/*.md` with YAML frontmatter | Agent name comes from Markdown frontmatter; no Codex `nickname_candidates`. |
-| Codex | `.codex/agents/*.toml` with `name`, `description`, `developer_instructions`, and optional ASCII `nickname_candidates` | Project provides generic fallback adapters (`worker.toml`, `explorer.toml`) plus business-role adapters (`frontend.toml`, `backend.toml`, `test.toml`, `review.toml`, `analysis.toml`, `verify.toml`, `docs.toml`) for hosts that honor named custom agents. Host-generated aliases still remain `runtimeInstanceAlias` only. |
+| Codex | `.codex/agents/*.toml` with `name`, `description`, `developer_instructions`, and optional ASCII `nickname_candidates` | Project provides compatibility adapters (`worker.toml`, `explorer.toml`) plus business-role adapters (`frontend.toml`, `backend.toml`, `test.toml`, `review.toml`, `analysis.toml`, `verify.toml`, `docs.toml`) for hosts that honor named custom agents. These adapters keep the runtime usable; they do not become durable governance owners. Host-generated aliases still remain `runtimeInstanceAlias` only. |
 | Cursor | `.cursor/agents/*.md` plus `.cursor/rules/*.mdc` / `AGENTS.md` context | Markdown/YAML agent mirror; no Codex TOML. |
 | OpenClaw | `openclaw/workspaces/<agent>/` files plus `openclaw/openclaw.template.json` | Workspace identity model (`BOOT.md`, `IDENTITY.md`, `SOUL.md`, `TOOLS.md`, `AGENTS.md`, `MEMORY.md`, `HEARTBEAT.md`, `USER.md`); no Codex TOML. |
 
@@ -524,7 +600,16 @@ Each `agentBlueprintPacket.roles[]` entry must include `ownerSource`, `agentCopy
 | `data_pipeline` | data source, schema, transform, storage, observability, quality tests, privacy/security, release |
 | `custom` | infer lanes from user outcome, then justify omissions |
 
-Output this as `businessFlowBlueprintPacket` with `requiredLanes`, `optionalLanes`, `omittedLanes` with reasons, `laneDependencies`, and `coverageJudgment`. Each required or optional lane object must include Fetch evidence inventory plus Thinking's resolution: `capabilitySearchQuery`, `candidateOwners`, `matchedCapabilities`, `capabilityBindings`, `selectedOwner`, `selectionReason`, and `coverageStatus` (`covered | partial | missing | omitted_with_reason`). A lane can be intentionally omitted only with a plain-language reason, e.g. "static page, no persisted user data". Do not fail a run only because it did not enumerate every example dimension. Legacy `candidateSkills` is compatibility evidence only.
+Output this as `businessFlowBlueprintPacket` with `requiredLanes`, `optionalLanes`, `omittedLanes` with reasons, `laneDependencies`, and `coverageJudgment`. Each required or selected optional lane object must include Fetch evidence inventory plus Thinking's resolution: `capabilitySearchQuery`, `candidateOwners`, `matchedCapabilities`, `capabilityBindings`, `selectedOwner`, `selectionReason`, and `coverageStatus` (`covered | partial | missing`). A lane can be intentionally omitted only in `omittedLanes` with a plain-language reason and `coverageStatus = omitted_with_reason`, e.g. "static page, no persisted user data". The point is not to enumerate every example dimension; the point is to prove the relevant expert lenses were considered and either covered or consciously omitted. Legacy `candidateSkills` is compatibility evidence only.
+
+**Quality-first expert lens rule**: before worker packets, Thinking must choose the right top-level lens for the work type and write it into the plan in compact form:
+- content = emotion value + core pain/desire + human voice + proof + shareability
+- product = growth loop + conversion + willingness to pay + retention + referral
+- code = layering + modularity + config + i18n + extensibility + decoupling + concurrency/reliability when relevant
+- research = claim + source quality + counterexample + decision impact
+- design = audience + job-to-be-done + first impression + friction + trust
+
+These are abstract lenses, not fixed task lists. Use the fewest words that make execution unambiguous, e.g. `goal=`, `done=`, `no=`, `use=`, `check=`. Internal prompt compression is allowed; user-facing explanations must stay plain.
 
 **Business-readable agent naming (hard rule)**:
 - User-visible role names must be coarse business role-family names: `frontend`, `backend`, `test`.
@@ -551,6 +636,8 @@ Output this as `businessFlowBlueprintPacket` with `requiredLanes`, `optionalLane
   - `governanceStageNodes`: `Critical`, `Fetch`, `Thinking`, and/or `Review` nodes this governance owner participates in.
 
 **Role coverage gap rule**: if `roleCoverageGate = fail`, `missingRoles` is non-empty, or any role has `ownerResolution = upgrade_existing_owner | create_owner_first`, then output `capabilityGapPacket` and require an approved owner card before Execution. In the Meta_Kim repo this means governance-owner upgrade only; in user projects it may mean copying a global agent into the project for modification or creating a project-local agent.
+
+**Stage 4 owner prohibition**: `general-purpose`, `worker`, `explorer`, host-generated personal aliases, and agent ids are runtime adapter labels, not execution owners. Stage 4 may dispatch only from Thinking's resolved `ownerAgent`, `roleDisplayName`, and `capabilityBindings`. If the runtime exposes only a generic adapter, record that adapter in `runtimeInstanceAlias`, keep the business role visible, and return to Thinking unless Fetch evidence proves the selected capability is sufficient.
 
 **Same-agent multi-instance rule**: The same `ownerAgent` may be spawned more than once in parallel when the work is shardable. Each instance must have a unique `roleInstanceId`, `shardKey`, `shardScope`, `workspaceIsolation`, `artifactNamespace`, `collisionPolicy`, `parallelGroup`, and a unified `mergeOwner` for the parallel group. If two instances share files or decisions without a merge/lock policy, they are not parallel; make them sequential or split the design owner first.
 
@@ -668,7 +755,7 @@ Every station must leave explicit deliverables:
 |---|---|
 | Warden | Participation Summary + Gate Decisions + Escalation + Final Synthesis |
 | Genesis | SOUL.md Draft + Boundary Definition + Reasoning Rules + Stress-Test Record |
-| Artisan | Skill Loadout + MCP/Tool Loadout + Fallback Plan + Capability Gap List + Adoption Notes |
+| Artisan | Skill Loadout + MCP/Tool Loadout + Runtime Compatibility Plan + Capability Gap List + Adoption Notes |
 | Sentinel | Threat Model + Permission Matrix + Hook Configuration + Rollback Rules |
 | Librarian | Memory Architecture + Continuity Protocol + Retention Policy + Recovery Evidence |
 | Conductor | Dispatch Board + Card Deck + Worker Task Board + Handoff Plan |
@@ -676,7 +763,7 @@ Every station must leave explicit deliverables:
 | Scout | Capability Baseline + Candidate Comparison + Security Notes + Adoption Brief |
 
 **Required Genesis deliverables**: SOUL.md Draft; Boundary Definition; Reasoning Rules; Stress-Test Record.
-**Required Artisan deliverables**: Skill Loadout; MCP/Tool Loadout; Fallback Plan; Capability Gap List; Adoption Notes.
+**Required Artisan deliverables**: Skill Loadout; MCP/Tool Loadout; Runtime Compatibility Plan; Capability Gap List; Adoption Notes.
 **Required Conductor deliverables**: Dispatch Board; Card Deck; Worker Task Board; Handoff Plan.
 
 ## Type C: Development Governance
@@ -685,7 +772,7 @@ Every station must leave explicit deliverables:
 
 **8-stage spine** (see `references/dev-governance.md` for complete spec):
 
-**Spine activation (mandatory first action)**: Write a spine state file to `.meta-kim/state/default/spine/spine-state.json` using the Write tool. Use this exact schema (version 2):
+**Spine activation (mandatory first action)**: First dispatch `meta-warden` via Agent tool (description must contain "meta-warden"). Then write spine state file to `.meta-kim/state/default/spine/spine-state.json`. The hook allows spine-state writes after meta-warden is in dispatchChain. Use this exact schema (version 2):
 ```json
 {
   "active": true,
@@ -734,7 +821,7 @@ After each stage completes, update the spine state: set current stage to `comple
 
 | # | Stage | Action |
 |---|---|---|
-| 1 | Critical | Clarify scope, ask if ambiguous. Update spine state `currentStage: "critical"` |
+| 1 | Critical | **First**: Dispatch meta-warden (description="meta-warden coordinate") so hook sees it in dispatchChain. **Then**: Write spine state. Update spine state `currentStage: "critical"` |
 | 2 | Fetch | Perform online and local research, confirm the problem and candidate solutions, inventory candidate agents/skills/commands/MCP capabilities/tools as evidence, and produce `contentEvidencePacket` before any user choice surface for non-trivial non-query work. Update spine state `currentStage: "fetch"` |
 | 3 | Thinking | Determine needed execution capabilities across agents, skills, commands, MCP capabilities, and tools; match existing capabilities from Fetch evidence; create or upgrade only for gaps; compose parallel, serial, or DAG orchestration with `mergeOwner`; explore ≥2 paths; produce `preDecisionOptionFrame` before runtime question tool / native choice / fallback; after user choice or recorded skip, **create planning files (task_plan.md, findings.md, progress.md) — MANDATORY supplement, see Step 3.7**; produce finalized protocol artifacts (`runHeader`, `businessFlowBlueprintPacket`, `agentBlueprintPacket`, `dispatchEnvelopePacket`, `dispatchBoard`, `workerTaskPackets`). **Blueprint-first Rule**: business lanes and role blueprint come before worker packets. **Minimum Decomposition Rule**: when task involves >1 file or >1 capability dimension, `workerTaskPackets` MUST contain >=2 packets. A single-packet plan equals no decomposition — violates "Dispatch Before You Execute." Each packet must have non-empty `owner`, `ownerAgent`, `businessRoleId`, `roleDisplayName`, `roleInstanceId`, `dependsOn` (or explicit `"dependsOn": []`), `parallelGroup`, `mergeOwner`, `shardKey`, and `shardScope`. Update spine state `currentStage: "thinking"` |
 | 4 | **Execution** | Dispatch according to Thinking's `agentBlueprintPacket`, `dispatchBoard`, and `workerTaskPackets`; use the selected agents plus run-scoped skills, commands, MCP capabilities, and tools; independent tasks run parallel. Update spine state `currentStage: "execution"`. **Update progress.md with agent outputs.** **Enforcement hook blocks execution tools until at least one Agent dispatch is recorded.** |
@@ -756,7 +843,7 @@ Stage 2 is the gate — do not skip to Stage 3/4. Stage 4 requires protocol arti
 **Hidden skeleton state:**
 - `agentInvocationState`: idle → discovered → matched → dispatched → returned/escalated
 - Skip-Level Gate: before skipping a stage, record why the skip is safe
-- Capability gap ladder: existing owner → Type B creation → temporary fallback with sunset criteria
+- Capability gap ladder: existing owner → owner upgrade / project-local creation → block or defer with `capabilityGapPacket`
 
 ## Type D: Review
 

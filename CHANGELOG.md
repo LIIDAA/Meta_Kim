@@ -6,6 +6,19 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.4.0] - 2026-05-27
+
+### Fixed
+
+- **H-001** — README.md badge links already use https:// (verified, no fix needed)
+- **M-002** — MCP Memory Service endpoints use MCP_MEMORY_URL env (verified, no fix needed)
+- **M-003** — Version inconsistency - unified to 2.4.0
+
+### Changed
+
+- Version bump: 2.3.2 → 2.4.0
+- Updated CHANGELOG.zh-CN.md with corresponding changes
+
 ## [2.3.2] - 2026-05-26
 
 ### Fixed
