@@ -275,7 +275,7 @@ Load only what the task needs:
 - `references/runtime-codex.md`: Codex adapter, subagent honesty, choice surface behavior.
 - `references/owner-resolution.md`: capability-first search, owner selection, agent-teams-playbook timing.
 - `references/verification-evidence.md`: verified-claim contract, fix evidence, release traceability.
-- `references/planning-files.md`: 8-stage planning files coverage (task_plan.md, findings.md, progress.md).
+- `references/planning-files.md`: 8-stage spine and 11-phase business workflow planning-file coverage (task_plan.md, findings.md, progress.md).
 - `references/evolution-writeback.md`: durable learning and writeback rules.
 - `references/dev-governance.md`: compact full-flow index and compatibility anchor.
 - `references/meta-theory.md`: theory background.
