@@ -63,7 +63,8 @@ Recommended reading order:
 
 1. This file, `README.md`
 2. `AGENTS.md`
-3. `docs/runtime-capability-matrix.md`
+3. `CLAUDE.md` when working on Claude Code behavior
+4. `canonical/runtime-assets/cursor/rules/meta-enforcement.mdc` when working on Cursor rules
 
 ### Usage Paths
 
@@ -734,6 +735,23 @@ The three memory layers work together toward two core goals:
 | `npm run meta:verify:all` | Full validation, including runtime smoke checks |
 | `npm run meta:doctor:governance` | Governance health check |
 
+### Where the active rules live
+
+| Surface | Current source |
+| --- | --- |
+| Repository / Codex rules | `AGENTS.md` |
+| Claude Code rules | `CLAUDE.md` |
+| Meta-theory skill | `canonical/skills/meta-theory/SKILL.md` |
+| Meta-theory details | `canonical/skills/meta-theory/references/` |
+| Cursor declarative backup rule | `canonical/runtime-assets/cursor/rules/meta-enforcement.mdc` |
+| Runtime mirrors | `.claude/`, `.codex/`, `.cursor/`, `openclaw/` after `npm run meta:sync` |
+
+When in doubt, edit canonical sources first, then run `npm run meta:sync` and `npm run meta:check`.
+
+### How to tell which scripts are useful
+
+Start with `package.json` scripts. The supported maintenance paths are the `meta:*` commands documented above; most helper files under `scripts/` exist because those commands call them. Use `npm run meta:status`, `npm run meta:check`, and `npm run meta:verify:all` for normal operation. Inspect an individual helper only when a `package.json` script or test points to it.
+
 ### Skills and dependencies
 
 | Command | Purpose |
@@ -858,8 +876,9 @@ Meta_Kim uses MCP (Model Context Protocol) to expand the capability boundary of 
 
 - [README.zh-CN.md](README.zh-CN.md)
 - [AGENTS.md](AGENTS.md)
+- [CLAUDE.md](CLAUDE.md)
 - [config/contracts/workflow-contract.json](config/contracts/workflow-contract.json)
-- [docs/runtime-capability-matrix.md](docs/runtime-capability-matrix.md)
+- [canonical/runtime-assets/cursor/rules/meta-enforcement.mdc](canonical/runtime-assets/cursor/rules/meta-enforcement.mdc)
 
 ---
 

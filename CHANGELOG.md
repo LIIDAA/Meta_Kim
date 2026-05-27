@@ -6,6 +6,20 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.4.1] - 2026-05-28
+
+### Fixed
+
+- **Meta-theory delivery trust** — Slimmed `/meta-theory` into a progressive dispatcher, split large operational details into references, and aligned Critical / Fetch / Thinking / Review so visible stage feedback is compact, human-readable, and follows the resolved user-facing language.
+- **Verification evidence hardening** — Bound `verifySteps[].id` to `workerExecutionEvidence[].verifyStepRef`, parse `json-output` evidence as JSON, structure `fixEvidence`, require accepted-risk ownership/revisit data, and prevent skipped worker evidence from claiming verified or public-ready status.
+- **Cross-runtime prompt/rules alignment** — Updated Conductor, Artisan, Cursor rules, and runtime prompts so agent-team playbooks only run for 2+ independent parallel lanes, capability discovery is runtime-aware, and generated Cursor prompts avoid duplicate headers/warnings.
+- **Release documentation cleanup** — Corrected stale references to removed runtime-matrix docs, updated ECC repository references to `affaan-m/ECC`, and synchronized package metadata for the new release.
+
+### Changed
+
+- Version bump: 2.4.0 -> 2.4.1.
+- Added clearer maintainer paths for rules and scripts so users can find the active sources instead of guessing from generated mirrors.
+
 ## [2.4.0] - 2026-05-27
 
 ### Fixed
