@@ -257,10 +257,12 @@
       "mergeOwner": "meta-warden",
       "verifySteps": [
         {
+          "id": "task-001-verify-1",
           "step": "replace inline secret fallback with env lookup",
           "verify": "no hardcoded secret in refresh.ts"
         },
         {
+          "id": "task-001-verify-2",
           "step": "update refresh.test.ts for new env-based path",
           "verify": "test suite passes"
         }
@@ -339,6 +341,11 @@
       ],
       "workerExecutionEvidence": [
         {
+          "verifyStepRef": "task-001-verify-1",
+          "expectedResult": "no hardcoded secret in refresh.ts",
+          "observedResult": "no hardcoded secret in refresh.ts",
+          "workingDirectory": ".",
+          "stderrTail": "",
           "command": "fixture-verify task-001 1",
           "actualOutput": "",
           "passClaim": "no hardcoded secret in refresh.ts",
@@ -350,6 +357,11 @@
           "runAt": "2026-05-26T00:00:00.000Z"
         },
         {
+          "verifyStepRef": "task-001-verify-2",
+          "expectedResult": "test suite passes",
+          "observedResult": "test suite passes",
+          "workingDirectory": ".",
+          "stderrTail": "",
           "command": "fixture-verify task-001 2",
           "actualOutput": "",
           "passClaim": "test suite passes",
@@ -414,7 +426,18 @@
       "inline fallback still present in src/auth/refresh.ts"
     ],
     "fixEvidence": [
-      "attempted change incomplete"
+      {
+        "findingId": "finding-001",
+        "actionId": "fix-001",
+        "verifiedBy": "meta-prism",
+        "verificationMethod": "artifact-inspection",
+        "evidenceRefs": [
+          "inline fallback still present"
+        ],
+        "resultArtifactRef": "src/auth/refresh.ts",
+        "result": "verified_closed",
+        "failureDisposition": "reopen finding on verification failure"
+      }
     ],
     "revisionResponses": [
       {

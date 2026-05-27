@@ -379,6 +379,77 @@ describe("validate-run-artifact.mjs", () => {
     );
   });
 
+  test("rejects worker evidence that is not bound to a verify step", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      delete artifact.workerResultPackets[0].workerExecutionEvidence[0].verifyStepRef;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /verifyStepRef/,
+    );
+  });
+
+  test("rejects json-output verification evidence that is not parseable JSON", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      const evidence = artifact.workerResultPackets[0].workerExecutionEvidence[0];
+      evidence.successMarkerFormat = "json-output";
+      evidence.actualOutput = "not json";
+      delete evidence.exitCode;
+      delete evidence.commandRanAt;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /parseable JSON/,
+    );
+  });
+
+  test("rejects unstructured fix evidence for closed findings", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.verificationPacket.fixEvidence = [
+        "src/auth/refresh.ts removed inline secret fallback",
+      ];
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /fixEvidence/,
+    );
+  });
+
+  test("rejects accepted risk without owner, reason, and revisit trigger", async (t) => {
+    const tempFixture = await writeTempFixture(t, (artifact) => {
+      artifact.verificationPacket.verificationResults[0].closeState =
+        "accepted_risk";
+      artifact.verificationPacket.fixEvidence[0].result = "accepted_risk";
+      delete artifact.verificationPacket.fixEvidence[0].riskOwner;
+      delete artifact.verificationPacket.fixEvidence[0].riskReason;
+      delete artifact.verificationPacket.fixEvidence[0].expiryOrRevisitTrigger;
+      artifact.summaryPacket.publicReady = false;
+      artifact.summaryPacket.verifyPassed = false;
+      artifact.summaryPacket.blockedBy = ["finding-001 accepted risk"];
+      artifact.runHeader.publicReady = false;
+    });
+    await assert.rejects(
+      execFileAsync(
+        "node",
+        ["scripts/validate-run-artifact.mjs", tempFixture],
+        { cwd: REPO_ROOT },
+      ),
+      /accepted_risk/,
+    );
+  });
+
   test("rejects public-ready runs with open worker todos by default", async (t) => {
     const tempFixture = await writeTempFixture(t, (artifact) => {
       artifact.workerTaskPackets[0].taskTodoState = "open";

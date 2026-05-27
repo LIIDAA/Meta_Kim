@@ -252,10 +252,12 @@
       "mergeOwner": "meta-warden",
       "verifySteps": [
         {
+          "id": "task-cross-001-verify-1",
           "step": "extract shared auth pattern module from source projects",
           "verify": "shared auth pattern module references both source projects correctly"
         },
         {
+          "id": "task-cross-001-verify-2",
           "step": "screen shared artifact for project-specific secrets",
           "verify": "no project-specific secrets found in shared artifact"
         }
@@ -334,6 +336,11 @@
       ],
       "workerExecutionEvidence": [
         {
+          "verifyStepRef": "task-cross-001-verify-1",
+          "expectedResult": "shared auth pattern module references both source projects correctly",
+          "observedResult": "shared auth pattern module references both source projects correctly",
+          "workingDirectory": ".",
+          "stderrTail": "",
           "command": "fixture-verify task-cross-001 1",
           "actualOutput": "",
           "passClaim": "shared auth pattern module references both source projects correctly",
@@ -345,6 +352,11 @@
           "runAt": "2026-05-26T00:00:00.000Z"
         },
         {
+          "verifyStepRef": "task-cross-001-verify-2",
+          "expectedResult": "no project-specific secrets found in shared artifact",
+          "observedResult": "no project-specific secrets found in shared artifact",
+          "workingDirectory": ".",
+          "stderrTail": "",
           "command": "fixture-verify task-cross-001 2",
           "actualOutput": "",
           "passClaim": "no project-specific secrets found in shared artifact",

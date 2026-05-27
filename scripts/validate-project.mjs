@@ -959,6 +959,13 @@ async function validatePortableSkill() {
   const referenceFiles = await listCanonicalSkillReferences();
   const skillSourcePath = canonicalSkillPath;
   const skillSource = await fs.readFile(skillSourcePath, "utf8");
+  const referenceSources = await Promise.all(
+    referenceFiles.map(async (referenceFile) => {
+      const referencePath = path.join(canonicalSkillReferencesDir, referenceFile);
+      return fs.readFile(referencePath, "utf8");
+    }),
+  );
+  const portableSkillCorpus = [skillSource, ...referenceSources].join("\n");
 
   for (const expected of [
     "name: meta-theory",
@@ -979,7 +986,7 @@ async function validatePortableSkill() {
     "Required Conductor deliverables",
   ]) {
     assert(
-      skillSource.includes(marker),
+      portableSkillCorpus.includes(marker),
       `Portable skill is missing station-deliverable marker ${marker}.`,
     );
   }

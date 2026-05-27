@@ -770,9 +770,14 @@ if (isReadOnlyTool(toolName)) {
   process.exit(0);
 }
 
-// Query bypass: allow everything
+// Query bypass skips orchestration confirmation only. It remains read-only.
 if (state.queryBypass) {
-  process.exit(0);
+  if (toolName === "Bash" && isReadOnlyBash((toolInput?.command || "").trim())) {
+    process.exit(0);
+  }
+  exitAfterDeny(
+    "queryBypass is limited to pure read-only inspection; mutation or state-changing tools are denied.",
+  );
 }
 
 // Execution tools: enforce dispatch chain

@@ -2940,14 +2940,48 @@ function validateWorkerExecutionEvidence(resultPacket, taskPacket, context) {
     `${context}.workerExecutionEvidence`,
   );
   ensure(
-    resultPacket.workerExecutionEvidence.length >= taskPacket.verifySteps.length,
-    `${context}.workerExecutionEvidence must cover every worker verifySteps entry.`,
+    resultPacket.workerExecutionEvidence.length === taskPacket.verifySteps.length,
+    `${context}.workerExecutionEvidence must cover every worker verifySteps entry exactly once.`,
   );
+  const verifyStepIds = new Set();
+  for (const [index, step] of taskPacket.verifySteps.entries()) {
+    ensureObject(step, `${context}.matchedWorkerTask.verifySteps[${index}]`);
+    ensureString(step.id, `${context}.matchedWorkerTask.verifySteps[${index}].id`);
+    ensure(
+      !verifyStepIds.has(step.id),
+      `${context}.matchedWorkerTask.verifySteps[${index}].id must be unique.`,
+    );
+    verifyStepIds.add(step.id);
+  }
+  const coveredStepIds = new Set();
   for (const [index, item] of resultPacket.workerExecutionEvidence.entries()) {
     ensureObject(item, `${context}.workerExecutionEvidence[${index}]`);
-    for (const field of ["command", "passClaim", "status", "runBy", "runAt"]) {
+    for (const field of [
+      "verifyStepRef",
+      "command",
+      "passClaim",
+      "status",
+      "runBy",
+      "runAt",
+      "expectedResult",
+      "observedResult",
+      "workingDirectory",
+    ]) {
       ensureString(item[field], `${context}.workerExecutionEvidence[${index}].${field}`);
     }
+    ensure(
+      typeof item.stderrTail === "string",
+      `${context}.workerExecutionEvidence[${index}].stderrTail must be a string.`,
+    );
+    ensure(
+      verifyStepIds.has(item.verifyStepRef),
+      `${context}.workerExecutionEvidence[${index}].verifyStepRef must match a worker verifySteps id.`,
+    );
+    ensure(
+      !coveredStepIds.has(item.verifyStepRef),
+      `${context}.workerExecutionEvidence[${index}].verifyStepRef duplicates ${item.verifyStepRef}.`,
+    );
+    coveredStepIds.add(item.verifyStepRef);
     ensureEnum(
       item.status,
       ["verified", "fabricated", "skipped"],
@@ -2981,6 +3015,16 @@ function validateWorkerExecutionEvidence(resultPacket, taskPacket, context) {
           item.actualOutput,
           `${context}.workerExecutionEvidence[${index}].actualOutput`,
         );
+        if (item.successMarkerFormat === "json-output") {
+          try {
+            JSON.parse(item.actualOutput);
+          } catch {
+            ensure(
+              false,
+              `${context}.workerExecutionEvidence[${index}].actualOutput must contain parseable JSON for json-output.`,
+            );
+          }
+        }
       }
     }
     if (item.status === "skipped") {
@@ -2989,6 +3033,12 @@ function validateWorkerExecutionEvidence(resultPacket, taskPacket, context) {
         `${context}.workerExecutionEvidence[${index}].skipReason`,
       );
     }
+  }
+  for (const stepId of verifyStepIds) {
+    ensure(
+      coveredStepIds.has(stepId),
+      `${context}.workerExecutionEvidence must include verifyStepRef ${stepId}.`,
+    );
   }
 }
 
@@ -3283,6 +3333,10 @@ function validateFindingChain(contract, artifact) {
     verificationPacket.closeFindings,
     "verificationPacket.closeFindings",
   );
+  ensureArray(
+    verificationPacket.fixEvidence,
+    "verificationPacket.fixEvidence",
+  );
 
   validateReviewProcessChecks(artifact);
 
@@ -3390,6 +3444,53 @@ function validateFindingChain(contract, artifact) {
     verificationByFinding.set(result.findingId, result);
   }
 
+  const fixEvidenceByFinding = new Map();
+  for (const [index, item] of verificationPacket.fixEvidence.entries()) {
+    ensureObject(item, `verificationPacket.fixEvidence[${index}]`);
+    for (const field of [
+      "findingId",
+      "actionId",
+      "verifiedBy",
+      "verificationMethod",
+      "resultArtifactRef",
+      "result",
+      "failureDisposition",
+    ]) {
+      ensureString(item[field], `verificationPacket.fixEvidence[${index}].${field}`);
+    }
+    ensureArray(item.evidenceRefs, `verificationPacket.fixEvidence[${index}].evidenceRefs`);
+    ensure(
+      item.evidenceRefs.length >= 1,
+      `verificationPacket.fixEvidence[${index}].evidenceRefs must not be empty.`,
+    );
+    ensure(
+      findings.has(item.findingId),
+      `verificationPacket.fixEvidence[${index}] references unknown findingId ${item.findingId}.`,
+    );
+    ensure(
+      revisionsByFinding.get(item.findingId)?.actionId === item.actionId,
+      `verificationPacket.fixEvidence[${index}].actionId must match the revisionResponse actionId for ${item.findingId}.`,
+    );
+    ensureGovernanceOwner(
+      contract,
+      item.verifiedBy,
+      `verificationPacket.fixEvidence[${index}].verifiedBy`,
+    );
+    if (item.result === "accepted_risk") {
+      for (const field of [
+        "riskOwner",
+        "riskReason",
+        "expiryOrRevisitTrigger",
+      ]) {
+        ensureString(
+          item[field],
+          `verificationPacket.fixEvidence[${index}].${field} for accepted_risk`,
+        );
+      }
+    }
+    fixEvidenceByFinding.set(item.findingId, item);
+  }
+
   for (const findingId of findings.keys()) {
     ensure(
       revisionsByFinding.has(findingId),
@@ -3398,6 +3499,10 @@ function validateFindingChain(contract, artifact) {
     ensure(
       verificationByFinding.has(findingId),
       `Finding ${findingId} is missing a verificationResult.`,
+    );
+    ensure(
+      fixEvidenceByFinding.has(findingId),
+      `Finding ${findingId} is missing structured fixEvidence.`,
     );
   }
 
@@ -3415,6 +3520,27 @@ function validateFindingChain(contract, artifact) {
         ),
       `closeFindings may only contain findings with a terminal verification closeState (${closedId}).`,
     );
+    const fixEvidence = fixEvidenceByFinding.get(closedId);
+    ensure(
+      fixEvidence,
+      `closeFindings requires structured fixEvidence for ${closedId}.`,
+    );
+    if (verificationResult.closeState === "accepted_risk") {
+      ensure(
+        fixEvidence.result === "accepted_risk",
+        `accepted_risk closeState requires matching fixEvidence result for ${closedId}.`,
+      );
+      for (const field of [
+        "riskOwner",
+        "riskReason",
+        "expiryOrRevisitTrigger",
+      ]) {
+        ensureString(
+          fixEvidence[field],
+          `verificationPacket.fixEvidence for accepted_risk ${closedId}.${field}`,
+        );
+      }
+    }
   }
 
   if (verificationPacket.verified === true) {

@@ -2489,11 +2489,12 @@
       },
       "verifyStepsField": {
         "type": "array",
-        "description": "Atomic step verification checklist. Each step defines a concrete completion criterion that Verification checks item by item. Based on the Goal-Driven Execution format: [Step] -> verify: [check].",
+        "description": "Atomic step verification checklist. Each step defines a concrete completion criterion that Verification checks item by item. Based on the Goal-Driven Execution format: [Step] -> verify: [check]. Each step has a stable id used by workerExecutionEvidence.verifyStepRef.",
         "items": {
           "type": "object",
-          "required": ["step", "verify"],
+          "required": ["id", "step", "verify"],
           "properties": {
+            "id": { "type": "string", "description": "Stable step id referenced by workerExecutionEvidence.verifyStepRef." },
             "step": { "type": "string", "description": "Concrete execution step." },
             "verify": { "type": "string", "description": "Checkable completion condition." }
           }
@@ -2517,14 +2518,19 @@
       },
       "workerExecutionEvidenceField": {
         "type": "array",
-        "description": "Workers reporting verification command pass/fail claims MUST include actual command output evidence. Closes v2.2.2/v2.2.3 historical fabrication where workers claimed '20/20 pass' without executing commands. Each evidence entry binds one command claim to its actual stdout/stderr capture. v2.3.0 adds successMarkerFormat enum to disambiguate silent-success commands (e.g. node --check) from fabricated empty placeholders (EB-008), and reshapes the field to standard JSON Schema for sibling consistency with verifyStepsField and fileCompletionListField (EB-010).",
+        "description": "Workers reporting verification command pass/fail claims MUST include actual command output evidence. Each evidence entry binds one command claim to one verifySteps item via verifyStepRef and records expectedResult, observedResult, workingDirectory, and stderrTail. v2.3.0 adds successMarkerFormat enum to disambiguate silent-success commands (e.g. node --check) from fabricated empty placeholders (EB-008), and json-output must parse as JSON.",
         "items": {
           "type": "object",
-          "required": ["command", "passClaim", "status", "runBy", "runAt", "successMarkerFormat"],
+          "required": ["verifyStepRef", "command", "passClaim", "status", "runBy", "runAt", "successMarkerFormat", "expectedResult", "observedResult", "workingDirectory", "stderrTail"],
           "properties": {
+            "verifyStepRef": {"type": "string", "description": "Must match one workerTaskPacket.verifySteps[].id exactly once."},
             "command": {"type": "string", "description": "Exact shell command claimed to have been run"},
             "actualOutput": {"type": "string", "description": "Real captured stdout (tail or summary OK). Required non-empty when successMarkerFormat is stdout-text or json-output; may be empty string when successMarkerFormat is exit-code-only AND exitCode is 0."},
             "passClaim": {"type": "string", "description": "What the worker is claiming the command proved"},
+            "expectedResult": {"type": "string", "description": "Expected check result from the verify step."},
+            "observedResult": {"type": "string", "description": "Observed result from the actual command or inspection."},
+            "workingDirectory": {"type": "string", "description": "Directory where the command or check ran."},
+            "stderrTail": {"type": "string", "description": "Captured stderr tail, empty string allowed when no stderr was produced."},
             "status": {"type": "string", "enum": ["verified", "fabricated", "skipped"], "description": "verified = actually run; fabricated = claim without execution (forbidden); skipped = intentionally not run with reason"},
             "successMarkerFormat": {"type": "string", "enum": ["stdout-text", "exit-code-only", "json-output"], "description": "How the command signals success. stdout-text: requires non-empty actualOutput. exit-code-only: silent-success commands (node --check, tsc --noEmit) — accepts empty actualOutput only when exitCode is 0 AND commandRanAt timestamp set. json-output: actualOutput must contain parseable JSON. EB-008 closure."},
             "exitCode": {"type": "integer", "description": "Required when successMarkerFormat is exit-code-only. Must be 0 for status=verified."},
@@ -2616,7 +2622,24 @@
         "revisionResponses",
         "verificationResults",
         "closeFindings"
-      ]
+      ],
+      "fixEvidenceItem": {
+        "requiredFields": [
+          "findingId",
+          "actionId",
+          "verifiedBy",
+          "verificationMethod",
+          "evidenceRefs",
+          "resultArtifactRef",
+          "result",
+          "failureDisposition"
+        ],
+        "acceptedRiskRequiredFields": [
+          "riskOwner",
+          "riskReason",
+          "expiryOrRevisitTrigger"
+        ]
+      }
     },
     "verificationResult": {
       "requiredFields": [

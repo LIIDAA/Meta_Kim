@@ -1168,6 +1168,35 @@ describe("Part F2: choice surface runtime gate", async () => {
     }
   });
 
+  test("queryBypass allows read-only inspection but still denies mutation", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "fetch",
+      queryBypass: true,
+    };
+
+    const readOnly = runEnforceHook(state, {
+      tool_name: "Bash",
+      tool_input: {
+        command: "rg ownerMode canonical/skills/meta-theory/SKILL.md",
+      },
+    });
+    assert.equal(readOnly.status, 0);
+    assert.doesNotMatch(readOnly.stdout, /permissionDecision/);
+
+    const mutation = runEnforceHook(state, {
+      tool_name: "Bash",
+      tool_input: {
+        command: "npm install left-pad",
+      },
+    });
+    assert.equal(mutation.status, 0);
+    assert.match(mutation.stdout, /permissionDecision/);
+  });
+
   test("rejects vague choiceGateSkip objects as non-decisions", () => {
     const state = {
       ...createInitialState({

@@ -177,6 +177,44 @@ describe("SKILL.md structural integrity", async () => {
     }
   });
 
+  describe("Progressive disclosure boundaries", () => {
+    test("SKILL.md stays lean and delegates details to references", () => {
+      const lineCount = raw.split(/\r?\n/).length;
+      assert.ok(
+        lineCount <= 320,
+        `SKILL.md should stay <= 320 lines after progressive disclosure; got ${lineCount}`,
+      );
+    });
+
+    test("SKILL.md does not document stale packet field names", () => {
+      for (const stale of [
+        "workerTaskPackets[].fileCompletionList",
+        "metaReviewPacket",
+        "verificationResults.fixEvidence",
+      ]) {
+        assert.ok(
+          !raw.includes(stale),
+          `SKILL.md must not contain stale packet field name ${stale}`,
+        );
+      }
+      assert.ok(raw.includes("workerResultPackets[].fileCompletionList"));
+      assert.ok(raw.includes("workerExecutionEvidence"));
+      assert.ok(raw.includes("verificationPacket.fixEvidence"));
+    });
+
+    test("agent-teams-playbook is scoped to real parallel execution lanes", () => {
+      assert.match(
+        raw,
+        /Thinking[\s\S]{0,120}Execution[\s\S]{0,240}agent-teams-playbook/i,
+      );
+      assert.match(raw, /2\+.*parallel worker lane|two or more.*parallel worker lane/i);
+      assert.doesNotMatch(
+        raw,
+        /Apply `agent-teams-playbook`[\s\S]{0,80}before substantive work/i,
+      );
+    });
+  });
+
   // ── 6. Contract files (3 tests) ────────────────────────────────────
 
   describe("Contract files", () => {
@@ -362,5 +400,21 @@ describe("Canonical meta-agent boundary structure", () => {
     }
 
     assert.deepEqual(bad, [], `Direct-writeback wording remains in: ${bad.join(", ")}`);
+  });
+
+  test("oversized meta-theory references are split below operational size limits", async () => {
+    const entries = await fs.readdir(REFERENCE_DIR, { withFileTypes: true });
+    const tooLarge = [];
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      const content = await fs.readFile(`${REFERENCE_DIR}/${entry.name}`, "utf-8");
+      const lines = content.split(/\r?\n/).length;
+      if (lines > 650) tooLarge.push(`${entry.name}:${lines}`);
+    }
+    assert.deepEqual(
+      tooLarge,
+      [],
+      `Reference files over 650 lines should be split: ${tooLarge.join(", ")}`,
+    );
   });
 });

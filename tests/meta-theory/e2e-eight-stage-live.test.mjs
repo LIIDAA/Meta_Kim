@@ -8,7 +8,7 @@
  */
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { readJson, readFile } from "./_helpers.mjs";
+import { loadMetaTheoryCorpus, readJson, readFile } from "./_helpers.mjs";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 数据加载（在async describe块中一次性加载，避免await问题）
@@ -19,7 +19,7 @@ const [
   dispatchScenarios,
   cardDeckScenarios,
   evolutionScenarios,
-  skillContent,
+  corpus,
   capabilityReport,
   devGov,
   conductor,
@@ -31,7 +31,7 @@ const [
   readJson("tests/meta-theory/scenarios/dispatch-scenarios.json"),
   readJson("tests/meta-theory/scenarios/card-deck-scenarios.json"),
   readJson("tests/meta-theory/scenarios/evolution-scenarios.json"),
-  readFile("canonical/skills/meta-theory/SKILL.md"),
+  loadMetaTheoryCorpus(),
   readFile("canonical/skills/meta-theory/references/meta-theory.md"),
   readFile("canonical/skills/meta-theory/references/dev-governance.md"),
   readFile("canonical/agents/meta-conductor.md"),
@@ -39,6 +39,8 @@ const [
   readFile("canonical/agents/meta-warden.md"),
   readJson("config/contracts/workflow-contract.json"),
 ]);
+
+const skillContent = corpus.combined;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Stage 1: Critical — Blocking Clarification
@@ -582,9 +584,9 @@ describe("End-to-End: Complete 8-Stage Spine Integration", () => {
       );
     }
     // 验证stage spine中Critical在Evolution前面（检查stage序列模式）
-    // SKILL.md line 17: Critical → Fetch → Thinking → Execution → Review → Meta-Review → Verification → Evolution
+    // SKILL.md keeps the compact ASCII spine while references may render it differently.
     const spinePattern =
-      /Critical.*→.*Fetch.*→.*Thinking.*→.*Execution.*→.*Review.*→.*Meta-Review.*→.*Verification.*→.*Evolution/i;
+      /Critical.*(?:→|->).*Fetch.*(?:→|->).*Thinking.*(?:→|->).*Execution.*(?:→|->).*Review.*(?:→|->).*Meta-Review.*(?:→|->).*Verification.*(?:→|->).*Evolution/i;
     assert.ok(
       spinePattern.test(skillContent),
       "SKILL.md must contain the full 8-stage spine sequence with Critical before Evolution",

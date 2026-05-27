@@ -281,10 +281,12 @@
       "mergeOwner": "meta-warden",
       "verifySteps": [
         {
+          "id": "task-001-verify-1",
           "step": "replace inline secret fallback with env lookup",
           "verify": "no hardcoded secret in refresh.ts"
         },
         {
+          "id": "task-001-verify-2",
           "step": "update refresh.test.ts for new env-based path",
           "verify": "test suite passes"
         }
@@ -352,10 +354,12 @@
       "mergeOwner": "meta-prism",
       "verifySteps": [
         {
+          "id": "task-002-verify-1",
           "step": "replace inline secret fallback with env lookup",
           "verify": "no hardcoded secret in refresh.ts"
         },
         {
+          "id": "task-002-verify-2",
           "step": "update refresh.test.ts for new env-based path",
           "verify": "test suite passes"
         }
@@ -433,6 +437,11 @@
       ],
       "workerExecutionEvidence": [
         {
+          "verifyStepRef": "task-001-verify-1",
+          "expectedResult": "no hardcoded secret in refresh.ts",
+          "observedResult": "no hardcoded secret in refresh.ts",
+          "workingDirectory": ".",
+          "stderrTail": "",
           "command": "fixture-verify task-001 1",
           "actualOutput": "",
           "passClaim": "no hardcoded secret in refresh.ts",
@@ -444,6 +453,11 @@
           "runAt": "2026-05-26T00:00:00.000Z"
         },
         {
+          "verifyStepRef": "task-001-verify-2",
+          "expectedResult": "test suite passes",
+          "observedResult": "test suite passes",
+          "workingDirectory": ".",
+          "stderrTail": "",
           "command": "fixture-verify task-001 2",
           "actualOutput": "",
           "passClaim": "test suite passes",
@@ -475,6 +489,11 @@
       ],
       "workerExecutionEvidence": [
         {
+          "verifyStepRef": "task-002-verify-1",
+          "expectedResult": "no hardcoded secret in refresh.ts",
+          "observedResult": "no hardcoded secret in refresh.ts",
+          "workingDirectory": ".",
+          "stderrTail": "",
           "command": "fixture-verify task-002 1",
           "actualOutput": "",
           "passClaim": "no hardcoded secret in refresh.ts",
@@ -486,6 +505,11 @@
           "runAt": "2026-05-26T00:00:00.000Z"
         },
         {
+          "verifyStepRef": "task-002-verify-2",
+          "expectedResult": "test suite passes",
+          "observedResult": "test suite passes",
+          "workingDirectory": ".",
+          "stderrTail": "",
           "command": "fixture-verify task-002 2",
           "actualOutput": "",
           "passClaim": "test suite passes",
@@ -549,7 +573,18 @@
       "tests/auth/refresh.test.ts passes with env-only secret flow"
     ],
     "fixEvidence": [
-      "src/auth/refresh.ts removed inline secret fallback"
+      {
+        "findingId": "finding-001",
+        "actionId": "fix-001",
+        "verifiedBy": "meta-prism",
+        "verificationMethod": "artifact-inspection",
+        "evidenceRefs": [
+          "src/auth/refresh.ts no longer contains inline fallback secret"
+        ],
+        "resultArtifactRef": "src/auth/refresh.ts",
+        "result": "verified_closed",
+        "failureDisposition": "reopen finding on verification failure"
+      }
     ],
     "revisionResponses": [
       {

@@ -96,6 +96,23 @@ Factory lane:
 
 Rule: Conductor may participate before or after the factory, but **Conductor does not build capability**.
 
+### Station Deliverable Contract (Mandatory)
+
+Required Genesis deliverables: SOUL / identity / responsibility boundary.
+Required Artisan deliverables: capability slots, provider compatibility, loadout rules.
+Required Conductor deliverables: orchestration board, dependencies, merge path.
+
+| Station | Deliverable |
+|---|---|
+| Warden | approval gate, public boundary, final owner decision |
+| Genesis | SOUL / identity / responsibility boundary |
+| Artisan | capability slots, provider compatibility, loadout rules |
+| Sentinel | safety, permissions, rollback, external side-effect review |
+| Librarian | memory, continuity, handoff and reuse policy |
+| Conductor | orchestration board, dependencies, merge path |
+| Prism | quality review, anti-slop check, evidence closure |
+| Scout | external capability discovery and gap evidence |
+
 ## Fixed Artifacts (Governance Owner Factory Mode)
 
 The public governance owner factory lane must produce these explicit artifacts:

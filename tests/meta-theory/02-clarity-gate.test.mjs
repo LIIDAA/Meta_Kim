@@ -17,7 +17,17 @@ const requiredOptionSignals = [
 ];
 
 describe("Clarity Gate unified execution confirmation", async () => {
-  const skillContent = await fs.readFile(SKILL_PATH, "utf-8");
+  const skillEntry = await fs.readFile(SKILL_PATH, "utf-8");
+  const runtimeCodex = await readFile(
+    "canonical/skills/meta-theory/references/runtime-codex.md",
+  );
+  const pathSelection = await readFile(
+    "canonical/skills/meta-theory/references/path-selection.md",
+  );
+  const ownerResolution = await readFile(
+    "canonical/skills/meta-theory/references/owner-resolution.md",
+  );
+  const skillContent = `${skillEntry}\n${runtimeCodex}\n${pathSelection}\n${ownerResolution}`;
   const decisionTemplate = await readFile(
     "canonical/templates/user-interaction/decision-template.md",
   );
