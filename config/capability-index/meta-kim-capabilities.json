@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-27T14:51:07.446Z",
+  "generatedAt": "2026-05-27T16:58:23.163Z",
   "registryName": "meta-kim-capabilities",
   "scope": "repo-canonical",
   "canonicalProjection": "config/capability-index/meta-kim-capabilities.json",
@@ -207,8 +207,8 @@
         "type": "skills",
         "namespace": "canonical",
         "path": "canonical/skills/meta-theory/SKILL.md",
-        "size": 13937,
-        "modified": "2026-05-27T11:14:37.538Z"
+        "size": 14781,
+        "modified": "2026-05-27T16:57:02.574Z"
       },
       "repo:canonical-reference:create-agent": {
         "id": "create-agent",
@@ -270,8 +270,8 @@
         "namespace": "canonical-reference",
         "path": "canonical/skills/meta-theory/references/path-selection.md",
         "relativePath": "path-selection.md",
-        "size": 949,
-        "modified": "2026-05-27T11:14:37.545Z"
+        "size": 1421,
+        "modified": "2026-05-27T16:57:02.576Z"
       },
       "repo:canonical-reference:planning-files": {
         "id": "planning-files",
@@ -306,8 +306,8 @@
         "namespace": "canonical-reference",
         "path": "canonical/skills/meta-theory/references/spine-state.md",
         "relativePath": "spine-state.md",
-        "size": 1051,
-        "modified": "2026-05-27T11:14:37.547Z"
+        "size": 1320,
+        "modified": "2026-05-27T16:57:02.576Z"
       },
       "repo:canonical-reference:ten-step-governance": {
         "id": "ten-step-governance",
@@ -324,8 +324,8 @@
         "namespace": "canonical-reference",
         "path": "canonical/skills/meta-theory/references/verification-evidence.md",
         "relativePath": "verification-evidence.md",
-        "size": 1117,
-        "modified": "2026-05-27T11:46:45.362Z"
+        "size": 1505,
+        "modified": "2026-05-27T16:57:02.576Z"
       }
     },
     "hooks": {

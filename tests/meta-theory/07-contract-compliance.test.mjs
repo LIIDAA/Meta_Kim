@@ -1105,6 +1105,37 @@ describe("workflow-contract.json — schema compliance", async () => {
     }
   });
 
+  test("quality policy requires ten-x path reasoning and user-facing closure rationale", () => {
+    const quality = contract.runDiscipline?.qualityFirstPolicy ?? {};
+    const thinkingOutputs = quality.stageRequiredOutputs?.thinking ?? [];
+    for (const field of [
+      "minimalFixPath",
+      "tenXPathShift",
+      "chosenRationale",
+      "omittedTenXWithReason",
+    ]) {
+      assert.ok(
+        thinkingOutputs.includes(field),
+        `Thinking required outputs missing ${field}`,
+      );
+    }
+
+    const summary = quality.userFacingSummaryContract ?? {};
+    assert.equal(summary.required, true);
+    for (const field of [
+      "whyChanged",
+      "whatChanged",
+      "userImpact",
+      "verificationEvidence",
+      "remainingLimits",
+    ]) {
+      assert.ok(
+        summary.requiredFields?.includes(field),
+        `userFacingSummaryContract missing ${field}`,
+      );
+    }
+  });
+
   test("run artifact validation is contract-backed", () => {
     const runArtifactValidation =
       contract.runDiscipline?.runArtifactValidation ?? {};

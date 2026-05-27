@@ -219,6 +219,20 @@ describe("SKILL.md structural integrity", async () => {
       assert.match(command, /2\+ independent parallel worker lanes/i);
       assert.doesNotMatch(command, /For any non-trivial task,\s*first apply `agent-teams-playbook`/i);
     });
+
+    test("SKILL.md preserves product reasoning, ten-x path challenge, and user-facing closure", () => {
+      assert.match(raw, /Product Reasoning Contract/i);
+      assert.match(raw, /surface request/i);
+      assert.match(raw, /real product problem/i);
+      assert.match(raw, /minimal fix/i);
+      assert.match(raw, /ten-x|10x|ten-times/i);
+      assert.match(raw, /path shift/i);
+      assert.match(raw, /chosen rationale/i);
+      assert.match(raw, /why.*changed|why.*change/i);
+      assert.match(raw, /what changed|where changed/i);
+      assert.match(raw, /user impact/i);
+      assert.match(raw, /verification/i);
+    });
   });
 
   // ── 6. Contract files (3 tests) ────────────────────────────────────

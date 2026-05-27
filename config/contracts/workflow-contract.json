@@ -267,8 +267,12 @@
       },
       "stageRequiredOutputs": {
         "critical": [
+          "surfaceRequest",
+          "realProductProblem",
           "realIntent",
+          "userPainValue",
           "successCriteria",
+          "undecidedUserChoices",
           "nonGoals",
           "blockingUnknowns",
           "noQuotaClarification"
@@ -284,6 +288,10 @@
           "designFrame",
           "workType",
           "expertLens",
+          "minimalFixPath",
+          "tenXPathShift",
+          "chosenRationale",
+          "omittedTenXWithReason",
           "consideredLanes",
           "omittedLanesWithReason",
           "workerTaskPackets",
@@ -297,6 +305,17 @@
           "fallbackBoundary",
           "expertLensFit"
         ]
+      },
+      "userFacingSummaryContract": {
+        "required": true,
+        "requiredFields": [
+          "whyChanged",
+          "whatChanged",
+          "userImpact",
+          "verificationEvidence",
+          "remainingLimits"
+        ],
+        "rule": "User-facing closure must explain why the path was chosen or changed, what changed and where, how the user path or product behavior changes, what verification evidence supports it, and what remains limited or deferred. Plain language is not a substitute for product rationale."
       },
       "dependencyPolicy": {
         "criticalDependencyFailureActions": [
@@ -332,9 +351,9 @@
       ],
       "fallbackPolicy": "Compatibility fallbacks may keep runtimes usable. Governance fallbacks may not hide missing intent, design, capability, owner, or worker-task quality. Missing quality blocks execution or returns to the responsible earlier stage.",
       "stageQualityContract": {
-        "critical": "Lock intent, audience, pain/value, success standard, non-goals, and blocking unknowns. Ask only questions whose answer changes execution.",
+        "critical": "Separate the surface request from the real product problem. Lock intent, audience, pain/value, success standard, undecided user choices, non-goals, and blocking unknowns. Ask only questions whose answer changes execution.",
         "fetch": "Prove evidence, capability, owner, tool, and constraint fit before options. Missing proof becomes a capabilityGapPacket or blocker.",
-        "thinking": "Design the smallest complete business flow: required lanes, omitted lanes with reasons, worker inputs, quality bar, verification, and merge path.",
+        "thinking": "Design the smallest complete business flow. Compare the minimal fix against any ten-x path shift; record chosen rationale, omitted ten-x reason, required lanes, omitted lanes with reasons, worker inputs, quality bar, verification, and merge path.",
         "execution": "Start only after workers know what good means, what inputs they can use, what they must deliver, and how success is checked.",
         "review": "Review the upstream chain first: if intent, evidence, design, owner fit, or worker task quality was missing before execution, fail the run instead of rescuing it."
       },

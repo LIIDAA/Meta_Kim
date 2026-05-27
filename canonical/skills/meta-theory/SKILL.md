@@ -29,6 +29,14 @@ Classify first:
 
 Ask only blocking questions. If a reasonable assumption is safe, record it and proceed.
 
+## Product Reasoning Contract
+
+Users often state a surface request before the real product problem is clear. Critical separates the surface request, real product problem, user pain/value, success standard, and undecided choices.
+
+Thinking must compare the `minimalFixPath` against the `tenXPathShift`: route, product shape, install path, validation model, owner, or abstraction changes that could make the outcome much better. Record the chosen rationale and any omitted ten-x option with reason.
+
+User-facing closure must say why changed, what changed / where changed, user impact, verification evidence, and remaining limits. Plain language is not a substitute for product rationale.
+
 ## Architecture Type Pre-judgment
 
 Important note: **Architecture Type Distinction**. Meta Architecture means agent governance, collaboration relationships, and responsibility boundaries. Project Technical Architecture means code organization, tech stack, and design patterns. For deep technical architecture, route to an `architect` or `backend-architect` capability found during Fetch.
@@ -54,7 +62,7 @@ Use `Agent(...)`, `spawn_agent`, a skill, command, MCP capability, runtime tool,
 ## DISPATCH SELF-CHECK
 
 - **Protocol-first Dispatch**: Stage 4 may not start before `runHeader`, `taskClassification`, `fetchPacket`, `contentEvidencePacket`, `preDecisionOptionFrame`, `dispatchBoard`, and `workerTaskPackets` are ready.
-- **Option Exploration is MANDATORY** in Stage 3 for non-trivial work: compare at least 2 solution paths, record Pros / Cons, rejected alternatives, and the chosen Decision Record.
+- **Option Exploration is MANDATORY** in Stage 3 for non-trivial work: compare at least 2 solution paths, including minimal fix vs ten-x path shift when relevant; record Pros / Cons, rejected alternatives, and the chosen rationale.
 - **Skip-Level Self-Reflection Gate**: before skipping or compressing a stage, state the skipped stage, why it is safe, which packet proves it, and where the run returns to the main chain.
 - `workerTaskPackets` must carry `dependsOn`, `parallelGroup`, `mergeOwner`, `roleDisplayName`, `roleInstanceId`, and `runtimeInstanceAlias`.
 - Business-flow capability matrix belongs in Fetch for executable deliverables: product, UX, UI, frontend, backend, database, motion, accessibility, browser QA, performance, feedback, and evolution lanes are considered and omitted only with reason.
@@ -72,9 +80,9 @@ Use `Agent(...)`, `spawn_agent`, a skill, command, MCP capability, runtime tool,
 | 7 | Verification | rerun fresh checks and bind evidence to claims |
 | 8 | Evolution | write back durable lessons or record no-writeback |
 
-1. **Critical**: classify path and risk. Output `realIntent`, `successCriteria`, `nonGoals`, `blockingUnknowns`, `noQuotaClarification`.
+1. **Critical**: classify path and risk. Output `surfaceRequest`, `realProductProblem`, `realIntent`, `successCriteria`, `nonGoals`, `blockingUnknowns`, `noQuotaClarification`.
 2. **Fetch**: inspect only evidence that changes route, owner, risk, acceptance, or verification. Output `evidence`, `decisionImpactMap`, `capabilityDiscovery`, `capabilityGap`, `contradictionLog`.
-3. **Thinking**: produce Option Exploration with at least 2 solution paths, Pros / Cons, chosen path, owner mapping, worker work orders, and verification plan. Thinking determines needed execution capabilities, matches existing capabilities, and creates or upgrades only for gaps.
+3. **Thinking**: produce Option Exploration with at least 2 solution paths, Pros / Cons, `minimalFixPath`, `tenXPathShift`, `chosenRationale`, `omittedTenXWithReason`, owner mapping, worker work orders, and verification plan. Thinking determines needed execution capabilities, matches existing capabilities, and creates or upgrades only for gaps.
 4. **Execution**: dispatch bounded worker tasks. Stage 4 may not start before `runHeader`, `taskClassification`, `fetchPacket`, `dispatchBoard`, `workerTaskPackets`, and owner bindings are ready.
 5. **Review**: meta-prism checks quality, boundary fit, evidence, and whether Review can reproduce the claims.
 6. **Meta-Review**: high-risk runs review the review standard. Meta-Review reviews `reviewPacket`; it is not a separate packet family.

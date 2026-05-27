@@ -1,6 +1,6 @@
 # Path Selection
 
-Choose the smallest path that can honestly satisfy the request.
+Choose the smallest path that can honestly satisfy the real product problem.
 
 ## Paths
 
@@ -12,5 +12,7 @@ Choose the smallest path that can honestly satisfy the request.
 
 - If multiple interpretations change output, ask one blocking clarification.
 - If a simpler approach solves the real pain, state it and use it.
+- Smallest path is not automatically the minimal fix. If the real pain suggests a route, product, validation, owner, install, or abstraction change, compare the minimal fix against the ten-x path shift before choosing.
+- Fuzzy user intent is not a fast path just because the requested artifact is small. If the user has not decided the outcome, audience, success standard, or product direction, keep the work in Critical / Thinking until the route is honest.
 - If evidence is missing but cheap to gather, Fetch first.
 - If capability is missing, return to Thinking or create `capabilityGapPacket`; do not invent a fallback owner.
