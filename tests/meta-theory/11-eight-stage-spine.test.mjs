@@ -29,6 +29,7 @@ import {
   checkChoiceSurfaceGate,
   checkStageRequirements,
   createInitialState,
+  STAGE_META_AGENT_MAP,
 } from "../../canonical/runtime-assets/claude/hooks/spine-state.mjs";
 import {
   REPO_ROOT,
@@ -1124,6 +1125,31 @@ describe("Part F2: choice surface runtime gate", async () => {
 
     assert.equal(result.status, 0);
     assert.doesNotMatch(result.stdout, /permissionDecision/);
+  });
+
+  test("Critical stage setup does not force meta-warden dispatch", () => {
+    assert.deepEqual(STAGE_META_AGENT_MAP.critical.required, []);
+    assert.doesNotMatch(STAGE_META_AGENT_MAP.critical.label, /Warden/i);
+
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "critical",
+    };
+
+    const result = runEnforceHook(state, {
+      tool_name: "Bash",
+      tool_input: {
+        command: "npm install left-pad",
+      },
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /permissionDecision/);
+    assert.doesNotMatch(result.stdout, /meta-warden|Warden scope clarification/i);
+    assert.match(result.stdout, /Critical stage is for scope clarification/i);
   });
 
   test("Fetch stage allows targeted read-only source search before editing", () => {

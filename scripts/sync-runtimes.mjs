@@ -1105,9 +1105,21 @@ async function collectSkillFiles(rootDir, currentDir = rootDir, bucket = []) {
     if (entry.isDirectory()) {
       await collectSkillFiles(rootDir, entryPath, bucket);
     } else if (entry.isFile()) {
+      if (entry.name.includes(".tmp.") || entry.name.endsWith(".tmp")) {
+        continue;
+      }
+      let content;
+      try {
+        content = await fs.readFile(entryPath, "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") {
+          continue;
+        }
+        throw error;
+      }
       bucket.push({
         relativePath: path.relative(rootDir, entryPath).replace(/\\/g, "/"),
-        content: await fs.readFile(entryPath, "utf8"),
+        content,
       });
     }
   }

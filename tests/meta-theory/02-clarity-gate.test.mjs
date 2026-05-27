@@ -259,6 +259,9 @@ describe("Clarity Gate unified execution confirmation", async () => {
     assert.match(codexPolicyText, /localized confirmation card/i);
     assert.match(codexPolicyText, /request_user_input/i);
     assert.match(codexPolicyText, /default_mode_request_user_input/i);
+    assert.match(codexPolicyText, /API 400|api_error/i);
+    assert.match(codexPolicyText, /do not retry blindly|retry blindly/i);
+    assert.match(codexPolicyText, /choiceSurfaceFallback/i);
     assert.match(codexPolicyText, /exec|hook adapters/i);
     assert.match(codexPolicyText, /chat card.*popup|popup.*chat card/i);
   });

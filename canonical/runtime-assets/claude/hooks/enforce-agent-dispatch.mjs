@@ -874,7 +874,8 @@ if (isExecutionTool(toolName)) {
     }
   }
 
-  // Critical stage: allow only spine-state and planning-file writes, block other mutations
+  // Critical stage: allow only spine-state/planning-file writes and read-only
+  // inspection. Warden is an escalation owner, not a mandatory setup dispatch.
   // Skip ALL checks if spine is inactive (allows normal work after session ends)
   if (stage === "critical" && currentIdx < execIdx) {
     if (isSpineStateWrite() || isPlanningFile()) {
@@ -887,12 +888,19 @@ if (isExecutionTool(toolName)) {
     // For other execution tools in critical with active spine, check requirements
     const req = checkStageRequirements(state);
     if (!req.met) {
+      const stageInfo = STAGE_META_AGENT_MAP[stage];
       exitAfterDeny(
-        `Stage "Critical (Warden scope clarification)" requires: ${req.missing.join(", ")}. ` +
+        `Stage "${stageInfo?.label || stage}" requires: ${req.missing.join(", ")}. ` +
           `Dispatch them via Agent tool (description must contain the meta-agent name). ` +
           `Dispatch chain so far: ${JSON.stringify(state.dispatchChain || {})}`,
       );
     }
+    exitAfterDeny(
+      "Critical stage is for scope clarification and read-only inspection. " +
+        "Complete Critical, Fetch, and Thinking before mutation. " +
+        "Allowed now: spine state writes, planning files, and read-only inspection. " +
+        `Dispatch chain so far: ${JSON.stringify(state.dispatchChain || {})}`,
+    );
   }
 
   // Execution stage: require at least one agent dispatch

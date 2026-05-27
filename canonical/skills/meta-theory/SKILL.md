@@ -27,7 +27,7 @@ Classify first:
 - `standard_path`: normal executable work. Use the 8-stage spine and capability-first dispatch.
 - `regulated_path`: security, release, install, cross-runtime, public-ready, or governance-contract work. Use the full spine, explicit evidence, Review, Meta-Review when risk is high, and Verification.
 
-Ask only blocking questions. If a reasonable assumption is safe, record it and proceed.
+**User Interaction Mandate**: Use the current runtime's native choice surface at key decision points. If no valid native surface is available, show a short localized chat decision card. Do not silently assume when the user's input has ambiguity or multiple valid interpretations.
 
 ## Product Reasoning Contract
 
@@ -109,11 +109,11 @@ Use `Agent(...)`, `spawn_agent`, a skill, command, MCP capability, runtime tool,
 
 Visible stage names and summaries must be localized to the resolved user language. Canonical stage names remain internal anchors. Packet field names may appear when they help auditability, but they must be paired with human-readable labels instead of appearing as unexplained English keys.
 
-1. **Critical**: classify path and risk. Record internally: `surfaceRequest`, `realProductProblem`, `realIntent`, `successCriteria`, `nonGoals`, `blockingUnknowns`, `noQuotaClarification`.
-2. **Fetch**: inspect only evidence that changes route, owner, risk, acceptance, or verification. Record internally: `evidence`, `decisionImpactMap`, `capabilityDiscovery`, `capabilityGap`, `contradictionLog`.
-3. **Thinking**: produce Option Exploration with at least 2 solution paths, Pros / Cons, `minimalFixPath`, `tenXPathShift`, `chosenRationale`, `omittedTenXWithReason`, owner mapping, worker work orders, and verification plan. Thinking determines needed execution capabilities, matches existing capabilities, and creates or upgrades only for gaps.
+1. **Critical**: classify path and risk. Record internally: `surfaceRequest`, `realProductProblem`, `realIntent`, `successCriteria`, `nonGoals`, `blockingUnknowns`, `noQuotaClarification`. **INTERACTION**: If intent is ambiguous or success criteria unclear, use a native choice surface or localized chat decision card to clarify before proceeding.
+2. **Fetch**: inspect only evidence that changes route, owner, risk, acceptance, or verification. Record internally: `evidence`, `decisionImpactMap`, `capabilityDiscovery`, `capabilityGap`, `contradictionLog`. **INTERACTION**: If evidence suggests multiple valid paths or requires user preference, surface the trade-off in the user's language.
+3. **Thinking**: produce Option Exploration with at least 2 solution paths, Pros / Cons, `minimalFixPath`, `tenXPathShift`, `chosenRationale`, `omittedTenXWithReason`, owner mapping, worker work orders, and verification plan. Thinking determines needed execution capabilities, matches existing capabilities, and creates or upgrades only for gaps. **INTERACTION**: Ask before Execution when choosing between paths with different scope/risk/cost. Present options clearly with a recommended default.
 4. **Execution**: dispatch bounded worker tasks. Stage 4 may not start before `runHeader`, `taskClassification`, `fetchPacket`, `dispatchBoard`, `workerTaskPackets`, and owner bindings are ready.
-5. **Review**: meta-prism checks quality, boundary fit, evidence, and whether Review can reproduce the claims.
+5. **Review**: meta-prism checks quality, boundary fit, evidence, and whether Review can reproduce the claims. **INTERACTION**: If review finds issues that require user preference to resolve (e.g., quality vs. speed trade-off), use a native choice surface or localized chat decision card before proceeding.
 6. **Meta-Review**: high-risk runs review the review standard. Meta-Review reviews `reviewPacket`; it is not a separate packet family.
 7. **Verification**: rerun fresh checks. To say "verified", record who ran it, what ran, where output lives, and what happens on failure.
 8. **Evolution**: write back only durable governance lessons. Otherwise record no-writeback. Meta-agent evolution directly edits the specific agent definition / SOUL.md-equivalent source after Warden approval; execution-agent gaps route through `capabilityGapPacket` and the Type B pipeline, not direct edit.
@@ -159,9 +159,28 @@ Minimum handoff:
 
 ## User Interaction
 
-Use one consolidated Decision after Thinking and before Execution when the answer changes scope, owner, risk, or acceptance. Notices do not need a popup. Choice cards must include at least two meaningful options and a recommended default.
+**MANDATORY**: Use the current runtime's native choice surface for key decision points. If the native tool is unavailable or rejects the payload, fall back once to a localized chat decision card and wait for the user.
 
-Proceed without confirmation only for trivial work, `fast_path`, explicit auto-proceed, or a recorded safe skip.
+**When to ask:**
+
+| Stage | When to Ask | Example Questions |
+|-------|-------------|-------------------|
+| Critical | Intent is ambiguous or multiple valid interpretations | "Should I focus on X or Y?" |
+| Fetch | Evidence suggests multiple paths with different trade-offs | "I found A (faster) and B (more thorough). Which approach?" |
+| Thinking | Choosing between solution paths with different scope/cost | "Minimal fix: 2 hours. Ten-x shift: 2 days. Your choice?" |
+| Review | Issues found that require user preference to resolve | "Quality concern: rebuild or patch?" |
+
+**Question Format:**
+- Provide 2-4 meaningful options
+- Include a recommended default
+- Use the user's language
+- Explain the trade-off clearly
+
+**When NOT to ask:**
+- Trivial work (< 5 minutes)
+- `fast_path` read-only queries
+- Explicit user directive ("do X, don't ask")
+- Previously recorded preference in spine state
 
 ## Type A: Analysis
 

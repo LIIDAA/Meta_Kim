@@ -100,8 +100,8 @@ const DEFAULT_READ_ONLY_INSPECTION_COMMANDS = [
 
 export const STAGE_META_AGENT_MAP = {
   critical: {
-    required: ["meta-warden"],
-    label: "Critical (Warden scope clarification)",
+    required: [],
+    label: "Critical (scope clarification)",
     readOnlyInspectionEnabled: true,
     readOnlyInspectionCommands: DEFAULT_READ_ONLY_INSPECTION_COMMANDS,
   },

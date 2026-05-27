@@ -12,7 +12,9 @@ If `spawn_agent` / `Agent` equivalent is unavailable:
 
 ## Choice Surfaces
 
-Use native `request_user_input` only when exposed. Otherwise use a short chat decision card. Do not call a chat fallback a popup.
+Use native `request_user_input` only when exposed, and only with a valid 1-3 question payload that offers meaningful options. Otherwise use a short chat decision card. Do not call a chat fallback a popup.
+
+If `request_user_input` returns API 400 or another host validation error, do not retry blindly. Fall back once to a localized markdown decision card, record `choiceSurfaceFallback=api_error`, and wait for the user's answer in chat.
 
 Visible Decision cards need at least two meaningful options and a recommended default. Notices can stay concise.
 
