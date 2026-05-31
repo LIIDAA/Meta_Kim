@@ -6,6 +6,32 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.8.0] - 2026-06-01
+
+### Added
+
+- **Degraded mode protocol** — When Agent dispatch is unavailable or no matching owner exists after capability discovery, the spine enters `controlState=degraded` instead of silently skipping stages. Requires `capabilityGapPacket`, `degradationReason`, and `surfaceState=internal-ready`. Claiming `public-ready` in degraded mode is forbidden.
+- **Fetch discovery checklist** — Before Thinking, Fetch must search at least `~/.claude/agents/`, `.claude/agents/`, `.claude/skills/`, `.mcp.json`, `config/capability-index/*.json`, and `package.json` scripts. Pass condition: `capabilityDiscovery.searchLog` exists with checked sources and results.
+- **Adversarial verify pattern** — Review stage for `regulated_path` spawns N=3 independent skeptic reviewers, each with a different lens (correctness, security, completeness). A finding survives only if a majority of refutations fail. Per-finding vote tallies recorded in `reviewPacket.findings[].adversarialVotes`.
+- **Fetch angle decomposition** — For research tasks (`researchRequired=true`), decompose the core question into N semantically distinct search angles before searching. Recorded in `contentEvidencePacket.searchAngles`. Default N=3.
+- **Worker output schema validation** — When `workerTaskPacket.output` defines an expected structure, the dispatcher validates worker results against it. On mismatch, worker retries up to 2 times before reporting failure. Recorded in `workerResultPacket.schemaValidationAttempts`.
+- **Interactive execution communication** — During multi-stage work, the dispatcher reports progress at 5 natural transition points: Fetch complete, Thinking complete, each Execution phase complete, scope-changing findings, and route-changing discoveries. Each report is a compact notice (max 3 bullets). Scope or route changes upgrade the notice to a Decision card.
+
+### Changed
+
+- **spine-state.md controlState** — Added `degraded` to the control state enum.
+- **spine-state.md pass conditions** — Added degraded-mode pass conditions for Fetch, Thinking, Review, and Verification stages.
+- **dev-governance.md** — Added degraded mode section with stage-specific guidance and interactive execution communication section.
+- **owner-resolution.md** — Added degraded path for owner resolution when no Agent dispatch exists.
+- **workflow-contract.json** — Added `degradedPolicy` to review, meta_review, and verification stage semantics. Added `adversarialVotes` to reviewFinding protocol. Added `searchAngles` to contentEvidencePacket protocol.
+- Version bump: 2.7.0 -> 2.8.0.
+
+### Verification
+
+- `npm run meta:validate` — 7/7 checks passed
+- `npm run meta:sync` — 4 runtimes synced (claude, codex, openclaw, cursor)
+- `npm run meta:check` — all green, no stale projections
+
 ## [2.7.0] - 2026-06-01
 
 ### Added

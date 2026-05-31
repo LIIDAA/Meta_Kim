@@ -6,6 +6,31 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.8.0] - 2026-06-01
+
+### 新增
+
+- **降级模式协议（Degraded Mode）** — Agent dispatch 不可用或无匹配 owner 时，spine 进入 `controlState=degraded` 而非静默跳过阶段。要求记录 `capabilityGapPacket`、`degradationReason`，且 `surfaceState` 保持 `internal-ready`。降级模式下禁止声称 `public-ready`。
+- **Fetch 发现清单** — Fetch 阶段在进入 Thinking 前必须搜索至少 6 个位置（全局 agents、项目 agents、skills、MCP 配置、capability index、package scripts）。通过条件：`capabilityDiscovery.searchLog` 存在。
+- **对抗验证模式（Adversarial Verify）** — `regulated_path` 的 Review 阶段生成 N=3 个独立怀疑者，各自用不同视角（正确性、安全性、完整性）尝试反驳每个 finding。仅多数反驳失败时 finding 存活。投票记录在 `adversarialVotes` 字段。
+- **Fetch 角度分解** — 研究类任务（`researchRequired=true`）在搜索前将问题拆分为 N 个语义不同的搜索角度，记录在 `searchAngles` 字段。默认 N=3。
+- **Worker 输出 schema 验证** — `workerTaskPacket.output` 定义了预期结构时，dispatcher 对 worker 返回结果做格式校验。不匹配则重试（最多 2 次）。记录在 `schemaValidationAttempts`。
+- **执行中交互沟通** — 多阶段任务中，dispatcher 在 5 个自然过渡点向用户报告进度：Fetch 完成、Thinking 完成、每阶段完成、scope 变更、路线变更。每次最多 3 条摘要。scope 或路线变化时升级为 Decision 卡片。
+
+### 变更
+
+- **spine-state.md** — controlState 枚举增加 `degraded`；增加降级模式各阶段通过条件。
+- **dev-governance.md** — 增加降级模式段落和交互沟通段落。
+- **owner-resolution.md** — 增加无 Agent dispatch 时的降级 owner 解析路径。
+- **workflow-contract.json** — review/meta_review/verification 增加 `degradedPolicy`；reviewFinding 增加 `adversarialVotes`；contentEvidencePacket 增加 `searchAngles`。
+- 版本升级：2.7.0 -> 2.8.0。
+
+### 验证
+
+- `npm run meta:validate` — 7/7 通过
+- `npm run meta:sync` — 4 个 runtime 同步完成（claude、codex、openclaw、cursor）
+- `npm run meta:check` — 全绿，无过期 projection
+
 ## [2.7.0] - 2026-06-01
 
 ### 新增

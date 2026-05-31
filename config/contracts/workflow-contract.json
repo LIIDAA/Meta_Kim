@@ -68,13 +68,28 @@
         "description": "Run multi-agent execution through matched agents and their selected skills, commands, MCP capabilities, and tools from the Thinking dispatch plan."
       },
       "review": {
-        "primaryAction": "capability_matched_output_review"
+        "primaryAction": "capability_matched_output_review",
+        "degradedPolicy": {
+          "when": "no Agent dispatch available or no matching review owner",
+          "path": "read meta-agent definition for review criteria, apply same checklist, record degradedFlag=true",
+          "forbidden": ["silently skip", "claim public-ready in degraded mode"]
+        }
       },
       "meta_review": {
-        "primaryAction": "review_standard_verification"
+        "primaryAction": "review_standard_verification",
+        "degradedPolicy": {
+          "when": "no Agent dispatch available or no matching meta-review owner",
+          "path": "read meta-warden criteria, apply same checklist, record degradedFlag=true",
+          "forbidden": ["silently skip", "claim public-ready in degraded mode"]
+        }
       },
       "verification": {
-        "primaryAction": "run_real_tests_with_fresh_evidence"
+        "primaryAction": "run_real_tests_with_fresh_evidence",
+        "degradedPolicy": {
+          "when": "no independent verification owner available",
+          "path": "main-thread runs verifySteps with degradedFlag=true, humanAcceptanceRequired=true",
+          "forbidden": ["claim verified without human acceptance", "claim public-ready in degraded mode"]
+        }
       },
       "evolution": {
         "primaryAction": "writeback_or_explicit_none",
@@ -1572,8 +1587,16 @@
         "decisionImpactMap",
         "researchRequired",
         "researchSkipReason",
-        "evidenceLaneValidatedBy"
+        "evidenceLaneValidatedBy",
+        "searchAngles"
       ],
+      "searchAngles": {
+        "description": "Fetch angle decomposition: semantically distinct search angles for research tasks. Required when researchRequired=true.",
+        "requiredWhen": "contentEvidencePacket.researchRequired = true",
+        "angleRequiredFields": ["angle", "keywords", "expectedCoverage"],
+        "defaultCount": 3,
+        "constraint": "angles must be semantically distinct; rephrasing the same angle is forbidden"
+      },
       "evidenceScopeEnum": [
         "local_project",
         "external_research",
@@ -2757,7 +2780,15 @@
         "fixArtifact",
         "verifiedBy",
         "closeState"
-      ]
+      ],
+      "adversarialVotes": {
+        "description": "Per-finding adversarial vote records when adversarial verify is active. Each vote is one skeptic's attempt to refute the finding.",
+        "requiredWhen": "regulated_path or user requests cross-check",
+        "voteRequiredFields": ["lens", "verdict", "refutationEvidence"],
+        "lensEnum": ["correctness", "security", "completeness"],
+        "verdictEnum": ["survived", "refuted"],
+        "survivalRule": "finding survives only if majority (>= ceil(N/2)) of votes have verdict=survived"
+      }
     },
     "revisionResponse": {
       "requiredFields": [
