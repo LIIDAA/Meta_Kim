@@ -667,8 +667,8 @@
       "claude": {
         "primarySurface": "AskUserQuestion_tool",
         "fallbackSurfaces": ["conversation_fallback"],
-        "triggerDescription": "Use AskUserQuestion for blocking Critical clarification only when Fetch cannot proceed, then use it once for Execution confirmation after contentEvidencePacket and preDecisionOptionFrame are complete.",
-        "implementation": "Invoke AskUserQuestion with questions array; platform natively supports modal popup."
+        "triggerDescription": "Use AskUserQuestion (native since v2.0.21) for blocking Critical clarification only when Fetch cannot proceed, then use it once for Execution confirmation after contentEvidencePacket and preDecisionOptionFrame are complete. PreToolUse hooks must whitelist AskUserQuestion to avoid stripping return data (issue #12031).",
+        "implementation": "Invoke AskUserQuestion with a questions array; platform renders an interactive Ink popup. If unavailable or returns empty, label the route conversation_fallback, render a localized chat decision card, and wait before Execution."
       },
       "codex": {
         "primarySurface": "request_user_input",

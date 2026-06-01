@@ -897,6 +897,13 @@ if (
   process.exit(0);
 }
 
+// AskUserQuestion: always allow — it is a read-only UI surface, and
+// PreToolUse hooks strip its return data (anthropics/claude-code#12031).
+// Bypassing hook processing here prevents the stripping bug.
+if (toolName === "AskUserQuestion") {
+  process.exit(0);
+}
+
 // Read-only tools: always allow
 if (isReadOnlyTool(toolName)) {
   if (shouldAdvanceCriticalToFetch(state, toolName, toolInput)) {

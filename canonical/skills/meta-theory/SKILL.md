@@ -229,6 +229,7 @@ Load only references needed for the run:
 - `path-selection.md`: route scoring and path bands.
 - `owner-resolution.md`: owner + weapon + dependency route.
 - `runtime-codex.md`: Codex-specific sandbox, approval, subagent, hook, and choice behavior.
+- `runtime-claude.md`: Claude Code-specific native question surface, Agent / Skill / Command / prompt / MCP dispatch, and no-self-execution behavior.
 - `verification-evidence.md`: verified claim and public-ready evidence.
 - `intent-amplification.md`: real intent, first action, pass/kill, userGoalDone.
 - `evolution-writeback.md`: writeback, scars, reuse keys.

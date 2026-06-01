@@ -1080,9 +1080,15 @@ async function validatePortableSkill() {
       canonicalReferencePath,
       "utf8",
     );
-    assertNoForbiddenMarkers(canonicalReference, canonicalReferencePath, [
-      "AskUserQuestion",
-    ]);
+    const allowedRuntimeMarkers =
+      referenceFile === "runtime-claude.md"
+        ? []
+        : ["AskUserQuestion"];
+    assertNoForbiddenMarkers(
+      canonicalReference,
+      canonicalReferencePath,
+      allowedRuntimeMarkers,
+    );
   }
 }
 
