@@ -16,6 +16,7 @@
 - **Fetch 角度分解** — 研究类任务（`researchRequired=true`）在搜索前将问题拆分为 N 个语义不同的搜索角度，记录在 `searchAngles` 字段。默认 N=3。
 - **Worker 输出 schema 验证** — `workerTaskPacket.output` 定义了预期结构时，dispatcher 对 worker 返回结果做格式校验。不匹配则重试（最多 2 次）。记录在 `schemaValidationAttempts`。
 - **执行中交互沟通** — 多阶段任务中，dispatcher 在 5 个自然过渡点向用户报告进度：Fetch 完成、Thinking 完成、每阶段完成、scope 变更、路线变更。每次最多 3 条摘要。scope 或路线变化时升级为 Decision 卡片。
+- **Fetch 基线验证通道** — Fetch 阶段现在可以在路线选择前运行定向只读基线检查，包括 `node --test`、`node scripts/run-node-tests.mjs`，以及名称属于 test/check/verify/validate/lint/typecheck 形态的安全包管理器脚本。
 
 ### 变更
 
@@ -23,6 +24,9 @@
 - **dev-governance.md** — 增加降级模式段落和交互沟通段落。
 - **owner-resolution.md** — 增加无 Agent dispatch 时的降级 owner 解析路径。
 - **workflow-contract.json** — review/meta_review/verification 增加 `degradedPolicy`；reviewFinding 增加 `adversarialVotes`；contentEvidencePacket 增加 `searchAngles`。
+- **Critical -> Fetch hook 推进** — 活跃运行开始收集仓库证据或写 planning files 时会进入 Fetch，避免把基线测试误判为 Critical 阶段的 mutation。
+- **只读 Bash 分类** — Hook 命令切分现在尊重引号，允许复合探测里的 shell-local `cd`，并把 `2>&1` 识别为 fd 重定向而不是写入工作区。
+- **运行时能力真实性回归** — runtime-native preservation 现在锁定 Codex hook support 为 `partial`，同时允许 Cursor hook support 在 runtime matrix 证据下保持 `native`。
 - 版本升级：2.7.0 -> 2.8.0。
 
 ### 验证
@@ -30,6 +34,9 @@
 - `npm run meta:validate` — 7/7 通过
 - `npm run meta:sync` — 4 个 runtime 同步完成（claude、codex、openclaw、cursor）
 - `npm run meta:check` — 全绿，无过期 projection
+- `npm run meta:test:setup` — 312/312 通过
+- `npm run meta:test:meta-theory` — 857/857 通过
+- `npm run meta:test:governance` — 33/33 通过
 
 ## [2.7.0] - 2026-06-01
 
@@ -51,7 +58,7 @@
 
 - `codex --version`
 - `codex doctor`
-- `codex -a never exec --ephemeral --sandbox read-only -C D:/KimProject/Meta_Kim "Codex实机冒烟测试：不要修改文件，不要运行外部命令。读取项目说明后，用一句中文回答你能看到Meta_Kim项目且当前任务是发布前验证。"`
+- `codex -a never exec --ephemeral --sandbox read-only -C <repo> "Codex实机冒烟测试：不要修改文件，不要运行外部命令。读取项目说明后，用一句中文回答你能看到Meta_Kim项目且当前任务是发布前验证。"`
 - `npm run meta:sync`
 - `npm run meta:sync:global`
 - `npm run meta:check:global:release`
@@ -233,7 +240,7 @@
 
 ### 修复
 
-- **Item 1 — ECC plugin macOS 安装失败（新）** — `config/skills.json` 防御性规范由 `ecc@ecc` 改为 `everything-claude-code@ecc`，以兼容上游 affaan-m/everything-claude-code → ecc 插件改名跨新旧 marketplace 缓存。`scripts/install-global-skills-all-runtimes.mjs` 在 marketplace 注册和插件安装之间加入刷新循环（`claude plugin marketplace update <id>`），以确保解析前缓存已更新。来源证据：本地缓存 `C:/Users/Kim/.claude/plugins/marketplaces/ecc/.claude-plugin/marketplace.json`（当前 HEAD，插件名=ecc，版本 2.0.0-rc.1）vs `.../marketplaces/everything-claude-code/.claude-plugin/marketplace.json`（旧版，插件名=everything-claude-code）。防御性规范对两种状态都生效。
+- **Item 1 — ECC plugin macOS 安装失败（新）** — `config/skills.json` 防御性规范由 `ecc@ecc` 改为 `everything-claude-code@ecc`，以兼容上游 affaan-m/everything-claude-code → ecc 插件改名跨新旧 marketplace 缓存。`scripts/install-global-skills-all-runtimes.mjs` 在 marketplace 注册和插件安装之间加入刷新循环（`claude plugin marketplace update <id>`），以确保解析前缓存已更新。来源证据：本地缓存 `~/.claude/plugins/marketplaces/ecc/.claude-plugin/marketplace.json`（当前 HEAD，插件名=ecc，版本 2.0.0-rc.1）vs `~/.claude/plugins/marketplaces/everything-claude-code/.claude-plugin/marketplace.json`（旧版，插件名=everything-claude-code）。防御性规范对两种状态都生效。
 - **EB-008（HIGH）— workerExecutionEvidence 静默成功语义** — `config/contracts/workflow-contract.json::workerExecutionEvidenceField` 新增 `successMarkerFormat` enum (`stdout-text` | `exit-code-only` | `json-output`) 及 `exitCode`、`commandRanAt` 属性。静默成功命令（`node --check`、`tsc --noEmit`）只有在 `successMarkerFormat="exit-code-only"` 且 `exitCode=0` 且 `commandRanAt` 已记录时才允许 `actualOutput` 为空。关闭 v2.2.5 `accepted_risk`（W1 诚实披露 exit codes；占位符压力模式 `EXIT_OK\n` 退役）。`canonical/agents/meta-prism.md::Decision Rule 16` 同步扩展（silent-success extension v2.3.0）。
 - **EB-009（LOW）— 公开撤回错判（dogfood）** — v2.2.5 release notes 声称 `validate-project.mjs:15 loadRuntimeProfiles` 未被使用。重新验证显示其在 `validate-project.mjs:2808` 的 `validateSyncConfiguration()` 内被实际调用，且 `scripts/meta-kim-sync-config.mjs:271,333` 也定义和使用。该 import 必需保留。v2.2.5 release notes + CHANGELOG 中英双语条目均加入撤回引用/子条目。不做代码裁剪。
 - **EB-010（MEDIUM）— 同级 schema 风格归一化** — `config/contracts/workflow-contract.json::workerExecutionEvidenceField` 由异构 `fieldType`/`itemSchema`/顶层 `enforcement` 布局重塑为标准 JSON Schema `type`/`items`/`properties` + `_meta` 边带元数据。同级风格现在与 `verifyStepsField`、`fileCompletionListField` 一致。`_meta.closes` 列出 `[EB-005, EB-008, EB-010]`。

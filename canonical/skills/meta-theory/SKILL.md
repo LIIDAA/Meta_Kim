@@ -54,7 +54,7 @@ Important: Architecture Type Distinction. Meta Architecture means agent governan
 | # | Stage | Action |
 |---|---|---|
 | 1 | Critical | clarify intent first, lock user pain, value, success criteria, non-goals, permissions, and Architecture Type |
-| 2 | Fetch | gather online/web and local evidence, confirm the problem, extract material claims, and list candidate solutions with sources |
+| 2 | Fetch | gather online/web and local evidence, confirm the problem, extract material claims, run targeted read-only baseline verification when it changes the route, and list candidate solutions with sources |
 | 3 | Thinking | determine needed execution capabilities across agents, skills, commands, MCP capabilities, and tools; match existing capabilities; create or upgrade only for gaps; plan DAG/parallel/serial lanes with `mergeOwner` |
 | 4 | Execution | run multi-agent work using skills, commands, MCP capabilities, and tools from Thinking artifacts |
 | 5 | Review | meta-prism checks upstream Critical, Fetch, Thinking, and result quality |

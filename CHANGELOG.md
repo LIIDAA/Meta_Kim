@@ -16,6 +16,7 @@ When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the
 - **Fetch angle decomposition** — For research tasks (`researchRequired=true`), decompose the core question into N semantically distinct search angles before searching. Recorded in `contentEvidencePacket.searchAngles`. Default N=3.
 - **Worker output schema validation** — When `workerTaskPacket.output` defines an expected structure, the dispatcher validates worker results against it. On mismatch, worker retries up to 2 times before reporting failure. Recorded in `workerResultPacket.schemaValidationAttempts`.
 - **Interactive execution communication** — During multi-stage work, the dispatcher reports progress at 5 natural transition points: Fetch complete, Thinking complete, each Execution phase complete, scope-changing findings, and route-changing discoveries. Each report is a compact notice (max 3 bullets). Scope or route changes upgrade the notice to a Decision card.
+- **Fetch baseline verification lane** — Fetch can now run targeted read-only baseline checks before route selection, including `node --test`, `node scripts/run-node-tests.mjs`, and safe package-manager scripts whose names are test/check/verify/validate/lint/typecheck shaped.
 
 ### Changed
 
@@ -24,6 +25,9 @@ When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the
 - **dev-governance.md** — Added degraded mode section with stage-specific guidance and interactive execution communication section.
 - **owner-resolution.md** — Added degraded path for owner resolution when no Agent dispatch exists.
 - **workflow-contract.json** — Added `degradedPolicy` to review, meta_review, and verification stage semantics. Added `adversarialVotes` to reviewFinding protocol. Added `searchAngles` to contentEvidencePacket protocol.
+- **Critical -> Fetch hook progression** — Active runs now advance into Fetch when the operator starts repo evidence gathering or writes planning files, so baseline tests are not incorrectly blocked as Critical-stage mutation.
+- **Read-only Bash classification** — Hook command splitting is now quote-aware, allows shell-local `cd` setup for compound probes, and treats `2>&1` as fd redirection rather than a workspace write.
+- **Runtime capability honesty regression** — Runtime-native preservation now locks Codex hook support as `partial` while allowing Cursor hook support to remain `native` when verified by the runtime matrix.
 - Version bump: 2.7.0 -> 2.8.0.
 
 ### Verification
@@ -31,6 +35,9 @@ When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the
 - `npm run meta:validate` — 7/7 checks passed
 - `npm run meta:sync` — 4 runtimes synced (claude, codex, openclaw, cursor)
 - `npm run meta:check` — all green, no stale projections
+- `npm run meta:test:setup` — 312/312 tests passed
+- `npm run meta:test:meta-theory` — 857/857 tests passed
+- `npm run meta:test:governance` — 33/33 tests passed
 
 ## [2.7.0] - 2026-06-01
 
@@ -52,7 +59,7 @@ When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the
 
 - `codex --version`
 - `codex doctor`
-- `codex -a never exec --ephemeral --sandbox read-only -C D:/KimProject/Meta_Kim "Codex实机冒烟测试：不要修改文件，不要运行外部命令。读取项目说明后，用一句中文回答你能看到Meta_Kim项目且当前任务是发布前验证。"`
+- `codex -a never exec --ephemeral --sandbox read-only -C <repo> "Codex实机冒烟测试：不要修改文件，不要运行外部命令。读取项目说明后，用一句中文回答你能看到Meta_Kim项目且当前任务是发布前验证。"`
 - `npm run meta:sync`
 - `npm run meta:sync:global`
 - `npm run meta:check:global:release`
@@ -259,7 +266,7 @@ When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the
 
 ### Fixed
 
-- **Item 1 — ECC plugin install failure on macOS (NEW)** — `config/skills.json` defensive spec changed from `ecc@ecc` to `everything-claude-code@ecc` so the install survives the upstream affaan-m/everything-claude-code → ecc plugin rename across legacy + current marketplace caches. `scripts/install-global-skills-all-runtimes.mjs` gains a marketplace refresh loop (`claude plugin marketplace update <id>`) between marketplace registration and plugin install so stale caches get refreshed before resolution. Source-of-truth: local cache evidence at `C:/Users/Kim/.claude/plugins/marketplaces/ecc/.claude-plugin/marketplace.json` (current HEAD, plugin name=ecc, version 2.0.0-rc.1) vs `.../marketplaces/everything-claude-code/.claude-plugin/marketplace.json` (legacy, plugin name=everything-claude-code). The defensive spec works against both states.
+- **Item 1 — ECC plugin install failure on macOS (NEW)** — `config/skills.json` defensive spec changed from `ecc@ecc` to `everything-claude-code@ecc` so the install survives the upstream affaan-m/everything-claude-code → ecc plugin rename across legacy + current marketplace caches. `scripts/install-global-skills-all-runtimes.mjs` gains a marketplace refresh loop (`claude plugin marketplace update <id>`) between marketplace registration and plugin install so stale caches get refreshed before resolution. Source-of-truth: local cache evidence at `~/.claude/plugins/marketplaces/ecc/.claude-plugin/marketplace.json` (current HEAD, plugin name=ecc, version 2.0.0-rc.1) vs `~/.claude/plugins/marketplaces/everything-claude-code/.claude-plugin/marketplace.json` (legacy, plugin name=everything-claude-code). The defensive spec works against both states.
 - **EB-008 (HIGH) — workerExecutionEvidence silent-success semantics** — `config/contracts/workflow-contract.json::workerExecutionEvidenceField` adds `successMarkerFormat` enum (`stdout-text` | `exit-code-only` | `json-output`) plus `exitCode` and `commandRanAt` properties. Silent-success commands (`node --check`, `tsc --noEmit`) may now record empty `actualOutput` only when `successMarkerFormat="exit-code-only"` AND `exitCode=0` AND `commandRanAt` set. Closes v2.2.5 `accepted_risk` (W1 honestly disclosed exit codes; placeholder pressure pattern `EXIT_OK\n` retired). `canonical/agents/meta-prism.md::Decision Rule 16` extended in parallel (silent-success extension v2.3.0).
 - **EB-009 (LOW) — release notes claim retracted (dogfood)** — v2.2.5 release notes claimed `validate-project.mjs:15 loadRuntimeProfiles` was unused. Re-verification shows it is actively called at `validate-project.mjs:2808` inside `validateSyncConfiguration()` plus `scripts/meta-kim-sync-config.mjs:271,333`. Import is REQUIRED. v2.2.5 release notes + CHANGELOG entries gained retraction blockquote/sub-bullets across English + Chinese mirrors. No code prune.
 - **EB-010 (MEDIUM) — sibling schema style normalized** — `config/contracts/workflow-contract.json::workerExecutionEvidenceField` reshaped from heterogeneous `fieldType`/`itemSchema`/top-level `enforcement` layout to standard JSON Schema `type`/`items`/`properties` with `_meta` sidecar. Sibling style now matches `verifyStepsField` and `fileCompletionListField`. `_meta.closes` lists `[EB-005, EB-008, EB-010]`.

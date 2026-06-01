@@ -84,8 +84,13 @@
 import process from "node:process";
 import { join, normalize } from "node:path";
 import { readJsonFromStdin, extractFilePath } from "./utils.mjs";
-import { isReadOnlyBash, classifyBashCommand } from "./bash-readonly-whitelist.mjs";
 import {
+  isReadOnlyBash,
+  classifyBashCommand,
+  __internals as bashReadonlyInternals,
+} from "./bash-readonly-whitelist.mjs";
+import {
+  advanceStage,
   readSpineState,
   checkCapabilityNodeBindings,
   checkPreExecutionReadiness,
@@ -136,6 +141,133 @@ function isPlanningFile() {
   if (planningFiles.some((f) => targetPath.endsWith(f))) return true;
   const cmd = (toolInput?.command || "").toLowerCase();
   return planningFiles.some((f) => cmd.includes(f.toLowerCase()));
+}
+
+function matchesStageReadOnlyCommand(command, prefixes) {
+  const segments = bashReadonlyInternals
+    .splitSegments(command)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  if (!segments.length || !prefixes.length) return false;
+
+  let matchedVerifierSegment = false;
+  for (const segment of segments) {
+    const matchedPrefix = prefixes.find((prefix) => segment.startsWith(prefix));
+    const matchesVerifier = !!matchedPrefix;
+    if (matchesVerifier) {
+      if (
+        /^(npm|pnpm|yarn)\s/.test(segment) &&
+        !isSafeVerifierScriptInvocation(segment)
+      ) {
+        return false;
+      }
+      matchedVerifierSegment = true;
+      continue;
+    }
+    if (isReadOnlyBash(segment)) {
+      continue;
+    }
+    return false;
+  }
+
+  return matchedVerifierSegment;
+}
+
+const SAFE_VERIFIER_SCRIPT_NAME =
+  /(^|:)(test|check|verify|validate|lint|typecheck)(:|$)/i;
+
+function isSafeVerifierScriptInvocation(segment) {
+  const trimmed = segment.trim();
+  if (/^npm\s+test(?:\s|$)/i.test(trimmed)) return true;
+  if (/^pnpm\s+test(?:\s|$)/i.test(trimmed)) return true;
+  if (/^yarn\s+test(?:\s|$)/i.test(trimmed)) return true;
+
+  const patterns = [
+    /^npm\s+run\s+([^\s]+)/i,
+    /^pnpm\s+run\s+([^\s]+)/i,
+    /^pnpm\s+([^\s-][^\s]*)/i,
+    /^yarn\s+([^\s]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = trimmed.match(pattern);
+    if (!match) continue;
+    const scriptName = match[1];
+    if (SAFE_VERIFIER_SCRIPT_NAME.test(scriptName)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+const FETCH_TRANSITION_READ_ONLY_TOOLS = new Set([
+  "Read",
+  "Glob",
+  "Grep",
+  "LSPO",
+  "WebFetch",
+  "WebSearch",
+  "ListMcpResourcesTool",
+  "ReadMcpResourceTool",
+]);
+
+function normalizedBashSegments(command) {
+  return bashReadonlyInternals
+    .splitSegments(command)
+    .map((segment) =>
+      bashReadonlyInternals
+        .stripEnvPrefix(segment.trim())
+        .join(" ")
+        .toLowerCase(),
+    )
+    .filter(Boolean);
+}
+
+function isFetchEvidenceBash(command) {
+  const cmd = (command || "").trim();
+  if (!isReadOnlyBash(cmd)) return false;
+
+  return normalizedBashSegments(cmd).some((segment) => {
+    if (
+      segment.startsWith("git status") ||
+      segment.startsWith("git diff") ||
+      segment.startsWith("git rev-parse") ||
+      segment.startsWith("rg ") ||
+      segment.startsWith("rg --files") ||
+      segment.startsWith("grep ") ||
+      segment.startsWith("egrep ") ||
+      segment.startsWith("fgrep ") ||
+      segment.startsWith("find ") ||
+      segment.startsWith("ls tests") ||
+      segment.startsWith("ls canonical") ||
+      segment.startsWith("cat package.json") ||
+      segment.startsWith("head package.json") ||
+      segment.startsWith("tail package.json") ||
+      segment.startsWith("get-childitem") ||
+      segment.startsWith("get-content") ||
+      segment.startsWith("select-string")
+    ) {
+      return true;
+    }
+    return false;
+  });
+}
+
+function shouldAdvanceCriticalToFetch(state, toolName, input) {
+  if (!state?.active || state.currentStage !== "critical") return false;
+  if (isPlanningFile()) return true;
+
+  if (FETCH_TRANSITION_READ_ONLY_TOOLS.has(toolName)) {
+    return true;
+  }
+
+  if (toolName !== "Bash") return false;
+  const cmd = (input?.command || "").trim();
+  if (isFetchEvidenceBash(cmd)) return true;
+  const fetchInspectionPrefixes =
+    STAGE_META_AGENT_MAP.fetch?.readOnlyInspectionCommands || [];
+  return matchesStageReadOnlyCommand(cmd, fetchInspectionPrefixes);
 }
 
 /**
@@ -767,6 +899,10 @@ if (
 
 // Read-only tools: always allow
 if (isReadOnlyTool(toolName)) {
+  if (shouldAdvanceCriticalToFetch(state, toolName, toolInput)) {
+    state = advanceStage(state, "fetch");
+    await writeSpineState(cwd, state);
+  }
   process.exit(0);
 }
 
@@ -793,7 +929,14 @@ if (isExecutionTool(toolName)) {
     // warn-mode falls through; block-mode already exited.
   }
 
-  if (isSpineStateWrite() || isPlanningFile()) {
+  if (isSpineStateWrite()) {
+    process.exit(0);
+  }
+  if (isPlanningFile()) {
+    if (state.active && state.currentStage === "critical") {
+      const advanced = advanceStage(state, "fetch");
+      await writeSpineState(cwd, advanced);
+    }
     process.exit(0);
   }
 
@@ -832,8 +975,12 @@ if (isExecutionTool(toolName)) {
       ...(stageConfig?.readOnlyVerifierCommands || []),
       ...(stageConfig?.readOnlyInspectionCommands || []),
     ];
-    const allowedByStage = stageWhitelist.some((prefix) => cmd.startsWith(prefix));
+    const allowedByStage = matchesStageReadOnlyCommand(cmd, stageWhitelist);
     if (allowedByStage || isReadOnlyBash(cmd)) {
+      if (shouldAdvanceCriticalToFetch(state, toolName, toolInput)) {
+        state = advanceStage(state, "fetch");
+        await writeSpineState(cwd, state);
+      }
       process.exit(0);
     }
   }
@@ -896,9 +1043,9 @@ if (isExecutionTool(toolName)) {
       );
     }
     exitAfterDeny(
-      "Critical stage is for scope clarification and read-only inspection. " +
-        "Complete Critical, Fetch, and Thinking before mutation. " +
-        "Allowed now: spine state writes, planning files, and read-only inspection. " +
+      "Current stage: Critical. This stage is for understanding the request and reading project evidence. " +
+        "Use repo-inspection commands to enter Fetch, then run baseline verification from Fetch. " +
+        "Allowed now: planning files, spine state writes, and read-only inspection. " +
         `Dispatch chain so far: ${JSON.stringify(state.dispatchChain || {})}`,
     );
   }

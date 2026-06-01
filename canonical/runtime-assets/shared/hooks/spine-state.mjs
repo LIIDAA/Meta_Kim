@@ -84,6 +84,20 @@ const DEFAULT_READ_ONLY_VERIFIER_COMMANDS = [
   "wc",
 ];
 
+// Fetch may gather evidence with targeted, read-only baseline verification
+// commands. These commands are narrower than general execution and exist to
+// let the operator inspect current health before route selection.
+const DEFAULT_FETCH_READ_ONLY_VERIFIER_COMMANDS = [
+  "node --test",
+  "node scripts/run-node-tests.mjs",
+  "npm test",
+  "npm run ",
+  "pnpm test",
+  "pnpm run ",
+  "yarn test",
+  "yarn ",
+];
+
 const DEFAULT_READ_ONLY_INSPECTION_COMMANDS = [
   "git status",
   "git diff --stat",
@@ -111,6 +125,8 @@ export const STAGE_META_AGENT_MAP = {
     requiresFetchRecord: true,
     readOnlyInspectionEnabled: true,
     readOnlyInspectionCommands: DEFAULT_READ_ONLY_INSPECTION_COMMANDS,
+    readOnlyVerifierEnabled: true,
+    readOnlyVerifierCommands: DEFAULT_FETCH_READ_ONLY_VERIFIER_COMMANDS,
   },
   thinking: {
     required: ["meta-conductor"],

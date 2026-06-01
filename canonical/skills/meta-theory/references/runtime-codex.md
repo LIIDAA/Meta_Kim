@@ -18,7 +18,7 @@ If `request_user_input` returns API 400 or another host validation error, do not
 
 Visible Decision cards need at least two meaningful options and a recommended default. Notices can stay concise.
 
-Fetch/content evidence must precede Thinking/pre-decision option framing. At the transition from Thinking to Execution, present one Decision only when the answer changes scope, owner, risk, or acceptance. After Thinking completes, BEFORE any Execution, ask the user only if the route branches. DO NOT ask confirmation during Critical/Fetch/Thinking/Review just to satisfy a ritual.
+Fetch/content evidence must precede Thinking/pre-decision option framing. Targeted read-only baseline verification such as existing test or validator runs belongs to Fetch when it changes the route; it does not belong to Critical. Once the run starts collecting repo evidence through Fetch-class inspection, the spine should progress into Fetch even if no planning file has been written yet. At the transition from Thinking to Execution, present one Decision only when the answer changes scope, owner, risk, or acceptance. After Thinking completes, BEFORE any Execution, ask the user only if the route branches. DO NOT ask confirmation during Critical/Fetch/Thinking/Review just to satisfy a ritual.
 
 Critical clarification is separate from execution confirmation: ask early when the user's expression fails the intent completeness framework, not because the model believes it knows the true human intent. Required dimensions are outcome, audience/value, success criteria, scope, constraints/permissions/safety, evidence freshness, and output format. If a missing or conflicting dimension changes route, scope, risk, acceptance, owner, permission, or non-goal, set `choiceSurfaceState = critical_clarification_allowed` and ask before Fetch, Thinking, or Execution. Ask later before executing a dispatch plan only when the plan has meaningful branches.
 
@@ -64,7 +64,7 @@ Codex hooks are the last fuse after preflight. Before mutation, Conductor must c
 
 `hookRepairMode` starts on the second same-reason block. It reads the hook output, fixes the missing packet or stage design, and retries only with a changed action. The same blocked action must not be retried unchanged. A third same-hook block stops Execution, emits `hookFailurePacket`, and blocks public-ready.
 
-`hookBlockRate` is measured as hook blocks divided by attempted mutating actions. `hookBlockRate <= 5%` is acceptable, `>5%` requires Evolution review, and `>15%` blocks public-ready. Read-only Fetch, repo search, dependency discovery, capability scan, and validator dry runs must not be blocked by Hook progression policy.
+`hookBlockRate` is measured as hook blocks divided by attempted mutating actions. `hookBlockRate <= 5%` is acceptable, `>5%` requires Evolution review, and `>15%` blocks public-ready. Read-only Fetch, repo search, dependency discovery, capability scan, targeted baseline test runs, and validator dry runs must not be blocked by Hook progression policy.
 
 
 ## Use when

@@ -19,6 +19,7 @@ import {
   copyFileSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -336,6 +337,11 @@ function runEnforceHook(state, payload, options = {}) {
   } finally {
     rmSync(cwd, { recursive: true, force: true });
   }
+}
+
+function buildCdCommand(command) {
+  const sampleRepoPath = join(tmpdir(), "meta-kim-sample-project").replace(/\\/g, "/");
+  return `cd "${sampleRepoPath}" && ${command}`;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1149,7 +1155,260 @@ describe("Part F2: choice surface runtime gate", async () => {
     assert.equal(result.status, 0);
     assert.match(result.stdout, /permissionDecision/);
     assert.doesNotMatch(result.stdout, /meta-warden|Warden scope clarification/i);
-    assert.match(result.stdout, /Critical stage is for scope clarification/i);
+    assert.match(result.stdout, /Current stage: Critical/i);
+  });
+
+  test("Critical planning-file write advances the active run into Fetch", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "critical",
+    };
+
+    const cwd = mkdtempSync(join(tmpdir(), "meta-kim-hook-stage-"));
+    try {
+      const hookDir = join(cwd, "hooks");
+      mkdirSync(hookDir, { recursive: true });
+      for (const fileName of [
+        "enforce-agent-dispatch.mjs",
+        "bash-readonly-whitelist.mjs",
+        "spine-state.mjs",
+      ]) {
+        copyFileSync(
+          join(REPO_ROOT, "canonical/runtime-assets/claude/hooks", fileName),
+          join(hookDir, fileName),
+        );
+      }
+      for (const fileName of ["utils.mjs", "skip-reminder.mjs", "hook-i18n.mjs"]) {
+        copyFileSync(
+          join(REPO_ROOT, "canonical/runtime-assets/shared/hooks", fileName),
+          join(hookDir, fileName),
+        );
+      }
+      const spineDir = join(cwd, ".meta-kim", "state", "test", "spine");
+      mkdirSync(spineDir, { recursive: true });
+      writeFileSync(
+        join(spineDir, "spine-state.json"),
+        JSON.stringify(state, null, 2),
+        "utf8",
+      );
+
+      const result = spawnSync(
+        process.execPath,
+        [join(hookDir, "enforce-agent-dispatch.mjs")],
+        {
+          cwd,
+          input: JSON.stringify({
+            tool_name: "Write",
+            tool_input: {
+              file_path: join(cwd, "task_plan.md"),
+              content: "# plan",
+            },
+          }),
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            META_KIM_SPINE_STATE_DIR: ".meta-kim/state/test/spine",
+            META_KIM_CAPABILITY_GATE: "block",
+            META_KIM_HOOK_RUNTIME: "codex",
+          },
+        },
+      );
+
+      assert.equal(result.status, 0);
+      assert.doesNotMatch(result.stdout, /permissionDecision/);
+
+      const nextState = JSON.parse(
+        readFileSync(join(spineDir, "spine-state.json"), "utf8"),
+      );
+      assert.equal(nextState.currentStage, "fetch");
+      assert.equal(nextState.stages.critical.status, "completed");
+      assert.equal(nextState.stages.fetch.status, "in_progress");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("Critical fetch-style repo inspection advances the active run into Fetch", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "critical",
+    };
+
+    const cwd = mkdtempSync(join(tmpdir(), "meta-kim-hook-fetch-"));
+    try {
+      const hookDir = join(cwd, "hooks");
+      mkdirSync(hookDir, { recursive: true });
+      for (const fileName of [
+        "enforce-agent-dispatch.mjs",
+        "bash-readonly-whitelist.mjs",
+        "spine-state.mjs",
+      ]) {
+        copyFileSync(
+          join(REPO_ROOT, "canonical/runtime-assets/claude/hooks", fileName),
+          join(hookDir, fileName),
+        );
+      }
+      for (const fileName of ["utils.mjs", "skip-reminder.mjs", "hook-i18n.mjs"]) {
+        copyFileSync(
+          join(REPO_ROOT, "canonical/runtime-assets/shared/hooks", fileName),
+          join(hookDir, fileName),
+        );
+      }
+      const spineDir = join(cwd, ".meta-kim", "state", "test", "spine");
+      mkdirSync(spineDir, { recursive: true });
+      writeFileSync(
+        join(spineDir, "spine-state.json"),
+        JSON.stringify(state, null, 2),
+        "utf8",
+      );
+
+      const result = spawnSync(
+        process.execPath,
+        [join(hookDir, "enforce-agent-dispatch.mjs")],
+        {
+          cwd,
+          input: JSON.stringify({
+            tool_name: "Bash",
+            tool_input: {
+              command:
+                'cat package.json | grep -E "\\"test|\\"meta:verify|\\"meta:check|\\"meta:validate" | head -20',
+            },
+          }),
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            META_KIM_SPINE_STATE_DIR: ".meta-kim/state/test/spine",
+            META_KIM_CAPABILITY_GATE: "block",
+            META_KIM_HOOK_RUNTIME: "codex",
+          },
+        },
+      );
+
+      assert.equal(result.status, 0);
+      assert.doesNotMatch(result.stdout, /permissionDecision/);
+
+      const nextState = JSON.parse(
+        readFileSync(join(spineDir, "spine-state.json"), "utf8"),
+      );
+      assert.equal(nextState.currentStage, "fetch");
+      assert.equal(nextState.stages.critical.status, "completed");
+      assert.equal(nextState.stages.fetch.status, "in_progress");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("Critical evidence gathering can transition into Fetch before baseline test verification", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "critical",
+    };
+
+    const cwd = mkdtempSync(join(tmpdir(), "meta-kim-hook-sequence-"));
+    try {
+      const hookDir = join(cwd, "hooks");
+      mkdirSync(hookDir, { recursive: true });
+      for (const fileName of [
+        "enforce-agent-dispatch.mjs",
+        "bash-readonly-whitelist.mjs",
+        "spine-state.mjs",
+      ]) {
+        copyFileSync(
+          join(REPO_ROOT, "canonical/runtime-assets/claude/hooks", fileName),
+          join(hookDir, fileName),
+        );
+      }
+      for (const fileName of ["utils.mjs", "skip-reminder.mjs", "hook-i18n.mjs"]) {
+        copyFileSync(
+          join(REPO_ROOT, "canonical/runtime-assets/shared/hooks", fileName),
+          join(hookDir, fileName),
+        );
+      }
+      const spineDir = join(cwd, ".meta-kim", "state", "test", "spine");
+      mkdirSync(spineDir, { recursive: true });
+      const stateFile = join(spineDir, "spine-state.json");
+      writeFileSync(stateFile, JSON.stringify(state, null, 2), "utf8");
+
+      const baseEnv = {
+        ...process.env,
+        META_KIM_SPINE_STATE_DIR: ".meta-kim/state/test/spine",
+        META_KIM_CAPABILITY_GATE: "block",
+        META_KIM_HOOK_RUNTIME: "codex",
+      };
+
+      const inspectResult = spawnSync(
+        process.execPath,
+        [join(hookDir, "enforce-agent-dispatch.mjs")],
+        {
+          cwd,
+          input: JSON.stringify({
+            tool_name: "Bash",
+            tool_input: {
+              command: "git diff --stat",
+            },
+          }),
+          encoding: "utf8",
+          env: baseEnv,
+        },
+      );
+
+      assert.equal(inspectResult.status, 0);
+      assert.doesNotMatch(inspectResult.stdout, /permissionDecision/);
+
+      const fetchState = JSON.parse(readFileSync(stateFile, "utf8"));
+      assert.equal(fetchState.currentStage, "fetch");
+
+      const verifyResult = spawnSync(
+        process.execPath,
+        [join(hookDir, "enforce-agent-dispatch.mjs")],
+        {
+          cwd,
+          input: JSON.stringify({
+            tool_name: "Bash",
+            tool_input: {
+              command: buildCdCommand("npm run meta:test:setup"),
+            },
+          }),
+          encoding: "utf8",
+          env: baseEnv,
+        },
+      );
+
+      assert.equal(verifyResult.status, 0);
+      assert.doesNotMatch(verifyResult.stdout, /permissionDecision/);
+
+      const wrappedTestResult = spawnSync(
+        process.execPath,
+        [join(hookDir, "enforce-agent-dispatch.mjs")],
+        {
+          cwd,
+          input: JSON.stringify({
+            tool_name: "Bash",
+            tool_input: {
+              command: buildCdCommand(
+                'node scripts/run-node-tests.mjs "tests/meta-theory/*.test.mjs" 2>&1 | tail -120',
+              ),
+            },
+          }),
+          encoding: "utf8",
+          env: baseEnv,
+        },
+      );
+
+      assert.equal(wrappedTestResult.status, 0);
+      assert.doesNotMatch(wrappedTestResult.stdout, /permissionDecision/);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
   });
 
   test("Fetch stage allows targeted read-only source search before editing", () => {
@@ -1170,6 +1429,89 @@ describe("Part F2: choice surface runtime gate", async () => {
 
     assert.equal(result.status, 0);
     assert.doesNotMatch(result.stdout, /permissionDecision/);
+  });
+
+  test("Fetch stage allows baseline test verification before route selection", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "fetch",
+    };
+
+    const result = runEnforceHook(state, {
+      tool_name: "Bash",
+      tool_input: {
+        command: buildCdCommand("npm run meta:test:setup 2>&1 | tail -80"),
+      },
+    });
+
+    assert.equal(result.status, 0);
+    assert.doesNotMatch(result.stdout, /permissionDecision/);
+  });
+
+  test("Fetch stage allows project test runner wrapper before route selection", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "fetch",
+    };
+
+    const result = runEnforceHook(state, {
+      tool_name: "Bash",
+      tool_input: {
+        command: buildCdCommand(
+          'node scripts/run-node-tests.mjs "tests/meta-theory/*.test.mjs" 2>&1 | tail -120',
+        ),
+      },
+    });
+
+    assert.equal(result.status, 0);
+    assert.doesNotMatch(result.stdout, /permissionDecision/);
+  });
+
+  test("Critical stage allows harmless cwd setup plus version probes", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "critical",
+    };
+
+    const result = runEnforceHook(state, {
+      tool_name: "Bash",
+      tool_input: {
+        command: buildCdCommand("node --version && npm --version"),
+      },
+    });
+
+    assert.equal(result.status, 0);
+    assert.doesNotMatch(result.stdout, /permissionDecision/);
+  });
+
+  test("Critical stage still denies test execution after harmless cwd setup", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "critical",
+    };
+
+    const result = runEnforceHook(state, {
+      tool_name: "Bash",
+      tool_input: {
+        command: buildCdCommand("npm run meta:test:setup"),
+      },
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /permissionDecision/);
+    assert.match(result.stdout, /Current stage: Critical/i);
   });
 
   test("Critical and Fetch stages still deny mutation commands", () => {

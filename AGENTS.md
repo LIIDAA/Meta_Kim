@@ -14,7 +14,7 @@ If you only keep five rules in mind:
 
 ## Codex Output Rules
 
-- On Windows, do not output raw Windows paths in normal Markdown text. Wrap paths in backticks and prefer forward slashes, for example `D:/KimProject/Meta_Kim`.
+- On Windows, do not output raw Windows paths in normal Markdown text. Wrap paths in backticks and prefer forward slashes, for example `D:/path/to/project`.
 - Do not paste full diffs or patches into chat after GitHub submit.
 - After GitHub submit, report only the branch name, commit hash, PR URL when present, and a short summary.
 
