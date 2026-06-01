@@ -82,8 +82,8 @@ Important: Architecture Type Distinction. Meta Architecture means agent governan
 - Stop and wait — do not proceed until the user answers
 
 **Do not ask:**
-- Ritual questions that do not change the route
-- Stage-by-stage confirmation spam
+- Ritual questions or stage-by-stage confirmation spam
+- Just because the work is read-only; ask only when read-only analysis still exposes route-changing choices
 - Questions during Meta-Review, Verification, or Evolution (these are mechanical checks)
 
 ## Type A: Prompt / Reference / Contract Hardening

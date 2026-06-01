@@ -1310,7 +1310,7 @@
       "dispatchArtifactsFinalizedAfterChoice": true,
       "choiceGateSkipAllowedWhen": [
         "trivial",
-        "pure_read_only_queryBypass",
+        "no_branching_choice",
         "explicit_auto_proceed"
       ],
       "capabilityGapPacketRequiredWhenUpgradeReasons": [
@@ -1758,16 +1758,16 @@
       ],
       "choiceGateSkipAllowedWhen": [
         "trivial",
-        "pure_read_only_queryBypass",
+        "no_branching_choice",
         "explicit_auto_proceed"
       ],
       "solutionChoiceStateEnum": [
         "confirmed",
         "trivial",
-        "pure_read_only_queryBypass",
+        "no_branching_choice",
         "explicit_auto_proceed"
       ],
-      "description": "Thinking-stage pre-decision frame for non-trivial executable work before AskUserQuestion, native choice, or fallback. It must list unresolvedQuestions, present contentEvidence-backed candidate solution paths, and record solutionChoiceState before detailed orchestration is locked. A skipped choice must include skipSource and skipSafetyRationale, and may only use strict skip reasons. It contains candidate orchestration paths and trade-offs only; it is not a finalized dispatchEnvelopePacket, dispatchBoard, or workerTaskPacket."
+      "description": "Thinking-stage pre-decision frame for non-trivial executable work before AskUserQuestion, native choice, or fallback. It must list unresolvedQuestions, present contentEvidence-backed candidate solution paths, and record solutionChoiceState before detailed orchestration is locked. A skipped choice must include skipSource and skipSafetyRationale, and may only use strict skip reasons. Read-only/queryBypass is a safety and path-classification boundary, not a choice-surface skip reason by itself; use no_branching_choice only when no user answer would change route, scope, risk, owner, permission, non-goal, or acceptance. It contains candidate orchestration paths and trade-offs only; it is not a finalized dispatchEnvelopePacket, dispatchBoard, or workerTaskPacket."
     },
     "intentPacket": {
       "requiredFields": [

@@ -112,7 +112,7 @@ Decision vs Notice bifurcation:
 - Decision asks the user to choose because outcome, scope, owner, risk, or acceptance changes.
 - Notice reports state without asking.
 
-Non-trivial execution needs one consolidated Decision after Fetch and Thinking, unless the skip is `trivial`, pure read-only `queryBypass`, or explicit auto-proceed with rationale.
+Non-trivial execution needs one consolidated Decision after Fetch and Thinking, unless the skip is `trivial`, `no_branching_choice`, or explicit auto-proceed with rationale. Read-only/queryBypass is a safety and path-classification boundary; it is not enough by itself to skip a choice surface when branch-changing options exist.
 
 Codex visible multi-option choice rule: visible Decisions include at least two options and a recommended default.
 

@@ -1054,7 +1054,7 @@ function getPreDecisionOptionFrame(state) {
 
 const ALLOWED_CHOICE_GATE_SKIPS = new Set([
   "trivial",
-  "pure_read_only_queryBypass",
+  "no_branching_choice",
   "explicit_auto_proceed",
 ]);
 

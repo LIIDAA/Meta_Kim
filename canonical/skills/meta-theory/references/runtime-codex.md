@@ -20,6 +20,8 @@ Visible Decision cards need at least two meaningful options and a recommended de
 
 Fetch/content evidence must precede Thinking/pre-decision option framing. Targeted read-only baseline verification such as existing test or validator runs belongs to Fetch when it changes the route; it does not belong to Critical. Once the run starts collecting repo evidence through Fetch-class inspection, the spine should progress into Fetch even if no planning file has been written yet. At the transition from Thinking to Execution, present one Decision only when the answer changes scope, owner, risk, or acceptance. After Thinking completes, BEFORE any Execution, ask the user only if the route branches. DO NOT ask confirmation during Critical/Fetch/Thinking/Review just to satisfy a ritual.
 
+Read-only status is not a choice-surface skip reason by itself. `queryBypass` says the run is a pure query / inspection path with no mutation, durable artifact, execution dispatch, or handoff; it does not prove that user choice is unnecessary. If a read-only analysis still has materially different routes, scopes, risks, owners, or acceptance standards, ask. If there is no branch-changing choice, record `no_branching_choice` or an explicit auto-proceed rationale instead of citing read-only status.
+
 Critical clarification is separate from execution confirmation: ask early when the user's expression fails the intent completeness framework, not because the model believes it knows the true human intent. Required dimensions are outcome, audience/value, success criteria, scope, constraints/permissions/safety, evidence freshness, and output format. If a missing or conflicting dimension changes route, scope, risk, acceptance, owner, permission, or non-goal, set `choiceSurfaceState = critical_clarification_allowed` and ask before Fetch, Thinking, or Execution. Ask later before executing a dispatch plan only when the plan has meaningful branches.
 
 Decision cards include: AI understanding, AI additions, Capability route, Candidate paths.
@@ -57,6 +59,8 @@ Respect user choices (after questioning). Base the analysis on the user's actual
 ## Query Bypass
 
 `queryBypass: true` means pure read-only query. It does not allow mutation, install, write, delete, or state-changing shell commands.
+
+`queryBypass` is not a general substitute for a pre-execution decision. It applies only when there is no execution branch to choose. When branch-changing options exist, use the Codex choice surface even if the evidence gathering itself is read-only.
 
 ## Hook progression
 
