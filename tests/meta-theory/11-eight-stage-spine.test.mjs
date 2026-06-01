@@ -55,8 +55,14 @@ const VALID_FIXTURE = `${REPO_ROOT}/tests/fixtures/run-artifacts/valid-run.json`
 
 function minimalNodeBindings() {
   return {
+    intentPacket: {
+      realIntent: "verify relaxed hook governance behavior",
+      successCriteria: ["minimum key behavior evidence is enough for execution"],
+    },
+    memoryMode: "project_only",
     fetchRecord: {
       capabilitySearchPerformed: true,
+      memoryStrategy: "project_only",
       capabilityMatches: [
         {
           name: "backend implementation capability",
@@ -195,6 +201,7 @@ function completePreExecutionBindings() {
       department: "Meta_Kim",
       primaryDeliverable: "auth-refresh-hardening",
       ownerAgent: "meta-conductor",
+      selectedWeapon: "npm run meta:test:meta-theory",
       reviewerAgent: "meta-prism",
       verifierAgent: "meta-warden",
     },
@@ -1225,7 +1232,7 @@ describe("Part F2: choice surface runtime gate", async () => {
     assert.deepEqual(result.missing, ["choiceSurfaceState=completed"]);
   });
 
-  test("blocks Execution when design-time packets are incomplete", () => {
+  test("allows Execution when key behavior evidence exists but optional design packets are incomplete", () => {
     const state = {
       ...createInitialState({
         taskClassification: "meta_theory_auto",
@@ -1241,11 +1248,7 @@ describe("Part F2: choice surface runtime gate", async () => {
     };
 
     const result = checkStageRequirements(state);
-    assert.equal(result.met, false);
-    assert.match(result.reason, /pre-execution readiness|design-time/i);
-    assert.ok(result.missing.includes("dispatchEnvelopePacket"));
-    assert.ok(result.missing.includes("productCompletenessPacket"));
-    assert.ok(result.missing.includes("rollbackPlanPacket"));
+    assert.equal(result.met, true);
   });
 
   test("allows Execution after Fetch, Thinking, and complete design-time packets", () => {
@@ -1286,7 +1289,7 @@ describe("Part F2: choice surface runtime gate", async () => {
     assert.equal(result.met, true);
   });
 
-  test("blocks Execution when top-level capability search lacks node bindings", () => {
+  test("blocks Execution when key intent evidence is missing", () => {
     const state = {
       ...createInitialState({
         taskClassification: "meta_theory_auto",
@@ -1304,16 +1307,19 @@ describe("Part F2: choice surface runtime gate", async () => {
       },
       choiceSurfaceState: "completed",
     };
+    delete state.intentPacket;
 
     const result = checkStageRequirements(state);
     assert.equal(result.met, false);
-    assert.match(result.reason, /every orchestration node/);
-    assert.ok(result.missing.includes("businessFlowBlueprintPacket"));
-    assert.ok(result.missing.includes("agentBlueprintPacket"));
-    assert.ok(result.missing.includes("workerTaskPackets"));
+    assert.match(result.reason, /key behavior evidence/i);
+    assert.ok(
+      result.missing.includes(
+        "intent signal (intentPacket or realIntent + successCriteria)",
+      ),
+    );
   });
 
-  test("blocks Execution when a worker task cannot bind to an agent role", () => {
+  test("does not hard-block Execution on optional worker-role binding mismatch", () => {
     const state = {
       ...createInitialState({
         taskClassification: "meta_theory_auto",
@@ -1324,11 +1330,10 @@ describe("Part F2: choice surface runtime gate", async () => {
     state.workerTaskPackets[0].businessRoleId = "frontend";
 
     const result = checkCapabilityNodeBindings(state);
-    assert.equal(result.met, false);
-    assert.ok(result.missing.includes("workerTaskPackets[0].agentBlueprintRoleBinding"));
+    assert.equal(result.met, true);
   });
 
-  test("blocks Execution when worker task work order evidence is incomplete", () => {
+  test("does not hard-block Execution on optional worker work-order fields", () => {
     const state = {
       ...createInitialState({
         taskClassification: "meta_theory_auto",
@@ -1341,10 +1346,69 @@ describe("Part F2: choice surface runtime gate", async () => {
     delete state.workerTaskPackets[0].workType;
 
     const result = checkCapabilityNodeBindings(state);
+    assert.equal(result.met, true);
+  });
+
+  test("blocks Execution when candidates exist but owner loadout is not selected", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      ...minimalNodeBindings(),
+    };
+    delete state.workerTaskPackets[0].capabilityRequirements;
+    delete state.workerTaskPackets[0].toolRequirements;
+    delete state.workerTaskPackets[0].skillRequirements;
+    delete state.workerTaskPackets[0].commandRequirements;
+    delete state.workerTaskPackets[0].mcpRequirements;
+    delete state.workerTaskPackets[0].abstractPrompt;
+    delete state.workerTaskPackets[0].promptRef;
+    delete state.workerTaskPackets[0].weapon;
+    delete state.agentBlueprintPacket.roles[0].matchedSkills;
+    delete state.agentBlueprintPacket.roles[0].matchedCapabilities;
+    delete state.agentBlueprintPacket.roles[0].capabilityBindings;
+
+    const result = checkCapabilityNodeBindings(state);
     assert.equal(result.met, false);
-    assert.ok(result.missing.includes("workerTaskPackets[0].evidenceRefs"));
-    assert.ok(result.missing.includes("workerTaskPackets[0].handoffContract"));
-    assert.ok(result.missing.includes("workerTaskPackets[0].workType"));
+    assert.ok(
+      result.missing.includes(
+        "owner loadout (skill, command, MCP, tool, or abstract prompt)",
+      ),
+    );
+  });
+
+  test("blocks Execution when Review standard is missing", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      ...minimalNodeBindings(),
+    };
+    delete state.workerTaskPackets[0].qualityBar;
+    delete state.workerTaskPackets[0].finalizationGate;
+    delete state.workerTaskPackets[0].handoffTarget;
+    delete state.workerTaskPackets[0].handoffContract;
+
+    const result = checkCapabilityNodeBindings(state);
+    assert.equal(result.met, false);
+    assert.ok(result.missing.includes("Review standard"));
+  });
+
+  test("blocks Execution when runtime or OS support is known unsupported", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      ...minimalNodeBindings(),
+      runtimeSupportStatus: "known_unsupported",
+    };
+
+    const result = checkCapabilityNodeBindings(state);
+    assert.equal(result.met, false);
+    assert.ok(result.missing.includes("runtime/OS support not known-unsupported"));
   });
 
   test("Critical stage allows read-only worktree inspection before editing", () => {
@@ -1957,7 +2021,7 @@ describe("Part F2: choice surface runtime gate", async () => {
     assert.match(hook, /Capability node binding violation/);
   });
 
-  test("Agent hook denies execution dispatch without node bindings", () => {
+  test("Agent hook denies execution dispatch when key intent evidence is missing", () => {
     const state = {
       ...createInitialState({
         taskClassification: "meta_theory_auto",
@@ -1974,6 +2038,7 @@ describe("Part F2: choice surface runtime gate", async () => {
       },
       choiceSurfaceState: "completed",
     };
+    delete state.intentPacket;
 
     const result = runEnforceHook(state, {
       tool_name: "Agent",
@@ -1984,10 +2049,10 @@ describe("Part F2: choice surface runtime gate", async () => {
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /Capability node binding violation/);
+    assert.match(result.stdout, /pre-execution readiness|key behavior evidence/i);
   });
 
-  test("Agent hook denies execution dispatch with incomplete worker work order", () => {
+  test("Agent hook allows dispatch with incomplete optional worker work-order fields", () => {
     const state = {
       ...createInitialState({
         taskClassification: "meta_theory_auto",
@@ -2009,10 +2074,7 @@ describe("Part F2: choice surface runtime gate", async () => {
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /Capability node binding violation/);
-    assert.match(result.stdout, /workerTaskPackets\[0\]\.evidenceRefs/);
-    assert.match(result.stdout, /workerTaskPackets\[0\]\.handoffContract/);
-    assert.match(result.stdout, /workerTaskPackets\[0\]\.workType/);
+    assert.doesNotMatch(result.stdout, /permissionDecision/);
   });
 
   test("spawn_agent hook denies execution dispatch before capability search", () => {
@@ -2052,6 +2114,8 @@ describe("Part F2: choice surface runtime gate", async () => {
       },
       choiceSurfaceState: "completed",
     };
+    delete state.memoryMode;
+    delete state.fetchRecord.memoryStrategy;
 
     const result = runEnforceHook(state, {
       tool_name: "spawn_agent",
@@ -2092,7 +2156,7 @@ describe("Part F2: choice surface runtime gate", async () => {
     assert.doesNotMatch(result.stdout, /permissionDecision/);
   });
 
-  test("apply_patch hook is treated as an execution tool", () => {
+  test("apply_patch hook is treated as an execution tool without exhaustive packet blocking", () => {
     const state = {
       ...createInitialState({
         taskClassification: "meta_theory_auto",
@@ -2118,7 +2182,7 @@ describe("Part F2: choice surface runtime gate", async () => {
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /Capability node binding violation/);
+    assert.doesNotMatch(result.stdout, /permissionDecision/);
   });
 
   test("Cursor deny path exits with code 2 and Cursor payload", () => {
@@ -2149,7 +2213,7 @@ describe("Part F2: choice surface runtime gate", async () => {
     assert.match(result.stderr, /Capability-first violation/);
   });
 
-  test("Agent hook denies execution dispatch that omits task node id", () => {
+  test("Agent hook allows single-worker dispatch that omits task node id", () => {
     const state = {
       ...createInitialState({
         taskClassification: "meta_theory_auto",
@@ -2168,7 +2232,7 @@ describe("Part F2: choice surface runtime gate", async () => {
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /must cite a workerTaskPackets/);
+    assert.doesNotMatch(result.stdout, /permissionDecision/);
   });
 
   test("Agent hook allows execution dispatch with matching task node id", () => {

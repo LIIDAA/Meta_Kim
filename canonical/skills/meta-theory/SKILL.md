@@ -107,8 +107,7 @@ Dispatch to `meta-prism` and `meta-warden`; optional `meta-scout`, `meta-sentine
 Dispatch to `meta-conductor` for business-flow blueprint and parallel lane orchestration, then `meta-warden` for synthesis. Thinking to Execution may use `agent-teams-playbook` only when there are 2+ independent parallel worker lanes / two or more parallel worker lane candidates. Independent sub-tasks must be parallelized when safe; avoid fake parallelism.
 
 ## Dispatch Self-Check
-
-Before Stage 4, record Protocol-first Dispatch: `runHeader`, `dispatchBoard`, `businessFlowBlueprintPacket`, `agentBlueprintPacket`, `ownerDiscoveryPacket`, and `workerTaskPackets`. Stage 4 may not start before protocol artifacts are ready. `agentInvocationState`: `idle -> discovered -> matched -> dispatched -> returned/escalated`. `workerTaskPackets` must include `dependsOn`, `parallelGroup`, and `mergeOwner`. `ownerDiscoveryPacket` must list repo canonical owners, runtime mirror owners, project runtime agents, local global agents, reusable skill/command/hook/rule/prompt/MCP/plugin/tool providers, and the Critical / Fetch / Thinking / Review governance-stage owners checked before any create or upgrade decision. Option Exploration is MANDATORY in Stage 3: compare ≥2 solution paths with Pros / Cons or Decision Record and rejected alternatives. Apply Skip-Level Self-Reflection Gate and Escalation Signals before dispatch.
+Before Stage 4, record the minimum Protocol-first Dispatch evidence: intent, Fetch evidence, a Thinking route, selected owner, owner loadout, memory strategy, and Review standard. Preferred artifacts are `runHeader`, `dispatchBoard`, `businessFlowBlueprintPacket`, `agentBlueprintPacket`, `ownerDiscoveryPacket`, and `workerTaskPackets`, but hooks must not require every optional field before useful work can continue. `agentInvocationState`: `idle -> discovered -> matched -> dispatched -> returned/escalated`. `workerTaskPackets` should include `dependsOn`, `parallelGroup`, and `mergeOwner` when the task has multiple lanes; single-lane work may record a compact task node. `ownerDiscoveryPacket` should list repo canonical owners, runtime mirror owners, project runtime agents, local global agents, reusable skill/command/hook/rule/prompt/MCP/plugin/tool providers, and the Critical / Fetch / Thinking / Review governance-stage owners checked before any create or upgrade decision. Option Exploration is MANDATORY when materially different paths exist: compare ≥2 solution paths with Pros / Cons or Decision Record, or record `no_branching_choice` with evidence. Apply Skip-Level Self-Reflection Gate and Escalation Signals before dispatch.
 
 ## Fetch Evidence Inventory
 
@@ -212,16 +211,17 @@ Dependencies are retained and routed by state, not deleted by score.
 
 ## Execution gate
 
-Execution may start only when all are true (or degraded mode is explicitly active with recorded degradation reason):
+Execution may start only when the key behavior gate is true (or degraded mode is explicitly active with recorded degradation reason). Hooks enforce this minimum; fuller packet shape is validated by validators and Review:
 
 - `realIntent`, success criteria, non-goals, and blocking unknowns are recorded.
 - Fetch evidence and capability discovery are complete enough for the chosen path.
-- Existing-owner discovery has checked repo canonical index, runtime mirrors, project runtime agents, local global agent inventory, and available skill/command/hook/rule/prompt/MCP/plugin/tool providers; skipped sources must appear as blockers or no-impact evidence.
-- Route score is `>=85`, or a branch-changing user choice accepts a `70-84` route.
+- Existing-owner discovery has checked enough available agents, skills, commands, MCP tools, runtime tools, and prompt/rule providers to justify the selected owner/loadout; skipped sources appear as blockers or no-impact evidence.
+- Route score is `>=85`, or a branch-changing user choice accepts a `70-84` route; simple single-path work may record `no_branching_choice`.
 - Owner is not `general-purpose`, not a runtime alias, and not a governance agent acting as implementation worker.
-- Weapon is callable and compatible with target runtime and OS.
-- Dependency is not `reference_only`, not `external_reference`, not missing invocation path, and not missing verification method when used for execution.
-- Verification owner, verification method, rollback/risk boundary, and expected evidence are known.
+- Owner has a usable loadout: skill, command, MCP capability, runtime tool, normal tool, or abstract prompt.
+- Runtime/OS support is not known-unsupported; unknown or partial support is recorded with a probe/degraded route.
+- Memory strategy exists (`project_only`, `cross_project_readonly`, `none-with-reason`, or equivalent).
+- Review standard is known. Verification owner, rollback, dependency eligibility, and detailed packet fields are required for public-ready, not as universal hook blockers.
 
 Worker output schema validation: when `workerTaskPacket.output` defines an expected structure, the dispatcher (or receiving agent) must validate the worker result against that structure before accepting it. On mismatch, the worker retries (up to 2 attempts) before reporting failure. Record `workerResultPacket.schemaValidationAttempts = [{attempt, passed, violationDetail}]`. This prevents format drift between Thinking's output contract and Execution's actual return.
 
@@ -295,7 +295,7 @@ Low-score, unknown, partial, uninstalled, external, high-risk, or reference-only
 
 ## No Hook loop
 
-Hooks are last-resort fuses, not the main governance engine. Execution must pass preflight before mutation: intent, evidence, capability discovery, runtime, OS, owner, weapon, dependency route eligibility, verification owner, rollback path, warning classification, and reserved writeback decision. A Hook block must include `returnToStage`, `repairOwner`, `repairAction`, `allowedNextAction`, and `forbiddenRetry`. The same Hook reason may block once; the second same-reason block enters `hookRepairMode`; a third same-hook block stops Execution and creates `hookFailurePacket`. Never retry the same blocked action unchanged.
+Hooks are last-resort fuses, not the main governance engine. Execution must pass the key behavior preflight before mutation: intent, evidence, capability discovery, runtime/OS not known-unsupported, owner, owner loadout across skill/command/MCP/tool/prompt, memory strategy, and Review standard. Detailed dependency eligibility, rollback, verification owner, warning classification, and writeback reservation are validator/public-ready gates unless their absence makes execution unsafe. A Hook block must include `returnToStage`, `repairOwner`, `repairAction`, `allowedNextAction`, and `forbiddenRetry`. The same Hook reason may block once; the second same-reason block enters `hookRepairMode`; a third same-hook block stops Execution and creates `hookFailurePacket`. Never retry the same blocked action unchanged.
 
 ## Degraded Mode
 

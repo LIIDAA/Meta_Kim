@@ -64,7 +64,9 @@ Respect user choices (after questioning). Base the analysis on the user's actual
 
 ## Hook progression
 
-Codex hooks are the last fuse after preflight. Before mutation, Conductor must confirm the route has real intent, Fetch evidence, owner, weapon, runtime, OS, dependency eligibility, verification owner, verification method, rollback path, warning classification, and writeback decision reservation. Hook output that blocks an action must name `returnToStage`, `repairOwner`, `repairAction`, `allowedNextAction`, and `forbiddenRetry`.
+Codex hooks are the last fuse after preflight. Current Codex documentation describes project hooks as trusted lifecycle guardrails loaded from hook/config layers, including managed/plugin/project sources and Windows-specific command variants. Do not treat them as an exhaustive all-tool policy engine.
+
+Before mutation, Conductor must confirm the route has the key behavior minimum: real intent, success criteria, Fetch evidence, capability discovery, selected owner, owner loadout across agent/skill/command/MCP/tool/abstract prompt, runtime/OS not known-unsupported, memory strategy, and Review standard. Hook output that blocks an action must name `returnToStage`, `repairOwner`, `repairAction`, `allowedNextAction`, and `forbiddenRetry`. Detailed rollback, dependency, warning, writeback, and verification-owner fields are public-ready/validator gates unless their absence makes the action unsafe.
 
 `hookRepairMode` starts on the second same-reason block. It reads the hook output, fixes the missing packet or stage design, and retries only with a changed action. The same blocked action must not be retried unchanged. A third same-hook block stops Execution, emits `hookFailurePacket`, and blocks public-ready.
 

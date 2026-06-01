@@ -6,6 +6,38 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.8.2] - 2026-06-02
+
+### 修复
+
+- **降低 Hook 死锁压力** — 运行时 hooks 现在只作为关键行为的最后保险丝：真实意图、Fetch/能力发现、已选择 owner、owner 对应的 agent/skill/command/MCP/tool/prompt loadout、记忆策略、运行时/OS 支持，以及不安全的 meta-agent mutation。
+- **可选 packet 字段不再硬阻断执行** — Worker packet 细节、rollback 字段、verification owner 细节、warning classification 和 writeback reservation 仍由 validator / Review / public-ready gate 检查，不再作为所有 hook 的通用硬拦截条件。
+- **放宽单 worker 调度追踪** — 单 worker 路径不再因为缺少 `taskPacketId` 或 `roleInstanceId` 直接 hard deny；多 worker 场景会提醒 Review 检查追踪性，而不是造成 hook 卡死。
+- **Codex Windows 更新路径不再恢复 macOS 通知命令** — `setup.mjs --update` 和全局同步现在会在 Windows 上把继承来的 Codex `terminal-notifier` `notify` 命令替换为 Windows-safe no-op notifier，避免已安装用户重新遇到 `legacy_notify program not found`。
+- **可选 Codex 原生插件错误更安静** — `codex plugin add superpowers@openai-curated` 失败现在只输出一条可选 warning，不再在更新过程中泄漏原始 marketplace/cache 错误。
+- **技能更新 fallback 不再吓人** — managed skill 的 `git pull --ff-only` 如果马上会被 re-clone fallback 修复，现在不会先打印原始 git error 再走成功 fallback。
+
+### 变更
+
+- **澄清 meta-theory 执行门** — `Critical -> Fetch -> Thinking -> Execution -> Review` 现在重点检查任务是否想清楚、是否存在匹配 owner/provider/loadout、以及记忆策略是否明确。
+- **统一跨运行时 hook 表述** — Claude Code、Codex、Cursor、OpenClaw 文档现在如实描述 hook 覆盖范围，包括 Codex hook 的版本依赖，以及 OpenClaw 在 typed plugin adapter 安装前仍以声明式 enforcement 为主。
+- **拆分 Hook progression policy** — `requiredPreflightChecks` 只保留关键行为最低集合；详细完整性移到 `optionalValidatorChecks`。
+- 版本升级：2.8.1 -> 2.8.2。
+
+### 升级说明
+
+- 已 clone 安装的用户应先用 `git pull --ff-only` 更新源码，再运行 `node setup.mjs --update` 或 `npm run meta:sync:global` 刷新已安装投影。
+- `node setup.mjs --update` 只刷新当前安装的 projections 和依赖；它不会自动拉取新的 Meta_Kim 源码。
+- 项目本地用户拉取后如需重新生成 `.claude`、`.codex`、`.cursor` 和 OpenClaw mirrors，请运行 `npm run meta:sync`。
+
+### 验证
+
+- `npm run meta:verify:all` — 通过
+- `npm run meta:verify:governance` — 通过
+- `npm run meta:check` — 通过
+- `npm run meta:graphify:rebuild` / `npm run meta:graphify:check` — 通过
+- `git diff --check` — 通过
+
 ## [2.8.1] - 2026-06-02
 
 ### 修复

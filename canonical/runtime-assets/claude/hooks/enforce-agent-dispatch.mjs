@@ -2,15 +2,16 @@
  * enforce-agent-dispatch.mjs — Meta_Kim Spine PreToolUse guard.
  *
  * Responsibilities:
- *   1. Spine-active runs: gate execution tools until the right meta-agents have
- *      been dispatched per stage requirements.
+ *   1. Spine-active runs: gate execution tools only on key behavior evidence:
+ *      intent, Fetch evidence, Thinking route/loadout, and memory strategy.
  *   2. Meta-agent readonly enforcement: even when spine is inactive (or skipped),
  *      a caller identified as a meta-* agent must not directly mutate the
  *      workspace via Edit / Write / MultiEdit / NotebookEdit / Bash. They must
  *      dispatch down to an execution worker instead.
  *   3. Capability-first gate: Agent dispatches at or after the execution stage
- *      require a prior capability search recorded in spine state. Forces the
- *      capability-first discovery contract instead of hardcoded agent names.
+ *      require a prior capability search recorded in spine state. This keeps
+ *      capability-first discovery without requiring every optional packet
+ *      field to be complete inside the hook.
  *   4. Read-only inspection fast-path (EB-002, v2.3.1): during Critical /
  *      Fetch / Review / Meta-Review / Verification stages, Bash commands that
  *      match the stage's read-only whitelist can bypass the stage-requirements
@@ -841,11 +842,12 @@ if (isAgentDispatchTool(toolName)) {
           packet?.taskPacketId && dispatchText.includes(packet.taskPacketId) ||
           packet?.roleInstanceId && dispatchText.includes(packet.roleInstanceId),
       );
-      if (!matchedTaskPacket) {
-        exitAfterDeny(
-          "Capability node binding violation: Agent dispatch in execution or later " +
-            "must cite a workerTaskPackets[].taskPacketId or roleInstanceId so the " +
-            "dispatch can be traced to a capability-matched task node.",
+      if (!matchedTaskPacket && (state?.workerTaskPackets || []).length > 1) {
+        process.stderr.write(
+          "\n[Meta_Kim capability-gate:warn] Agent dispatch did not cite a " +
+            "workerTaskPackets taskPacketId or roleInstanceId. Multiple worker " +
+            "nodes exist, so Review should verify traceability, but the hook " +
+            "will not block when minimum owner/loadout evidence is present.\n",
         );
       }
 
@@ -856,6 +858,7 @@ if (isAgentDispatchTool(toolName)) {
         toolInput?.type ||
         "";
       if (
+        matchedTaskPacket &&
         typeof dispatchTarget === "string" &&
         dispatchTarget.startsWith("meta-") &&
         matchedTaskPacket.ownerAgent !== dispatchTarget
@@ -1051,11 +1054,15 @@ if (isExecutionTool(toolName)) {
     );
   }
 
-  // Execution stage: require at least one agent dispatch
+  // Execution stage: the hard gate is capability-bound owner/loadout evidence,
+  // already checked above by checkCapabilityNodeBindings. Do not also require
+  // the host to have emitted a prior Agent dispatch event; Codex/Cursor/OpenClaw
+  // hook coverage and delegation surfaces differ by runtime and OS.
   if (stage === "execution" && state.dispatchedAgents.length === 0) {
-    exitAfterDeny(
-      "Execution stage requires at least one agent dispatch via Agent tool. " +
-        "Dispatch a specialist first. Violation: self-execution without delegation.",
+    process.stderr.write(
+      "\n[Meta_Kim dispatch:warn] Execution has no recorded Agent dispatch yet. " +
+        "Continuing because minimum owner/loadout evidence is present; Review " +
+        "must confirm the work did not collapse into an unbounded self-execution.\n",
     );
   }
 

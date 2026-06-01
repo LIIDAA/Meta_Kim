@@ -74,13 +74,13 @@ Critical -> Fetch -> Thinking -> Execution -> Review -> Meta-Review -> Verificat
 
 ## STAGE 4: Execution
 
-Execution dispatches from Thinking artifacts: `agentBlueprintPacket`, `dispatchEnvelopePacket`, `dispatchBoard`, and `workerTaskPackets`. Selected capabilities may be agents, skills, commands, MCP capabilities, runtime tools, or file-set capabilities. Execution is multi-agent when the task has independent lanes.
+Execution dispatches from Thinking artifacts: `agentBlueprintPacket`, `dispatchEnvelopePacket`, `dispatchBoard`, and `workerTaskPackets` when they are available. Hooks enforce only the key behavior minimum: intent, Fetch evidence, capability discovery, selected owner, owner loadout, runtime/OS not known-unsupported, memory strategy, and Review standard. Selected capabilities may be agents, skills, commands, MCP capabilities, runtime tools, abstract prompts, or file-set capabilities. Execution is multi-agent when the task has independent lanes.
 
 Stage transitions:
 
 - Critical -> Fetch after intent, scope, non-goals, permissions, and task classification are clear. When user input is wishful or ambiguous, Critical and Fetch form a bounded loop: Critical does initial intent translation, Fetch reads project context to fill gaps, then Critical updates the intent with context-enriched understanding. The loop repeats adaptively up to `criticalFetchLoopMax` (default 3). Exit requires an IntentCard confirmation by the user (or an allowed skip with recorded reason). See `spine-state.md` Critical-Fetch Intent Loop for full field definitions.
 - Fetch -> Thinking after decision-grade evidence, capability discovery, and contradictions are recorded.
-- Thinking -> Execution after option exploration, pre-decision frame, user choice or allowed skip, dispatch board, and worker task packets.
+- Thinking -> Execution after option exploration or `no_branching_choice`, owner/loadout selection, memory strategy, and enough dispatch evidence to execute. Full packet shape is validated by validators and Review; hooks must not block merely because optional fields are absent.
 - Review -> Meta-Review -> Verification when risk or review quality needs a standard check.
 - Evolution is final and cannot precede Verification.
 

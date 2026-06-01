@@ -22,6 +22,7 @@ import {
 } from "./meta-kim-sync-config.mjs";
 import {
   CODEX_REQUEST_USER_INPUT_FEATURE,
+  ensureCodexWindowsNotifyCompat,
   ensureCodexRequestUserInputFeature,
   hasCodexRequestUserInputFeature,
 } from "./codex-config-merge.mjs";
@@ -233,7 +234,9 @@ async function ensureCodexGlobalConfigChoiceSurface() {
   const prev = (await pathExists(configPath))
     ? await fs.readFile(configPath, "utf8")
     : "";
-  const next = ensureCodexRequestUserInputFeature(prev);
+  const next = ensureCodexWindowsNotifyCompat(
+    ensureCodexRequestUserInputFeature(prev),
+  );
 
   if (prev === next) {
     console.log(
@@ -251,11 +254,15 @@ async function ensureCodexGlobalConfigChoiceSurface() {
 
   await fs.writeFile(configPath, next, "utf8");
   recordSafe((rec) =>
-    rec.recordSettingsMerge(configPath, [CODEX_REQUEST_USER_INPUT_FEATURE], {
-      source: "sync-global-meta-theory",
-      purpose: "codex-global-config-choice-surface",
-      category: CATEGORIES.C,
-    }),
+    rec.recordSettingsMerge(
+      configPath,
+      [CODEX_REQUEST_USER_INPUT_FEATURE, "notify"],
+      {
+        source: "sync-global-meta-theory",
+        purpose: "codex-global-config-choice-surface",
+        category: CATEGORIES.C,
+      },
+    ),
   );
   console.log(
     `${C.green}✓${C.reset} ${C.dim}Enabled Codex ${CODEX_REQUEST_USER_INPUT_FEATURE}: ${configPath}${C.reset}`,

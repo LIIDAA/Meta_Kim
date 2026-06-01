@@ -6,6 +6,38 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.8.2] - 2026-06-02
+
+### Fixed
+
+- **Hook deadlock pressure reduced** — Runtime hooks now act as last-resort fuses for key behavior only: real intent, Fetch/capability discovery, selected owner, owner loadout across agent/skill/command/MCP/tool/prompt, memory strategy, runtime/OS support, and unsafe meta-agent mutation.
+- **Optional packet fields no longer hard-block execution** — Worker packet detail, rollback fields, verification-owner detail, warning classification, and writeback reservation remain validator / Review / public-ready concerns instead of universal hook blockers.
+- **Single-worker dispatch trace relaxed** — Agent dispatch no longer hard-denies a single worker path just because `taskPacketId` or `roleInstanceId` is absent. Multi-worker ambiguity is warned for Review instead of causing hook lockup.
+- **Codex Windows update path no longer restores macOS notifications** — `setup.mjs --update` and global sync now replace an inherited `terminal-notifier` Codex `notify` command with a Windows-safe no-op notifier on Windows, preventing installed users from reintroducing `legacy_notify program not found`.
+- **Optional Codex native plugin errors are quieter** — failed `codex plugin add superpowers@openai-curated` attempts are now reported as a single optional warning instead of leaking raw marketplace/cache errors during update.
+- **Skill update fallback is less alarming** — managed skill `git pull --ff-only` failures that are immediately repaired by re-clone fallback no longer print raw git errors before the successful fallback path.
+
+### Changed
+
+- **Meta-theory execution gate clarified** — `Critical -> Fetch -> Thinking -> Execution -> Review` now emphasizes whether the task is understood, whether a matching owner/provider/loadout exists, and whether memory strategy is explicit.
+- **Cross-runtime hook wording aligned** — Claude Code, Codex, Cursor, and OpenClaw docs now describe hook coverage honestly, including Codex version-dependent hook coverage and OpenClaw's declarative enforcement until a typed plugin adapter exists.
+- **Hook progression policy split** — `requiredPreflightChecks` now covers the minimum key behavior set; detailed completeness moved to `optionalValidatorChecks`.
+- Version bump: 2.8.1 -> 2.8.2.
+
+### Upgrade Notes
+
+- Existing clone installs should update source first with `git pull --ff-only`, then refresh installed projections with `node setup.mjs --update` or `npm run meta:sync:global`.
+- `node setup.mjs --update` refreshes the current installation projections and dependencies; it does not pull new Meta_Kim source code by itself.
+- Project-local users should run `npm run meta:sync` after pulling if they need `.claude`, `.codex`, `.cursor`, and OpenClaw mirrors regenerated from canonical sources.
+
+### Verification
+
+- `npm run meta:verify:all` — passed
+- `npm run meta:verify:governance` — passed
+- `npm run meta:check` — passed
+- `npm run meta:graphify:rebuild` / `npm run meta:graphify:check` — passed
+- `git diff --check` — passed
+
 ## [2.8.1] - 2026-06-02
 
 ### Fixed
