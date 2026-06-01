@@ -1565,6 +1565,60 @@ describe("Part F2: choice surface runtime gate", async () => {
     assert.match(mutation.stdout, /permissionDecision/);
   });
 
+  test("queryBypass allows spine-state writes without allowing business-file writes", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "fetch",
+      queryBypass: true,
+    };
+
+    const spineWrite = runEnforceHook(state, {
+      tool_name: "Write",
+      tool_input: {
+        file_path: ".meta-kim/state/test/spine/spine-state.json",
+        content: JSON.stringify({ ...state, queryBypass: false }, null, 2),
+      },
+    });
+    assert.equal(spineWrite.status, 0);
+    assert.doesNotMatch(spineWrite.stdout, /permissionDecision/);
+
+    const businessWrite = runEnforceHook(state, {
+      tool_name: "Write",
+      tool_input: {
+        file_path: "src/main.go",
+        content: "package main\n",
+      },
+    });
+    assert.equal(businessWrite.status, 0);
+    assert.match(businessWrite.stdout, /permissionDecision/);
+  });
+
+  test("simpleMode residue in spine state cannot skip dispatch governance", () => {
+    const state = {
+      ...createInitialState({
+        taskClassification: "meta_theory_auto",
+        triggerReason: "test",
+      }),
+      currentStage: "execution",
+      simpleMode: true,
+    };
+
+    const result = runEnforceHook(state, {
+      tool_name: "Write",
+      tool_input: {
+        file_path: "src/main.go",
+        content: "package main\n",
+      },
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /permissionDecision/);
+    assert.doesNotMatch(result.stderr, /Simple mode enabled|simple_mode/i);
+  });
+
   test("rejects vague choiceGateSkip objects as non-decisions", () => {
     const state = {
       ...createInitialState({
