@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-01T11:18:13.389Z",
+  "generatedAt": "2026-06-01T13:07:00.236Z",
   "registryName": "meta-kim-capabilities",
   "scope": "repo-canonical",
   "canonicalProjection": "config/capability-index/meta-kim-capabilities.json",
@@ -20,7 +20,7 @@
   "summary": {
     "totalAgents": 9,
     "totalSkills": 15,
-    "totalHooks": 23,
+    "totalHooks": 22,
     "totalMcpServers": 1,
     "totalMcpTools": 3,
     "totalPlugins": 0,
@@ -207,8 +207,8 @@
         "type": "skills",
         "namespace": "canonical",
         "path": "canonical/skills/meta-theory/SKILL.md",
-        "size": 26990,
-        "modified": "2026-06-01T11:17:19.970Z"
+        "size": 29137,
+        "modified": "2026-06-01T12:11:11.158Z"
       },
       "repo:canonical-reference:create-agent": {
         "id": "create-agent",
@@ -297,8 +297,8 @@
         "namespace": "canonical-reference",
         "path": "canonical/skills/meta-theory/references/runtime-claude.md",
         "relativePath": "runtime-claude.md",
-        "size": 4061,
-        "modified": "2026-06-01T11:15:27.314Z"
+        "size": 7713,
+        "modified": "2026-06-01T11:43:40.313Z"
       },
       "repo:canonical-reference:runtime-codex": {
         "id": "runtime-codex",
@@ -425,8 +425,8 @@
         "namespace": "canonical-runtime-assets",
         "path": "canonical/runtime-assets/claude/hooks/enforce-agent-dispatch.mjs",
         "relativePath": "enforce-agent-dispatch.mjs",
-        "size": 38142,
-        "modified": "2026-06-01T09:44:13.541Z"
+        "size": 38409,
+        "modified": "2026-06-01T11:38:35.615Z"
       },
       "repo:canonical-runtime-assets:post-console-log-warn.mjs": {
         "id": "post-console-log-warn.mjs",
@@ -454,15 +454,6 @@
         "relativePath": "post-typecheck.mjs",
         "size": 947,
         "modified": "2026-04-18T14:43:54.623Z"
-      },
-      "repo:canonical-runtime-assets:pre-git-push-confirm.mjs": {
-        "id": "pre-git-push-confirm.mjs",
-        "type": "hooks",
-        "namespace": "canonical-runtime-assets",
-        "path": "canonical/runtime-assets/claude/hooks/pre-git-push-confirm.mjs",
-        "relativePath": "pre-git-push-confirm.mjs",
-        "size": 839,
-        "modified": "2026-04-18T14:43:54.818Z"
       },
       "repo:canonical-runtime-assets:stop-compaction.mjs": {
         "id": "stop-compaction.mjs",

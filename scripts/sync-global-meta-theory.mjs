@@ -11,6 +11,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import {
   buildMetaKimHooksTemplate,
+  isRetiredMetaKimHookCommand,
   mergeGlobalMetaKimHooksIntoSettings,
 } from "./claude-settings-merge.mjs";
 import {
@@ -63,6 +64,7 @@ const withGlobalHooks =
 const cliArgs = process.argv.slice(2);
 
 const repoHooksDir = path.join(canonicalRuntimeAssetsDir, "claude", "hooks");
+const RETIRED_HOOK_FILES = ["pre-git-push-confirm.mjs"];
 const codexMetaTheoryCommandSource = path.join(
   canonicalRuntimeAssetsDir,
   "codex",
@@ -283,6 +285,25 @@ async function copyCanonicalHooksToGlobal() {
   await fs.mkdir(path.dirname(dest), { recursive: true });
   await fs.rm(dest, { recursive: true, force: true });
   await fs.cp(repoHooksDir, dest, { recursive: true, force: true });
+
+  // Cleanup hooks removed from canonical but still present in older installs.
+  for (const retired of RETIRED_HOOK_FILES) {
+    const retiredPath = path.join(dest, retired);
+    assertHomeBound(retiredPath);
+    if (await pathExists(retiredPath)) {
+      await fs.rm(retiredPath, { force: true });
+    }
+  }
+  // Also cleanup top-level global hooks dir (pre-meta-kim-subdir layout)
+  const topHooksDir = path.dirname(dest);
+  for (const retired of RETIRED_HOOK_FILES) {
+    const topPath = path.join(topHooksDir, retired);
+    assertHomeBound(topPath);
+    if (await pathExists(topPath)) {
+      await fs.rm(topPath, { force: true });
+    }
+  }
+
   recordSafe((rec) =>
     rec.recordDir(dest, {
       source: "sync-global-meta-theory",
@@ -350,6 +371,7 @@ async function syncClaudeGlobalSettingsHooks() {
   }
 
   const merged = mergeGlobalMetaKimHooksIntoSettings(base, template);
+  stripRetiredGlobalHookEntries(merged);
   const out = `${JSON.stringify(merged, null, 2)}\n`;
   const prev = (await pathExists(settingsPath))
     ? await fs.readFile(settingsPath, "utf8")
@@ -373,6 +395,28 @@ async function syncClaudeGlobalSettingsHooks() {
   await fs.writeFile(settingsPath, out, "utf8");
   console.log(`Merged Meta_Kim hooks into ${settingsPath}`);
   recordSettingsMerge();
+}
+
+function stripRetiredGlobalHookEntries(settings) {
+  if (!settings.hooks || typeof settings.hooks !== "object") {
+    return;
+  }
+  for (const [event, blocks] of Object.entries(settings.hooks)) {
+    const keptBlocks = [];
+    for (const block of blocks ?? []) {
+      const hooks = (block.hooks ?? []).filter(
+        (hook) => !isRetiredMetaKimHookCommand(hook.command ?? ""),
+      );
+      if (hooks.length > 0) {
+        keptBlocks.push({ ...block, hooks });
+      }
+    }
+    if (keptBlocks.length > 0) {
+      settings.hooks[event] = keptBlocks;
+    } else {
+      delete settings.hooks[event];
+    }
+  }
 }
 
 async function runCheck() {

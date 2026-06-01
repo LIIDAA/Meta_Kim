@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   buildMetaKimHooksTemplate,
   hookCommandNode,
+  mergeGlobalMetaKimHooksIntoSettings,
   mergeRepoClaudeSettings,
   rewriteRepoHookCommandsToAbsolute,
 } from "../../scripts/claude-settings-merge.mjs";
@@ -23,6 +24,50 @@ describe("Claude settings hook command rendering", () => {
     const command = template.Stop[0].hooks[0].command;
 
     assert.equal(command, 'node "C:/Users/Example/.claude/hooks/meta-kim/stop-compaction.mjs"');
+    const commands = Object.values(template)
+      .flatMap((blocks) => blocks.flatMap((block) => block.hooks ?? []))
+      .map((hook) => hook.command);
+    assert.equal(
+      commands.some((entry) => entry.includes("pre-git-push-confirm.mjs")),
+      false,
+    );
+  });
+
+  test("global settings merge strips retired git push confirmation hooks", () => {
+    const base = {
+      hooks: {
+        PreToolUse: [
+          {
+            matcher: "Bash",
+            hooks: [
+              {
+                type: "command",
+                command:
+                  'node "C:/Users/Example/.claude/hooks/pre-git-push-confirm.mjs"',
+              },
+              {
+                type: "command",
+                command: 'node "C:/Users/Example/.claude/hooks/custom.mjs"',
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const template = buildMetaKimHooksTemplate(
+      "C:\\Users\\Example\\.claude\\hooks\\meta-kim",
+    );
+
+    const merged = mergeGlobalMetaKimHooksIntoSettings(base, template);
+    const commands = Object.values(merged.hooks)
+      .flatMap((blocks) => blocks.flatMap((block) => block.hooks ?? []))
+      .map((hook) => hook.command);
+
+    assert.equal(
+      commands.some((entry) => entry.includes("pre-git-push-confirm.mjs")),
+      false,
+    );
+    assert.ok(commands.includes('node "C:/Users/Example/.claude/hooks/custom.mjs"'));
   });
 
   test("repo hook rewrite keeps Windows absolute paths shell portable", () => {
