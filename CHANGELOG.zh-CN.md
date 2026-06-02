@@ -6,6 +6,31 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.8.4] - 2026-06-02
+
+### 新增
+
+- **默认能力发现 smoke** — 新增 `npm run meta:capabilities:smoke`，用于证明真实执行需求会自然选择执行 owner、agent provider、agent creation provider、skill discovery / creation provider、MCP provider、command/runtime tool 和 verification path。
+- **OpenClaw live 分片能力** — live meta-agent 评估支持 `--agent=<id[,id]>`，长时间 Claude/OpenClaw live 检查可以分片恢复、定位问题。
+
+### 修复
+
+- **Execution routing 在进入执行前绑定真实 provider** — 工程执行路线现在必须具备执行级 owner / provider / verification 绑定，不能主要依赖 validator 或 gate 在后面兜空路线。
+- **OpenClaw live evaluation 继承主配置 provider/model** — OpenClaw smoke 直接读取主 OpenClaw 配置；live Meta_Kim agent 检查会把主配置 provider/model 定义合并进临时 project-agent config，让项目 agent 使用与用户 OpenClaw 安装一致的 provider 表面。
+- **加固 live evaluator 解析和恢复** — Claude/OpenClaw 结构化 payload 解析现在支持嵌套 JSON 文本、OpenClaw session JSONL 恢复、子进程清理，以及不降低阈值的边界表达同义词覆盖。
+- **OpenClaw auth hydration 更稳** — 当 `main/agent` auth 缺失时，本地 OpenClaw meta-agent auth 可以从已有可用 meta-agent auth 来源补齐，并避免覆盖已经可用的 agent auth 文件。
+
+### 验证
+
+- `npm run meta:capabilities:smoke` — 通过
+- `npm run meta:test:governance` — 通过
+- `npm run meta:providers:validate` — 24 providers，0 errors，0 warnings
+- `node scripts/validate-provider-capabilities.mjs --strict-global-hooks` — 24 providers，0 errors，0 warnings
+- `npm run meta:verify:all` — Claude/Codex/OpenClaw smoke 通过，880/880 tests 通过
+- `npm run meta:verify:all:live` — Claude、Codex、OpenClaw 的 live-only evaluator gate
+- `npm audit --audit-level=high --registry=https://registry.npmjs.org` — 0 vulnerabilities
+- 版本升级：2.8.3 -> 2.8.4。
+
 ## [2.8.3] - 2026-06-02
 
 ### 新增
