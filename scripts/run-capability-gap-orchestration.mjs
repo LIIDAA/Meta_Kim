@@ -35,6 +35,102 @@ const OWNER_BY_DECISION = {
   blocked_or_needs_approval: "meta-sentinel",
 };
 
+const MULTI_TYPE_CAPABILITY_INVENTORY = [
+  {
+    capabilityType: "agent",
+    source: "canonical agents and runtime agent mirrors",
+    routeImpact: "owner selection and governance boundary",
+  },
+  {
+    capabilityType: "skill",
+    source: "canonical skills and installed/runtime skill mirrors",
+    routeImpact: "reusable workflow selection",
+  },
+  {
+    capabilityType: "script",
+    source: "scripts/ and package automation",
+    routeImpact: "repeatable local implementation or validation path",
+  },
+  {
+    capabilityType: "command",
+    source: "package.json scripts and local CLI commands",
+    routeImpact: "callable execution weapon",
+  },
+  {
+    capabilityType: "mcp_provider_tool",
+    source: "MCP configs, provider registry, and tool inventory",
+    routeImpact: "external or structured tool provider path",
+  },
+  {
+    capabilityType: "runtime_tool",
+    source: "runtime-native tools and host adapters",
+    routeImpact: "host-specific execution surface",
+  },
+  {
+    capabilityType: "plugin_connector",
+    source: "plugin and connector inventory",
+    routeImpact: "optional integration surface",
+  },
+  {
+    capabilityType: "retrieval_capability",
+    source: "web, url, docs, browser, MCP, plugin, local, and user-source retrieval",
+    routeImpact: "source-backed Fetch and deep research readiness",
+  },
+  {
+    capabilityType: "dependency_external_package",
+    source: "dependency registry and external package references",
+    routeImpact: "third-party capability reuse or risk boundary",
+  },
+  {
+    capabilityType: "worker_task",
+    source: "run-scoped workerTaskPacket path",
+    routeImpact: "one-run execution without durable capability creation",
+  },
+];
+
+const RETRIEVAL_CAPABILITIES = [
+  {
+    name: "web_search",
+    status: "requires_runtime_inventory",
+    role: "current public facts and ecosystem discovery",
+  },
+  {
+    name: "url_fetch",
+    status: "requires_runtime_inventory",
+    role: "direct source retrieval when a URL is known",
+  },
+  {
+    name: "docs_lookup",
+    status: "requires_runtime_inventory",
+    role: "official documentation and API surface verification",
+  },
+  {
+    name: "browser_open",
+    status: "requires_runtime_inventory",
+    role: "interactive or rendered page inspection",
+  },
+  {
+    name: "mcp_search",
+    status: "requires_runtime_inventory",
+    role: "MCP-backed search or provider discovery",
+  },
+  {
+    name: "plugin_search",
+    status: "requires_runtime_inventory",
+    role: "runtime plugin or connector discovery",
+  },
+  {
+    name: "local_only",
+    status: "available",
+    role: "repo, canonical, contract, package, and test evidence",
+  },
+  {
+    name: "user_supplied_sources",
+    status: "available_if_provided",
+    role: "pasted text, attachments, or explicit source files",
+  },
+];
+
 function stableId(prefix, seed) {
   const hash = createHash("sha1").update(String(seed ?? "")).digest("hex").slice(0, 10);
   const safe = String(seed ?? "")
@@ -93,6 +189,73 @@ function makeGroupKey(result) {
   return `${result.gapDecision.decision}:${repeatKeyFor(result)}`;
 }
 
+function needsExternalResearch(input) {
+  return /\b(latest|current|today|api|platform|provider|dependency|external|web|search|official|version|price)\b|联网|最新|当前|今天|平台|外部|生态|供应商|依赖|官方|版本|价格|搜索|市场/i.test(
+    String(input ?? "")
+  );
+}
+
+function buildResearchCapabilityDiscovery(input) {
+  const researchRequired = needsExternalResearch(input);
+  return {
+    owner: "meta-scout",
+    researchRequired,
+    retrievalCapabilities: RETRIEVAL_CAPABILITIES,
+    selectedPath: researchRequired ? "mixed_source_backed_research" : "local_only_with_probe_record",
+    blocked: false,
+    limitations: researchRequired
+      ? [
+          "External retrieval capability must be proven by the active runtime before source-backed claims are final.",
+        ]
+      : [
+          "No current external-fact dependency detected for this orchestration fixture.",
+        ],
+  };
+}
+
+function buildDeepResearchPlan(input) {
+  const required = needsExternalResearch(input);
+  return {
+    owner: "meta-scout",
+    required,
+    decisionImpactRequired: true,
+    stageGate: required ? "must_complete_before_thinking" : "recorded_before_thinking",
+    sourceCategories: required
+      ? ["official_docs", "current_runtime_inventory", "provider_registry", "external_ecosystem"]
+      : ["canonical_sources", "contracts", "local_runtime_inventory"],
+    questions: required
+      ? [
+          "Which current facts or external provider capabilities change the route?",
+          "Which retrieval capability can verify those facts in this runtime?",
+          "Does the evidence support reuse, creation, upgrade, workerTask-only, or block?",
+        ]
+      : [
+          "Which local canonical and contract evidence changes the route?",
+          "Which capability types are already covered before Thinking?",
+        ],
+    skipReason: required
+      ? null
+      : "Task does not depend on current external facts, third-party state, or live ecosystem claims.",
+  };
+}
+
+function buildCapabilityInventory(decided) {
+  const decisions = new Set(decided.map((gap) => gap.decision));
+  return MULTI_TYPE_CAPABILITY_INVENTORY.map((item) => ({
+    ...item,
+    checkedBeforeThinking: true,
+    coverageStatus:
+      item.capabilityType === "worker_task" ||
+      (item.capabilityType === "skill" && decisions.has("create_skill")) ||
+      (item.capabilityType === "agent" && decisions.has("create_agent")) ||
+      (item.capabilityType === "script" && decisions.has("create_script")) ||
+      (item.capabilityType === "mcp_provider_tool" && decisions.has("create_mcp_provider"))
+        ? "route_relevant"
+        : "checked_no_primary_route",
+    insufficiencyPolicy: "create_or_upgrade_only_after_fetch_evidence",
+  }));
+}
+
 function summarizeGap(result, request) {
   const repeatKey = repeatKeyFor(result);
   return {
@@ -144,6 +307,7 @@ function makeWorkerTaskPacket({ gap, group, groupIndex, itemIndex }) {
     evidenceRefs: [gap.gapId, gap.requestId],
     capabilityRequirements: [decision],
     toolRequirements: [],
+    capabilityInventoryRefs: group.capabilityInventoryRefs,
     referenceDirection: "Use CapabilityGap and GapDecision evidence; concrete one-run work stays in this packet.",
     handoffTarget: "meta-conductor",
     handoffContract: {
@@ -212,7 +376,13 @@ export function buildCapabilityGapOrchestration(input) {
     const result = decideCapabilityGap(request.input);
     return summarizeGap(result, request);
   });
+  const capabilityInventory = buildCapabilityInventory(decided);
+  const researchCapabilityDiscovery = buildResearchCapabilityDiscovery(input);
+  const deepResearchPlan = buildDeepResearchPlan(input);
   const groups = groupGaps(decided);
+  for (const group of groups) {
+    group.capabilityInventoryRefs = capabilityInventory.map((item) => item.capabilityType);
+  }
   const workerTaskPackets = groups.flatMap((group, groupIndex) =>
     group.items.map((gap, itemIndex) =>
       makeWorkerTaskPacket({ gap, group, groupIndex, itemIndex })
@@ -250,6 +420,10 @@ export function buildCapabilityGapOrchestration(input) {
     requests.length > 0 &&
     workerTaskPackets.length === decided.length &&
     workerTaskPackets.every((packet) => packet.mergeOwner === "meta-conductor") &&
+    capabilityInventory.length >= 10 &&
+    capabilityInventory.every((item) => item.checkedBeforeThinking) &&
+    researchCapabilityDiscovery.retrievalCapabilities.length >= 8 &&
+    deepResearchPlan.decisionImpactRequired === true &&
     orchestrationTaskBoardPacket.triggerChain[0] === "meta-theory-skill-adapter" &&
     orchestrationTaskBoardPacket.triggerChain[2] === "meta-conductor-orchestration"
       ? "pass"
@@ -260,7 +434,8 @@ export function buildCapabilityGapOrchestration(input) {
     rootGoal:
       "Route meta-theory-triggered complex tasks through Warden/Conductor before CapabilityGap decisions enter execution.",
     criticalSummary: {
-      realGoal: "Support multiple capability gaps and repeated same-type needs without making the skill the planner.",
+      realGoal:
+        "Support multiple capability gaps and repeated same-type needs without making a skill or runtime adapter the planner.",
       nonGoals: [
         "No full CapabilityGraph.",
         "No graph database.",
@@ -283,6 +458,15 @@ export function buildCapabilityGapOrchestration(input) {
       entryGate: "meta-warden",
       orchestrationOwner: "meta-conductor",
       decisionKernel: "scripts/capability-gap-mvp.mjs",
+      stageOrder: "Fetch completes research and multi-type capability inventory before Thinking.",
+      capabilityInventory,
+      researchCapabilityDiscovery,
+      deepResearchPlan,
+      decisionImpactMap: capabilityInventory.map((item) => ({
+        capabilityType: item.capabilityType,
+        routeImpact: item.routeImpact,
+        checkedBeforeThinking: item.checkedBeforeThinking,
+      })),
     },
     capabilityGaps: decided,
     groupedGaps: groups,
@@ -300,6 +484,15 @@ export function buildCapabilityGapOrchestration(input) {
         sameOwnerInstancesHaveShardScope: workerTaskPackets.every(
           (packet) => packet.roleInstanceId && packet.shardScope && packet.mergeOwner
         ),
+        multiTypeCapabilityInventoryPresent:
+          capabilityInventory.length >= 10 &&
+          capabilityInventory.every((item) => item.checkedBeforeThinking),
+        researchCapabilityDiscoveryRecorded:
+          researchCapabilityDiscovery.retrievalCapabilities.length >= 8,
+        deepResearchPlanRecorded: deepResearchPlan.decisionImpactRequired === true,
+        fetchBeforeThinking:
+          orchestrationTaskBoardPacket.triggerChain.indexOf("meta-conductor-orchestration") >
+          orchestrationTaskBoardPacket.triggerChain.indexOf("meta-warden-entry-gate"),
       },
     },
     verificationResult: {

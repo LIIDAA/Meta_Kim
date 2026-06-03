@@ -52,11 +52,66 @@ describe("31 — Capability Gap orchestration through meta-theory Conductor", ()
           packet.mergeOwner === "meta-conductor" &&
           packet.parallelGroup &&
           packet.roleInstanceId &&
-          packet.shardScope
+          packet.shardScope &&
+          packet.capabilityInventoryRefs.includes("retrieval_capability")
       )
     );
+    assert.deepEqual(
+      report.fetchEvidence.capabilityInventory.map((item) => item.capabilityType),
+      [
+        "agent",
+        "skill",
+        "script",
+        "command",
+        "mcp_provider_tool",
+        "runtime_tool",
+        "plugin_connector",
+        "retrieval_capability",
+        "dependency_external_package",
+        "worker_task",
+      ]
+    );
+    assert.ok(
+      report.fetchEvidence.capabilityInventory.every((item) => item.checkedBeforeThinking),
+      "multi-type capability inventory must complete before Thinking"
+    );
+    assert.deepEqual(
+      report.fetchEvidence.researchCapabilityDiscovery.retrievalCapabilities.map(
+        (capability) => capability.name
+      ),
+      [
+        "web_search",
+        "url_fetch",
+        "docs_lookup",
+        "browser_open",
+        "mcp_search",
+        "plugin_search",
+        "local_only",
+        "user_supplied_sources",
+      ]
+    );
+    assert.equal(report.fetchEvidence.deepResearchPlan.decisionImpactRequired, true);
     assert.equal(report.reviewResult.checks.skillIsNotPlanner, true);
     assert.equal(report.reviewResult.checks.conductorOwnsBoard, true);
+    assert.equal(report.reviewResult.checks.multiTypeCapabilityInventoryPresent, true);
+    assert.equal(report.reviewResult.checks.researchCapabilityDiscoveryRecorded, true);
+    assert.equal(report.reviewResult.checks.deepResearchPlanRecorded, true);
+    assert.equal(report.reviewResult.checks.fetchBeforeThinking, true);
+  });
+
+  test("marks external/current capability claims as deep research gated before Thinking", () => {
+    const report = buildCapabilityGapOrchestration(
+      "需要根据最新 API 和外部生态判断 MCP provider 是否足够，并联网搜索官方资料。"
+    );
+
+    assert.equal(report.status, "pass");
+    assert.equal(report.fetchEvidence.researchCapabilityDiscovery.researchRequired, true);
+    assert.equal(
+      report.fetchEvidence.researchCapabilityDiscovery.selectedPath,
+      "mixed_source_backed_research"
+    );
+    assert.equal(report.fetchEvidence.deepResearchPlan.required, true);
+    assert.equal(report.fetchEvidence.deepResearchPlan.stageGate, "must_complete_before_thinking");
   });
 
   test("groups same-type same-repeatKey needs without collapsing worker instances", () => {
