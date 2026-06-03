@@ -818,7 +818,26 @@ export async function runGovernanceAgentProcessMvp({
 }
 
 async function main() {
-  const report = await runGovernanceAgentProcessMvp();
+  const statePath = path.resolve(
+    process.argv.includes("--json-out")
+      ? process.argv[process.argv.indexOf("--json-out") + 1]
+      : DEFAULT_STATE_PATH
+  );
+  const markdownPath = path.resolve(
+    process.argv.includes("--markdown-out")
+      ? process.argv[process.argv.indexOf("--markdown-out") + 1]
+      : DEFAULT_MARKDOWN_PATH
+  );
+  const dbPath = path.resolve(
+    process.argv.includes("--db")
+      ? process.argv[process.argv.indexOf("--db") + 1]
+      : DEFAULT_DB_PATH
+  );
+  const report = await runGovernanceAgentProcessMvp({
+    statePath,
+    markdownPath,
+    dbPath,
+  });
   process.stdout.write(
     `${JSON.stringify(
       {
@@ -827,7 +846,7 @@ async function main() {
         gapDecision: report.gapDecision,
         generatedAgentSpec: report.generatedAgentSpec.name,
         events: report.database.events,
-        report: path.relative(REPO_ROOT, DEFAULT_MARKDOWN_PATH).replaceAll("\\", "/"),
+        report: path.relative(REPO_ROOT, markdownPath).replaceAll("\\", "/"),
       },
       null,
       2

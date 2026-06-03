@@ -12,6 +12,7 @@ import {
 } from "./capability-gap-mvp.mjs";
 import { runEvaluation } from "./evaluate-agent-design-quality.mjs";
 import { runGovernanceAgentProcessMvp } from "./run-governance-agent-process-mvp.mjs";
+import { runCapabilityGapRealInputReplay } from "./run-capability-gap-real-input-replay.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
@@ -140,7 +141,7 @@ async function summarizeRunStateStore(fixtures) {
   };
 }
 
-function buildFrChecks({ fixtures, decisionSummary, storeSummary, agentEvaluation, processReport }) {
+function buildFrChecks({ fixtures, decisionSummary, storeSummary, agentEvaluation, processReport, realInputReplay }) {
   const fixtureDecisions = [...new Set(fixtures.map((fixture) => fixture.expectedDecision))].sort();
   return [
     check(
@@ -216,8 +217,9 @@ function buildFrChecks({ fixtures, decisionSummary, storeSummary, agentEvaluatio
     check(
       "FR-010",
       "判断依据合同",
-      decisionSummary.explainableCount === fixtures.length,
-      `explainable=${decisionSummary.explainableCount}/${fixtures.length}`
+      decisionSummary.explainableCount === fixtures.length &&
+        realInputReplay.status === "pass",
+      `fixtures=${decisionSummary.explainableCount}/${fixtures.length}, realInputs=${realInputReplay.cases.length}`
     ),
     check(
       "FR-011",
@@ -228,7 +230,7 @@ function buildFrChecks({ fixtures, decisionSummary, storeSummary, agentEvaluatio
   ];
 }
 
-function buildMetricChecks({ fixtures, decisionSummary, storeSummary, agentEvaluation, processReport }) {
+function buildMetricChecks({ fixtures, decisionSummary, storeSummary, agentEvaluation, processReport, realInputReplay }) {
   const stationPackets = processReport.stationPackets ?? {};
   const stationPacketNames = Object.keys(stationPackets);
   const stationSourceLeakCount = /gstack|gbrain|wshobson|anthropic|skill-creator/i.test(
@@ -345,6 +347,15 @@ function buildMetricChecks({ fixtures, decisionSummary, storeSummary, agentEvalu
       "0",
       "0"
     ),
+    check(
+      "real_input_replay_pass",
+      "真实输入新进程回放通过",
+      realInputReplay.status === "pass" &&
+        realInputReplay.cases.length === 6 &&
+        realInputReplay.stationPacketCoverage === true,
+      `${realInputReplay.cases.length}/6`,
+      "100%"
+    ),
   ];
 }
 
@@ -406,6 +417,11 @@ export async function runCoreMvpAcceptance({
     markdownPath: path.join(tempDir, "process.md"),
     dbPath: path.join(tempDir, "process.sqlite"),
   });
+  const realInputReplay = await runCapabilityGapRealInputReplay({
+    jsonPath: path.join(tempDir, "real-input-replay.json"),
+    markdownPath: path.join(tempDir, "real-input-replay.md"),
+    dbPath: path.join(tempDir, "real-input-replay.sqlite"),
+  });
   await fs.rm(tempDir, { recursive: true, force: true });
 
   const frChecks = buildFrChecks({
@@ -414,6 +430,7 @@ export async function runCoreMvpAcceptance({
     storeSummary,
     agentEvaluation,
     processReport,
+    realInputReplay,
   });
   const metricChecks = buildMetricChecks({
     fixtures,
@@ -421,6 +438,7 @@ export async function runCoreMvpAcceptance({
     storeSummary,
     agentEvaluation,
     processReport,
+    realInputReplay,
   });
   const checks = [...frChecks, ...metricChecks];
   const status = statusFrom(checks);
@@ -444,6 +462,7 @@ export async function runCoreMvpAcceptance({
       agentDesignEvaluation: agentEvaluation.acceptance.status,
       governanceProcessMvp: processReport.status,
       stationPacketsCovered: Object.keys(processReport.stationPackets ?? {}).length,
+      realInputReplay: realInputReplay.status,
     },
     frChecks,
     metricChecks,
@@ -461,6 +480,7 @@ export async function runCoreMvpAcceptance({
         "npm run meta:core:mvp:acceptance",
         "npm run meta:test:meta-theory",
         "npm run meta:agent-process:mvp",
+        "npm run meta:gap:real-input-replay",
       ],
       generatedReports: {
         json: relative(jsonPath),
