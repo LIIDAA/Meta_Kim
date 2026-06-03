@@ -99,6 +99,18 @@ const DIMENSION_LABELS = {
   dependency_content_boundary: "依赖边界清楚：只吸收内容能力，不搬别人的架构",
 };
 
+const INTELLIGENCE_DIMENSION_LABELS = {
+  reasoning_trace_present: "推理链存在：不能只交最终 spec",
+  core_problem_capture: "抓住真实问题：区分表面请求和长期能力缺口",
+  evidence_grounding: "证据落地：引用本地依据，依赖项目只作内容证据",
+  alternative_comparison: "路径比较：至少比较两条可行路径再选择",
+  rejected_weak_path: "拒绝弱路径：能说清为什么不选泛泛 agent、任务绑定或架构复制",
+  station_reasoning: "分工判断：Genesis、Artisan、Prism 各自有不同判断",
+  loadout_roi_reasoning: "能力栈判断：loadout 有覆盖率、频率、成本或 ROI 依据",
+  prism_adversarial_review: "反证审查：Prism 不只点赞，还检查 claim 和标准强度",
+  final_spec_binding: "结果绑定：最终 spec 能回连到真实问题和已选路径",
+};
+
 function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -251,6 +263,123 @@ export function evaluateSpec(spec, contract) {
   };
 }
 
+function intelligenceDimensionChecks(trace, spec, contract) {
+  const policy = contract.intelligenceLayer;
+  if (!trace) {
+    return {
+      reasoning_trace_present: {
+        status: "fail",
+        passCondition: "Trace must exist.",
+      },
+      ...Object.fromEntries(
+        policy.scorecardDimensions.map((dimension) => [
+          dimension.id,
+          {
+            status: "fail",
+            passCondition: dimension.passCondition,
+          },
+        ])
+      ),
+    };
+  }
+
+  const missingTraceFields = policy.requiredTraceFields.filter(
+    (field) => !Object.hasOwn(trace, field)
+  );
+  const dependencyEvidence = asArray(trace.evidenceUsed?.dependencyEvidence);
+  const alternatives = asArray(trace.designAlternatives);
+  const rejectedWeakPaths = asArray(trace.rejectedWeakPaths);
+  const stationReasoning = trace.stationReasoning ?? {};
+  const loadoutCandidates = asArray(trace.loadoutReasoning?.candidates);
+  const prismAssertions = asArray(trace.prismReview?.assertions);
+
+  const checks = {
+    reasoning_trace_present: missingTraceFields.length === 0,
+    core_problem_capture:
+      typeof trace.coreProblem?.durableProblem === "string" &&
+      trace.coreProblem.durableProblem.length >= 50 &&
+      trace.coreProblem.notAOneRunTask === true &&
+      !/any task|improve quality for any task/i.test(
+        `${trace.coreProblem.durableProblem} ${trace.coreProblem.surfaceRequest ?? ""}`
+      ),
+    evidence_grounding:
+      asArray(trace.evidenceUsed?.localSources).length >= 2 &&
+      dependencyEvidence.every((item) => item.architectureCopied === false),
+    alternative_comparison:
+      alternatives.length >= 2 &&
+      typeof trace.selectedPath === "string" &&
+      alternatives.some((item) => item.path === trace.selectedPath) &&
+      alternatives.every((item) => typeof item.reason === "string" && item.reason.length > 0),
+    rejected_weak_path:
+      rejectedWeakPaths.length >= 1 &&
+      rejectedWeakPaths.every(
+        (item) => typeof item.path === "string" && typeof item.reason === "string"
+      ),
+    station_reasoning:
+      typeof stationReasoning.genesis?.judgment === "string" &&
+      typeof stationReasoning.artisan?.judgment === "string" &&
+      typeof stationReasoning.prism?.judgment === "string",
+    loadout_roi_reasoning:
+      loadoutCandidates.length >= 1 &&
+      loadoutCandidates.some(
+        (item) =>
+          typeof item.slot === "string" &&
+          typeof item.roi === "number" &&
+          ["keep", "reject"].includes(item.decision)
+      ),
+    prism_adversarial_review:
+      prismAssertions.length >= 1 &&
+      prismAssertions.every(
+        (item) =>
+          typeof item.claim === "string" &&
+          ["pass", "fail", "unverified"].includes(item.status)
+      ) &&
+      typeof trace.prismReview?.selfCritique === "string" &&
+      trace.prismReview.selfCritique.length >= 20,
+    final_spec_binding:
+      trace.finalSpecBinding?.selectedPath === trace.selectedPath &&
+      trace.finalSpecBinding?.generatedSpecName === spec.name &&
+      trace.finalSpecBinding?.boundToCoreProblem === true,
+  };
+
+  return Object.fromEntries(
+    [
+      {
+        id: "reasoning_trace_present",
+        passCondition: "Trace has all required process fields.",
+      },
+      ...policy.scorecardDimensions,
+    ].map((dimension) => [
+      dimension.id,
+      {
+        status: checks[dimension.id] ? "pass" : "fail",
+        passCondition: dimension.passCondition,
+      },
+    ])
+  );
+}
+
+export function evaluateIntelligenceTrace(trace, spec, contract) {
+  const dimensions = intelligenceDimensionChecks(trace, spec, contract);
+  const failedDimensions = Object.entries(dimensions)
+    .filter(([, result]) => result.status !== "pass")
+    .map(([dimension]) => dimension);
+  const hardBlockDimensions = [
+    "reasoning_trace_present",
+    ...contract.intelligenceLayer.hardBlockDimensions,
+  ];
+  const hardBlocks = failedDimensions.filter((dimension) =>
+    hardBlockDimensions.includes(dimension)
+  );
+
+  return {
+    status: failedDimensions.length === 0 ? "pass" : "fail",
+    failedIntelligenceDimensions: failedDimensions,
+    intelligenceHardBlocks: hardBlocks,
+    intelligenceDimensions: dimensions,
+  };
+}
+
 function summarize(results) {
   return {
     totalFixtures: results.length,
@@ -276,6 +405,31 @@ function summarize(results) {
     ).length,
     longTermIdentityPollutionCount: results.filter((result) =>
       result.status === "pass" && result.failedDimensions.includes("identity_cleanliness")
+    ).length,
+    reasoningTraceMissingPassCount: results.filter(
+      (result) =>
+        result.status === "pass" &&
+        result.failedIntelligenceDimensions.includes("reasoning_trace_present")
+    ).length,
+    surfaceMirroringPassCount: results.filter(
+      (result) =>
+        result.status === "pass" &&
+        result.failedIntelligenceDimensions.includes("core_problem_capture")
+    ).length,
+    singlePathReasoningPassCount: results.filter(
+      (result) =>
+        result.status === "pass" &&
+        result.failedIntelligenceDimensions.includes("alternative_comparison")
+    ).length,
+    missingPrismReviewPassCount: results.filter(
+      (result) =>
+        result.status === "pass" &&
+        result.failedIntelligenceDimensions.includes("prism_adversarial_review")
+    ).length,
+    finalSpecWithoutReasoningPassCount: results.filter(
+      (result) =>
+        result.status === "pass" &&
+        result.failedIntelligenceDimensions.includes("final_spec_binding")
     ).length,
   };
 }
@@ -330,6 +484,43 @@ function acceptanceFromSummary(summary, contract) {
         summary.longTermIdentityPollutionCount ===
         expected.longTermIdentityPollutionCount,
     },
+    {
+      id: "reasoning_trace_missing_pass_count",
+      expected: expected.reasoningTraceMissingPassCount,
+      actual: summary.reasoningTraceMissingPassCount,
+      passed:
+        summary.reasoningTraceMissingPassCount ===
+        expected.reasoningTraceMissingPassCount,
+    },
+    {
+      id: "surface_mirroring_pass_count",
+      expected: expected.surfaceMirroringPassCount,
+      actual: summary.surfaceMirroringPassCount,
+      passed: summary.surfaceMirroringPassCount === expected.surfaceMirroringPassCount,
+    },
+    {
+      id: "single_path_reasoning_pass_count",
+      expected: expected.singlePathReasoningPassCount,
+      actual: summary.singlePathReasoningPassCount,
+      passed:
+        summary.singlePathReasoningPassCount ===
+        expected.singlePathReasoningPassCount,
+    },
+    {
+      id: "missing_prism_review_pass_count",
+      expected: expected.missingPrismReviewPassCount,
+      actual: summary.missingPrismReviewPassCount,
+      passed:
+        summary.missingPrismReviewPassCount === expected.missingPrismReviewPassCount,
+    },
+    {
+      id: "final_spec_without_reasoning_pass_count",
+      expected: expected.finalSpecWithoutReasoningPassCount,
+      actual: summary.finalSpecWithoutReasoningPassCount,
+      passed:
+        summary.finalSpecWithoutReasoningPassCount ===
+        expected.finalSpecWithoutReasoningPassCount,
+    },
   ];
 
   return {
@@ -360,6 +551,10 @@ function markdownReport(report) {
     `- 任务绑定身份误通过：${report.summary.taskBoundIdentityPassCount}`,
     `- 依赖架构复制误通过：${report.summary.dependencyArchitectureCopyPassCount}`,
     `- 缺 verifier 误通过：${report.summary.missingVerifierCount}`,
+    `- 缺推理链误通过：${report.summary.reasoningTraceMissingPassCount}`,
+    `- 表面复述误通过：${report.summary.surfaceMirroringPassCount}`,
+    `- 单一路径推理误通过：${report.summary.singlePathReasoningPassCount}`,
+    `- 缺 Prism 审查误通过：${report.summary.missingPrismReviewPassCount}`,
     `- 长期身份污染：${report.summary.longTermIdentityPollutionCount}`,
     "",
     "## 判断标准",
@@ -371,6 +566,21 @@ function markdownReport(report) {
         `| ${dimension.id} | ${escapeCell(DIMENSION_LABELS[dimension.id] ?? dimension.passCondition)} |`
     ),
     "",
+    "## 智力层判断标准",
+    "",
+    "| 维度 | 意思 |",
+    "|---|---|",
+    ...[
+      {
+        id: "reasoning_trace_present",
+        passCondition: "Trace has all required process fields.",
+      },
+      ...report.contract.intelligenceLayer.scorecardDimensions,
+    ].map(
+      (dimension) =>
+        `| ${dimension.id} | ${escapeCell(INTELLIGENCE_DIMENSION_LABELS[dimension.id] ?? dimension.passCondition)} |`
+    ),
+    "",
     "## 依赖项目边界",
     "",
     "- 可以参考：内容、能力行为、专业标准、任务产物形态、判断模式。",
@@ -379,11 +589,11 @@ function markdownReport(report) {
     "",
     "## Fixtures",
     "",
-    "| Fixture | 期望 | 实际 | 失败维度 |",
-    "|---|---|---|---|",
+    "| Fixture | 期望 | 实际 | Spec 失败维度 | 智力层失败维度 |",
+    "|---|---|---|---|---|",
     ...report.results.map(
       (result) =>
-        `| ${result.id} ${escapeCell(result.name)} | ${result.expectedStatus} | ${result.status} | ${escapeCell(result.failedDimensions.join(", ") || "none")} |`
+        `| ${result.id} ${escapeCell(result.name)} | ${result.expectedStatus} | ${result.status} | ${escapeCell(result.failedDimensions.join(", ") || "none")} | ${escapeCell(result.failedIntelligenceDimensions.join(", ") || "none")} |`
     ),
     "",
     "## AI 可识别验收",
@@ -397,7 +607,7 @@ function markdownReport(report) {
     "",
     "## 下一步",
     "",
-    "下一步不是先造 agent，而是把真实治理 agent 产出的 agent spec 丢进这套评测：先评 meta-genesis + meta-artisan + meta-prism 是否能稳定产出通过样例，再决定是否升级它们的提示、边界或 fixture。",
+    "下一步不是先造 agent，而是把真实治理 agent 的过程产物丢进这套评测：先评 meta-genesis + meta-artisan + meta-prism 是否能稳定完成真实问题捕捉、路径比较、弱路径拒绝、loadout ROI、Prism 反证审查，再决定是否升级它们的提示、边界或 fixture。",
     "",
   ];
   return `${lines.join("\n")}`;
@@ -410,13 +620,26 @@ export async function runEvaluation({
   const contract = await readJson(contractPath);
   const fixtures = await readJson(fixturePath);
   const results = fixtures.map((fixture) => {
-    const evaluation = evaluateSpec(fixture.spec, contract);
+    const specEvaluation = evaluateSpec(fixture.spec, contract);
+    const intelligenceEvaluation = evaluateIntelligenceTrace(
+      fixture.intelligenceTrace,
+      fixture.spec,
+      contract
+    );
+    const status =
+      specEvaluation.status === "pass" && intelligenceEvaluation.status === "pass"
+        ? "pass"
+        : "fail";
     return {
       id: fixture.id,
       name: fixture.name,
       expectedStatus: fixture.expectedStatus,
       expectedFailDimensions: fixture.expectedFailDimensions ?? [],
-      ...evaluation,
+      expectedFailIntelligenceDimensions:
+        fixture.expectedFailIntelligenceDimensions ?? [],
+      ...specEvaluation,
+      ...intelligenceEvaluation,
+      status,
     };
   });
   const summary = summarize(results);

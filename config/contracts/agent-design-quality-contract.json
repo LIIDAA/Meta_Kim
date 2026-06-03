@@ -140,6 +140,60 @@
     "memory_fit",
     "dependency_content_boundary"
   ],
+  "intelligenceLayer": {
+    "purpose": "Evaluate whether governance agents can reason their way to a good agent design, not only whether the final spec has the right shape.",
+    "requiredTraceFields": [
+      "coreProblem",
+      "evidenceUsed",
+      "designAlternatives",
+      "rejectedWeakPaths",
+      "stationReasoning",
+      "loadoutReasoning",
+      "prismReview",
+      "finalSpecBinding"
+    ],
+    "scorecardDimensions": [
+      {
+        "id": "core_problem_capture",
+        "passCondition": "Trace separates the surface request from the durable capability problem."
+      },
+      {
+        "id": "evidence_grounding",
+        "passCondition": "Trace cites local/source evidence and treats dependency projects as content evidence only."
+      },
+      {
+        "id": "alternative_comparison",
+        "passCondition": "Trace compares at least two viable design paths before selecting one."
+      },
+      {
+        "id": "rejected_weak_path",
+        "passCondition": "Trace rejects at least one weak path with a reason, such as generic agent, task-bound agent, script-only, or architecture copy."
+      },
+      {
+        "id": "station_reasoning",
+        "passCondition": "Genesis, Artisan, and Prism each contribute a distinct judgment instead of one undifferentiated answer."
+      },
+      {
+        "id": "loadout_roi_reasoning",
+        "passCondition": "Artisan loadout reasoning includes coverage, frequency, cost, ROI, or rejection rationale."
+      },
+      {
+        "id": "prism_adversarial_review",
+        "passCondition": "Prism checks claims, anti-slop, and whether evaluation criteria are strong enough."
+      },
+      {
+        "id": "final_spec_binding",
+        "passCondition": "Final GeneratedAgentSpec is explicitly bound back to the reasoning trace and selected path."
+      }
+    ],
+    "hardBlockDimensions": [
+      "core_problem_capture",
+      "alternative_comparison",
+      "station_reasoning",
+      "prism_adversarial_review",
+      "final_spec_binding"
+    ]
+  },
   "quantitativeAcceptance": {
     "requiredDimensionPassRate": "100%",
     "genericAgentPassCount": 0,
@@ -147,6 +201,11 @@
     "dependencyArchitectureCopyPassCount": 0,
     "missingVerifierCount": 0,
     "missingHandoffCount": 0,
-    "longTermIdentityPollutionCount": 0
+    "longTermIdentityPollutionCount": 0,
+    "reasoningTraceMissingPassCount": 0,
+    "surfaceMirroringPassCount": 0,
+    "singlePathReasoningPassCount": 0,
+    "missingPrismReviewPassCount": 0,
+    "finalSpecWithoutReasoningPassCount": 0
   }
 }

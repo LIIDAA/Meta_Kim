@@ -1,7 +1,11 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { readJson } from "./_helpers.mjs";
-import { evaluateSpec, runEvaluation } from "../../scripts/evaluate-agent-design-quality.mjs";
+import {
+  evaluateIntelligenceTrace,
+  evaluateSpec,
+  runEvaluation,
+} from "../../scripts/evaluate-agent-design-quality.mjs";
 
 const REQUIRED_DIMENSIONS = [
   "identity_clarity",
@@ -15,6 +19,17 @@ const REQUIRED_DIMENSIONS = [
   "install_projection_readiness",
   "identity_cleanliness",
   "dependency_content_boundary",
+];
+
+const REQUIRED_INTELLIGENCE_DIMENSIONS = [
+  "core_problem_capture",
+  "evidence_grounding",
+  "alternative_comparison",
+  "rejected_weak_path",
+  "station_reasoning",
+  "loadout_roi_reasoning",
+  "prism_adversarial_review",
+  "final_spec_binding",
 ];
 
 describe("24 — Agent design quality evaluation", async () => {
@@ -62,6 +77,33 @@ describe("24 — Agent design quality evaluation", async () => {
     }
   });
 
+  test("contract covers intelligence-layer reasoning, not only final spec shape", () => {
+    const intelligenceLayer = contract.intelligenceLayer ?? {};
+    assert.equal(
+      intelligenceLayer.purpose,
+      "Evaluate whether governance agents can reason their way to a good agent design, not only whether the final spec has the right shape."
+    );
+    assert.deepEqual(
+      intelligenceLayer.scorecardDimensions.map((dimension) => dimension.id),
+      REQUIRED_INTELLIGENCE_DIMENSIONS
+    );
+    for (const field of [
+      "coreProblem",
+      "evidenceUsed",
+      "designAlternatives",
+      "rejectedWeakPaths",
+      "stationReasoning",
+      "loadoutReasoning",
+      "prismReview",
+      "finalSpecBinding",
+    ]) {
+      assert.ok(
+        intelligenceLayer.requiredTraceFields.includes(field),
+        `intelligence trace missing ${field}`
+      );
+    }
+  });
+
   test("fixtures include good agent, generic agent, task-bound identity, and dependency architecture copy", () => {
     assert.deepEqual(
       fixtures.map((fixture) => fixture.id),
@@ -80,6 +122,17 @@ describe("24 — Agent design quality evaluation", async () => {
     assert.deepEqual(result.failedDimensions, []);
   });
 
+  test("professional fixture passes intelligence-layer reasoning", () => {
+    const fixture = fixtures.find((item) => item.id === "ADQ-01");
+    const result = evaluateIntelligenceTrace(
+      fixture.intelligenceTrace,
+      fixture.spec,
+      contract
+    );
+    assert.equal(result.status, "pass");
+    assert.deepEqual(result.failedIntelligenceDimensions, []);
+  });
+
   test("bad fixtures fail for the intended reasons", () => {
     for (const fixture of fixtures.filter((item) => item.expectedStatus === "fail")) {
       const result = evaluateSpec(fixture.spec, contract);
@@ -93,6 +146,22 @@ describe("24 — Agent design quality evaluation", async () => {
     }
   });
 
+  test("surface-mirroring intelligence trace fails for intended reasons", () => {
+    const fixture = fixtures.find((item) => item.id === "ADQ-02");
+    const result = evaluateIntelligenceTrace(
+      fixture.intelligenceTrace,
+      fixture.spec,
+      contract
+    );
+    assert.equal(result.status, "fail");
+    for (const expectedDimension of fixture.expectedFailIntelligenceDimensions) {
+      assert.ok(
+        result.failedIntelligenceDimensions.includes(expectedDimension),
+        `ADQ-02 must fail intelligence dimension ${expectedDimension}`
+      );
+    }
+  });
+
   test("full evaluation meets quantitative acceptance", async () => {
     const report = await runEvaluation();
     assert.equal(report.acceptance.status, "pass");
@@ -101,5 +170,10 @@ describe("24 — Agent design quality evaluation", async () => {
     assert.equal(report.summary.taskBoundIdentityPassCount, 0);
     assert.equal(report.summary.dependencyArchitectureCopyPassCount, 0);
     assert.equal(report.summary.longTermIdentityPollutionCount, 0);
+    assert.equal(report.summary.reasoningTraceMissingPassCount, 0);
+    assert.equal(report.summary.surfaceMirroringPassCount, 0);
+    assert.equal(report.summary.singlePathReasoningPassCount, 0);
+    assert.equal(report.summary.missingPrismReviewPassCount, 0);
+    assert.equal(report.summary.finalSpecWithoutReasoningPassCount, 0);
   });
 });

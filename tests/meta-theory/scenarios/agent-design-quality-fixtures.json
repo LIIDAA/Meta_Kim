@@ -102,6 +102,118 @@
           "gbrain"
         ]
       }
+    },
+    "intelligenceTrace": {
+      "coreProblem": {
+        "surfaceRequest": "create an agent for long-term test coverage strategy owner",
+        "durableProblem": "The project repeatedly lacks a stable owner for test coverage strategy, gap diagnosis, and verification planning after existing test providers are checked.",
+        "notAOneRunTask": true
+      },
+      "evidenceUsed": {
+        "localSources": [
+          "canonical/skills/meta-theory/references/create-agent.md",
+          "canonical/agents/meta-genesis.md",
+          "canonical/agents/meta-artisan.md",
+          "canonical/agents/meta-prism.md"
+        ],
+        "dependencyEvidence": [
+          {
+            "sourceId": "wshobson-agents-style",
+            "usedFor": "professional role naming and concise trigger",
+            "architectureCopied": false
+          },
+          {
+            "sourceId": "gstack",
+            "usedFor": "product-flow handoff clarity",
+            "architectureCopied": false
+          },
+          {
+            "sourceId": "gbrain",
+            "usedFor": "scoped memory and gap analysis behavior",
+            "architectureCopied": false
+          }
+        ]
+      },
+      "designAlternatives": [
+        {
+          "path": "worker_task_only",
+          "fit": "low",
+          "reason": "Would solve only the current coverage task and lose repeated strategy ownership."
+        },
+        {
+          "path": "create_script",
+          "fit": "medium",
+          "reason": "Could automate report parsing, but cannot own coverage strategy and gap diagnosis."
+        },
+        {
+          "path": "create_agent",
+          "fit": "high",
+          "reason": "The repeated missing boundary is a long-term professional owner, not only an automation."
+        }
+      ],
+      "selectedPath": "create_agent",
+      "rejectedWeakPaths": [
+        {
+          "path": "generic_quality_agent",
+          "reason": "Too replaceable; does not name test coverage domain judgment."
+        },
+        {
+          "path": "task_bound_report_fixer",
+          "reason": "Would put today's report and commands into durable identity."
+        }
+      ],
+      "stationReasoning": {
+        "genesis": {
+          "judgment": "Define the stable identity as test coverage strategy, not as running one test command.",
+          "boundary": "Own coverage strategy and gap diagnosis; do not implement every failing test."
+        },
+        "artisan": {
+          "judgment": "Use abstract loadout slots, then bind concrete test commands only per run."
+        },
+        "prism": {
+          "judgment": "Reject if replacing the name with generic-agent still works or if verifySteps appear in identity."
+        }
+      },
+      "loadoutReasoning": {
+        "candidates": [
+          {
+            "slot": "test command discovery",
+            "coverage": 0.9,
+            "frequency": "every coverage run",
+            "cost": "low",
+            "roi": 4.5,
+            "decision": "keep"
+          },
+          {
+            "slot": "browser QA",
+            "coverage": 0.2,
+            "frequency": "only for UI coverage",
+            "cost": "medium",
+            "roi": 0.8,
+            "decision": "reject"
+          }
+        ]
+      },
+      "prismReview": {
+        "assertions": [
+          {
+            "claim": "The design is domain-specific.",
+            "status": "pass",
+            "evidence": "Capabilities name coverage reports, fixtures, test framework discovery, and missing verifier diagnosis."
+          },
+          {
+            "claim": "The design is not task-bound.",
+            "status": "pass",
+            "evidence": "Concrete commands and file paths are explicitly refused."
+          }
+        ],
+        "selfCritique": "A pass would be too weak without fixture replay and identity cleanliness checks."
+      },
+      "finalSpecBinding": {
+        "selectedPath": "create_agent",
+        "generatedSpecName": "test-coverage-specialist",
+        "boundToCoreProblem": true
+      }
     }
   },
   {
@@ -111,6 +223,13 @@
     "expectedFailDimensions": [
       "domain_specificity",
       "verification_readiness"
+    ],
+    "expectedFailIntelligenceDimensions": [
+      "core_problem_capture",
+      "alternative_comparison",
+      "rejected_weak_path",
+      "station_reasoning",
+      "prism_adversarial_review"
     ],
     "spec": {
       "name": "quality-agent",
@@ -168,6 +287,45 @@
         "usedFor": [],
         "architectureCopied": false,
         "sourceIds": []
+      }
+    },
+    "intelligenceTrace": {
+      "coreProblem": {
+        "surfaceRequest": "make work better",
+        "durableProblem": "Improve quality for any task.",
+        "notAOneRunTask": false
+      },
+      "evidenceUsed": {
+        "localSources": [],
+        "dependencyEvidence": []
+      },
+      "designAlternatives": [
+        {
+          "path": "create_agent",
+          "fit": "high",
+          "reason": "A quality agent is useful."
+        }
+      ],
+      "selectedPath": "create_agent",
+      "rejectedWeakPaths": [],
+      "stationReasoning": {
+        "genesis": {
+          "judgment": "Make a helpful quality agent."
+        },
+        "artisan": {},
+        "prism": {}
+      },
+      "loadoutReasoning": {
+        "candidates": []
+      },
+      "prismReview": {
+        "assertions": [],
+        "selfCritique": ""
+      },
+      "finalSpecBinding": {
+        "selectedPath": "create_agent",
+        "generatedSpecName": "quality-agent",
+        "boundToCoreProblem": false
       }
     }
   },

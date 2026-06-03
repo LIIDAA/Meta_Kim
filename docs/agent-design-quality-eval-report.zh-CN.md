@@ -12,6 +12,10 @@
 - 任务绑定身份误通过：0
 - 依赖架构复制误通过：0
 - 缺 verifier 误通过：0
+- 缺推理链误通过：0
+- 表面复述误通过：0
+- 单一路径推理误通过：0
+- 缺 Prism 审查误通过：0
 - 长期身份污染：0
 
 ## 判断标准
@@ -30,6 +34,20 @@
 | identity_cleanliness | 身份干净：长期身份里没有本次任务、路径、票据、验收步骤 |
 | dependency_content_boundary | 依赖边界清楚：只吸收内容能力，不搬别人的架构 |
 
+## 智力层判断标准
+
+| 维度 | 意思 |
+|---|---|
+| reasoning_trace_present | 推理链存在：不能只交最终 spec |
+| core_problem_capture | 抓住真实问题：区分表面请求和长期能力缺口 |
+| evidence_grounding | 证据落地：引用本地依据，依赖项目只作内容证据 |
+| alternative_comparison | 路径比较：至少比较两条可行路径再选择 |
+| rejected_weak_path | 拒绝弱路径：能说清为什么不选泛泛 agent、任务绑定或架构复制 |
+| station_reasoning | 分工判断：Genesis、Artisan、Prism 各自有不同判断 |
+| loadout_roi_reasoning | 能力栈判断：loadout 有覆盖率、频率、成本或 ROI 依据 |
+| prism_adversarial_review | 反证审查：Prism 不只点赞，还检查 claim 和标准强度 |
+| final_spec_binding | 结果绑定：最终 spec 能回连到真实问题和已选路径 |
+
 ## 依赖项目边界
 
 - 可以参考：内容、能力行为、专业标准、任务产物形态、判断模式。
@@ -38,12 +56,12 @@
 
 ## Fixtures
 
-| Fixture | 期望 | 实际 | 失败维度 |
-|---|---|---|---|
-| ADQ-01 professional-test-coverage-owner | pass | pass | none |
-| ADQ-02 generic-excellence-agent | fail | fail | domain_specificity, tool_least_privilege, verification_readiness |
-| ADQ-03 task-bound-agent | fail | fail | tool_least_privilege, memory_fit, gap_honesty, identity_cleanliness |
-| ADQ-04 dependency-architecture-copy | fail | fail | dependency_content_boundary |
+| Fixture | 期望 | 实际 | Spec 失败维度 | 智力层失败维度 |
+|---|---|---|---|---|
+| ADQ-01 professional-test-coverage-owner | pass | pass | none | none |
+| ADQ-02 generic-excellence-agent | fail | fail | domain_specificity, tool_least_privilege, verification_readiness | core_problem_capture, evidence_grounding, alternative_comparison, rejected_weak_path, station_reasoning, loadout_roi_reasoning, prism_adversarial_review, final_spec_binding |
+| ADQ-03 task-bound-agent | fail | fail | tool_least_privilege, memory_fit, gap_honesty, identity_cleanliness | reasoning_trace_present, core_problem_capture, evidence_grounding, alternative_comparison, rejected_weak_path, station_reasoning, loadout_roi_reasoning, prism_adversarial_review, final_spec_binding |
+| ADQ-04 dependency-architecture-copy | fail | fail | dependency_content_boundary | reasoning_trace_present, core_problem_capture, evidence_grounding, alternative_comparison, rejected_weak_path, station_reasoning, loadout_roi_reasoning, prism_adversarial_review, final_spec_binding |
 
 ## AI 可识别验收
 
@@ -56,7 +74,12 @@
 | missing_handoff_count | 0 | 0 | pass |
 | missing_verifier_count | 0 | 0 | pass |
 | long_term_identity_pollution_count | 0 | 0 | pass |
+| reasoning_trace_missing_pass_count | 0 | 0 | pass |
+| surface_mirroring_pass_count | 0 | 0 | pass |
+| single_path_reasoning_pass_count | 0 | 0 | pass |
+| missing_prism_review_pass_count | 0 | 0 | pass |
+| final_spec_without_reasoning_pass_count | 0 | 0 | pass |
 
 ## 下一步
 
-下一步不是先造 agent，而是把真实治理 agent 产出的 agent spec 丢进这套评测：先评 meta-genesis + meta-artisan + meta-prism 是否能稳定产出通过样例，再决定是否升级它们的提示、边界或 fixture。
+下一步不是先造 agent，而是把真实治理 agent 的过程产物丢进这套评测：先评 meta-genesis + meta-artisan + meta-prism 是否能稳定完成真实问题捕捉、路径比较、弱路径拒绝、loadout ROI、Prism 反证审查，再决定是否升级它们的提示、边界或 fixture。
