@@ -96,6 +96,55 @@ function inferDecision(input) {
   }
   if (
     includesAny(text, [
+      "json report",
+      "mechanical",
+      "testable",
+      "normalize",
+      "normalization",
+      "转换",
+      "机械",
+      "release artifacts",
+      "release-note",
+      "发布前",
+    ])
+  ) {
+    return "create_script";
+  }
+  if (
+    includesAny(text, [
+      "same critical",
+      "same set",
+      "reusable flow",
+      "review standard",
+      "可复用",
+      "多次",
+      "同一套",
+      "流程包",
+      "prd review",
+      "应该是 skill",
+      "skill candidate",
+    ])
+  ) {
+    return "create_skill";
+  }
+  if (
+    !includesAny(text, ["不是一次性", "不只是一次性", "不是单次"]) &&
+    includesAny(text, [
+      "这次只",
+      "本轮只",
+      "一次性任务",
+      "没有复用",
+      "不需要长期",
+      "不进入长期",
+      "已有编辑",
+      "编辑能力足够",
+      "worker task only",
+    ])
+  ) {
+    return "worker_task_only";
+  }
+  if (
+    includesAny(text, [
       "paid job",
       "publish",
       "external write",
@@ -177,6 +226,32 @@ function inferDecision(input) {
     return "create_skill";
   }
   return "worker_task_only";
+}
+
+function decisionFromUserCorrections(userCorrections = []) {
+  const text = userCorrections
+    .map((item) => String(item ?? "").toLowerCase())
+    .join("\n");
+  if (!text) return null;
+  if (includesAny(text, ["create_skill", "skill candidate", "应该是 skill", "沉淀成 skill"])) {
+    return "create_skill";
+  }
+  if (includesAny(text, ["create_agent", "agent candidate", "应该是 agent", "长期 owner"])) {
+    return "create_agent";
+  }
+  if (includesAny(text, ["create_script", "script candidate", "应该是 script", "本地 script"])) {
+    return "create_script";
+  }
+  if (includesAny(text, ["create_mcp_provider", "mcp provider", "应该是 mcp"])) {
+    return "create_mcp_provider";
+  }
+  if (includesAny(text, ["worker_task_only", "一次性任务", "不要长期"])) {
+    return "worker_task_only";
+  }
+  if (includesAny(text, ["blocked_or_needs_approval", "需要授权", "必须阻塞"])) {
+    return "blocked_or_needs_approval";
+  }
+  return null;
 }
 
 function rejectedAlternatives(decision) {
@@ -669,7 +744,8 @@ function makeDecisionEvidence({
 }
 
 export function decideCapabilityGap(input, options = {}) {
-  const decision = options.expectedDecision ?? inferDecision(input);
+  const userCorrectionDecision = decisionFromUserCorrections(options.userCorrections);
+  const decision = options.expectedDecision ?? userCorrectionDecision ?? inferDecision(input);
   if (!GAP_DECISIONS.includes(decision)) {
     throw new Error(`Unknown GapDecision: ${decision}`);
   }
@@ -1094,10 +1170,26 @@ export async function openRunStateStore(dbPath = ":memory:") {
         .prepare(`
           SELECT
             gd.verification_owner AS owner,
-            0 AS failures,
-            COUNT(*) AS total,
-            0.0 AS failureRate
+            SUM(
+              CASE
+                WHEN e.event_type IN ('review_score_recorded', 'fixture_replayed', 'decision_output_created')
+                  AND e.payload_json LIKE '%"status":"fail"%'
+                THEN 1
+                ELSE 0
+              END
+            ) AS failures,
+            COUNT(DISTINCT gd.decision_id) AS total,
+            CAST(SUM(
+              CASE
+                WHEN e.event_type IN ('review_score_recorded', 'fixture_replayed', 'decision_output_created')
+                  AND e.payload_json LIKE '%"status":"fail"%'
+                THEN 1
+                ELSE 0
+              END
+            ) AS REAL) / COUNT(DISTINCT gd.decision_id) AS failureRate
           FROM gap_decisions gd
+          JOIN capability_gaps cg ON cg.gap_id = gd.gap_id
+          LEFT JOIN run_events e ON e.run_id = cg.run_id
           GROUP BY gd.verification_owner
           ORDER BY gd.verification_owner
         `)

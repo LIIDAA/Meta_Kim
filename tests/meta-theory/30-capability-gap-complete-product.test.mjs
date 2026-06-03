@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -38,6 +38,7 @@ describe("30 — Capability Gap complete product MVP", () => {
       assert.equal(report.summary.inputs, 12);
       assert.equal(report.summary.decisionsCovered, 6);
       assert.equal(report.summary.scorecardsPassed, 12);
+      assert.equal(report.summary.naturalInferenceWithoutExpectedDecision, true);
       assert.equal(report.summary.frPassRate, 1);
       assert.equal(report.summary.quantitativePassRate, 1);
       assert.deepEqual(
@@ -68,11 +69,24 @@ describe("30 — Capability Gap complete product MVP", () => {
 
       assert.equal(report.graphValidation.status, "pass");
       assert.equal(report.graphValidation.conditionalEdgeCount, 6);
+      assert.equal(report.graphValidation.branchExecutionCoverage, 6);
       assert.equal(report.graphValidation.databaseAsPlannerCount, 0);
       assert.equal(report.graphValidation.directCanonicalWriteFromGraphNode, 0);
 
       assert.equal(report.feedbackReplay.cases.length, 6);
       assert.equal(report.feedbackReplay.reductionPercent, 30);
+      assert.equal(
+        report.feedbackReplay.correctionInfluence.decisionChangedByCorrection,
+        true
+      );
+      assert.notEqual(
+        report.feedbackReplay.correctionInfluence.baselineDecision,
+        report.feedbackReplay.correctionInfluence.correctedDecision
+      );
+      assert.equal(report.feedbackReplay.correctionInfluence.correctedDecision, "create_skill");
+      assert.ok(
+        report.feedbackReplay.correctionInfluence.replayedUserCorrections.length > 0
+      );
       assert.ok(
         report.feedbackReplay.promotionCandidates.some(
           (item) =>
@@ -89,6 +103,15 @@ describe("30 — Capability Gap complete product MVP", () => {
       assert.ok(report.analytics.candidateAcceptance.length >= 2);
       assert.ok(report.analytics.repeatKeyTopList.length > 0);
       assert.ok(report.analytics.ownerFailureRate.length > 0);
+      assert.ok(
+        report.analytics.ownerFailureRate.every(
+          (item) => typeof item.failureRate === "number"
+        )
+      );
+
+      const r006 = report.requirementChecks.find((item) => item.id === "R-006");
+      assert.match(r006.evidence, /auditableChecks=true/);
+      assert.doesNotMatch(r006.evidence, /本命令输出 status/);
 
       for (const artifact of report.productArtifacts) {
         for (const field of [
@@ -111,6 +134,42 @@ describe("30 — Capability Gap complete product MVP", () => {
       assert.match(markdown, /Capability Gap Complete Product MVP Report/);
       assert.match(markdown, /R-006/);
       assert.match(markdown, /Analytics/);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test("runs a single natural-language product entry without fixture expectedDecision", async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), "meta-kim-single-product-"));
+    try {
+      const jsonPath = path.join(tempDir, "single-product.json");
+      const markdownPath = path.join(tempDir, "single-product.md");
+      const dbPath = path.join(tempDir, "single-product.sqlite");
+      const report = await runCapabilityGapCompleteProduct({
+        jsonPath,
+        markdownPath,
+        dbPath,
+        task: "这个任务需要把重复出现的 PRD review standard 沉淀成可复用 skill candidate。",
+      });
+
+      assert.equal(report.status, "pass");
+      assert.equal(report.summary.mode, "single_task_entry");
+      assert.equal(report.summary.inputs, 1);
+      assert.equal(report.summary.decisionsCovered, 1);
+      assert.equal(report.summary.naturalInferenceWithoutExpectedDecision, true);
+      assert.equal(report.productArtifacts[0].gapDecision.decision, "create_skill");
+      assert.equal(report.graphValidation.branchExecutionCoverage, 1);
+      assert.equal(report.summary.frPassRate, 1);
+      assert.equal(report.summary.quantitativePassRate, 1);
+
+      for (const targetPath of [jsonPath, markdownPath, dbPath]) {
+        const file = await stat(targetPath);
+        assert.ok(file.size > 0, `${targetPath} should be written`);
+      }
+
+      const markdown = await readFile(markdownPath, "utf8");
+      assert.match(markdown, /Capability Gap Complete Product MVP Report/);
+      assert.doesNotMatch(JSON.stringify(report), sourceLeakPattern);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
