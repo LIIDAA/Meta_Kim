@@ -97,12 +97,17 @@ function inferDecision(input) {
   if (
     includesAny(text, [
       "json report",
+      "json summary",
+      "summary json",
       "mechanical",
       "testable",
       "normalize",
       "normalization",
       "转换",
       "机械",
+      "需要脚本",
+      "写脚本",
+      "本地脚本",
       "release artifacts",
       "release-note",
       "发布前",
@@ -183,12 +188,17 @@ function inferDecision(input) {
   if (
     includesAny(text, [
       "json report",
+      "json summary",
+      "summary json",
       "mechanical",
       "testable",
       "normalize",
       "normalization",
       "转换",
       "机械",
+      "需要脚本",
+      "写脚本",
+      "本地脚本",
       "release artifacts",
       "release-note",
     ])
