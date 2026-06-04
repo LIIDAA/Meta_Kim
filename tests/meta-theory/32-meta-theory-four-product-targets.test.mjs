@@ -175,6 +175,33 @@ describe("32 — Meta-theory four product targets", () => {
 
       assert.equal(readBack.artifact.runId, "test-run-readable-report");
       assert.equal(readBack.artifact.runReport.status, "pass");
+      assert.equal(readBack.artifact.runReportPanelContract.status, "pass");
+      assert.equal(
+        readBack.artifact.runReportPanelContract.schemaVersion,
+        "run-report-panel-contract-v0.1"
+      );
+      assert.equal(
+        readBack.artifact.runReportPanelContract.decisionSummary.runId,
+        "test-run-readable-report"
+      );
+      assert.ok(
+        readBack.artifact.runReportPanelContract.ownerHandoff.length > 0
+      );
+      assert.ok(
+        readBack.artifact.runReportPanelContract.runtimeEvidence.length >= 4
+      );
+      assert.equal(
+        readBack.artifact.runReportPanelContract.approvalRequest.dryRunCanonicalWrites,
+        0
+      );
+      assert.deepEqual(
+        readBack.artifact.runReportPanelContract.courseRubric.map((item) => item.id),
+        ["design", "execution", "acceptance", "feedback", "deliverables"]
+      );
+      assert.equal(
+        readBack.artifact.runReportPanelContract.deliverables.panelContract,
+        "artifact.runReportPanelContract"
+      );
       for (const section of [
         "判定摘要",
         "为什么这么判",
@@ -217,6 +244,30 @@ describe("32 — Meta-theory four product targets", () => {
       assert.equal(summary.status, "pass");
       assert.equal(summary.runId, "test-run-cli");
       assert.match(summary.report, /test-run-cli\.zh-CN\.md$/);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test("CLI accepts npm-style stripped positional arguments", async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), "meta-kim-governed-cli-positional-"));
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [
+          "scripts/run-meta-theory-governed-execution.mjs",
+          "同一套 PRD review standard 需要 skill。",
+          "test-run-cli-positional",
+          tempDir,
+          path.join(tempDir, "runs.sqlite"),
+        ],
+        { cwd: process.cwd(), encoding: "utf8" }
+      );
+      assert.equal(result.status, 0, result.stderr);
+      const summary = JSON.parse(result.stdout);
+      assert.equal(summary.status, "pass");
+      assert.equal(summary.runId, "test-run-cli-positional");
+      assert.match(summary.report, /test-run-cli-positional\.zh-CN\.md$/);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }

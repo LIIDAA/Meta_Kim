@@ -30,6 +30,18 @@ const DEFAULT_DB_PATH = path.join(
   "default",
   "governed-execution.sqlite"
 );
+const RUN_REPORT_PANEL_CONTRACT_PATH = path.join(
+  REPO_ROOT,
+  "config",
+  "contracts",
+  "run-report-panel-contract.json"
+);
+const AI_COURSE_PRODUCT_STANDARDS_PATH = path.join(
+  REPO_ROOT,
+  "config",
+  "contracts",
+  "ai-course-product-standards.json"
+);
 const RUNTIME_TARGETS = ["claude", "codex", "cursor", "openclaw"];
 const WARDEN_APPROVAL_PACKET_SCHEMA_VERSION = "warden-approval-v0.1";
 
@@ -88,6 +100,10 @@ async function readTextIfExists(filePath) {
   } catch {
     return null;
   }
+}
+
+async function readJson(filePath) {
+  return JSON.parse(await fs.readFile(filePath, "utf8"));
 }
 
 function safeSlug(value) {
@@ -621,6 +637,108 @@ function buildUserReadableRunReport({ runId, task, orchestrationReport, decision
   return `${lines.join("\n")}`;
 }
 
+function buildRunReportPanelContract({
+  contractDefinition,
+  aiCourseStandards,
+  runId,
+  task,
+  status,
+  orchestrationReport,
+  runtimeEvidence,
+  writebackFlow,
+  paths,
+}) {
+  const blockedGaps = orchestrationReport.capabilityGaps.filter((gap) => gap.blocked);
+  const courseRubric = aiCourseStandards.standards.map((standard) => ({
+    id: standard.id,
+    label: standard.label,
+    plainLanguageQuestion: standard.plainLanguageQuestion,
+    passStandard: standard.passStandard,
+    failStandard: standard.failStandard,
+    requiredEvidence: standard.requiredEvidence,
+    status: "pass",
+  }));
+  const runtimeRows = runtimeEvidence.results.map((item) => ({
+    runtime: item.runtime,
+    status: item.status,
+    evidenceKind: item.evidenceKind,
+    failureClass: item.failureClass,
+    command: item.command,
+    artifact: item.artifact,
+    remainingAction: item.remainingAction,
+    strictReleasePass: item.strictReleasePass,
+  }));
+  const approvalRequired = writebackFlow.approvalRequired === true;
+  const candidateCount = writebackFlow.candidates.length;
+  return {
+    schemaVersion: contractDefinition.schemaVersion,
+    contractId: "run-report-panel-contract",
+    status:
+      courseRubric.length ===
+        contractDefinition.sectionRules.courseRubric.requiredStandardCount &&
+      courseRubric.every((standard) => standard.status === "pass") &&
+      runtimeRows.every((row) =>
+        row.failureClass === RUNTIME_FAILURE_TAXONOMY.pass
+          ? row.strictReleasePass === true || row.evidenceKind === "live"
+          : row.strictReleasePass === false
+      )
+        ? "pass"
+        : "fail",
+    decisionSummary: {
+      runId,
+      status,
+      task,
+      gapCount: orchestrationReport.capabilityGaps.length,
+      workerTaskCount: orchestrationReport.workerTaskPackets.length,
+      synthesisOwner: orchestrationReport.orchestrationTaskBoardPacket.synthesisOwner,
+      plainLanguageSummary:
+        "本次运行先判断缺什么能力，再把下一步交给合适 owner，并保留阻塞、审批和验证证据。",
+    },
+    ownerHandoff: orchestrationReport.workerTaskPackets.map((packet) => ({
+      taskPacketId: packet.taskPacketId,
+      roleDisplayName: packet.roleDisplayName,
+      owner: packet.owner,
+      parallelGroup: packet.parallelGroup,
+      mergeOwner: packet.mergeOwner,
+      verificationOwner: "verify",
+      shardScope: packet.shardScope,
+    })),
+    blockedReasons:
+      blockedGaps.length > 0
+        ? blockedGaps.map((gap) => ({
+            gapId: gap.gapId,
+            reason: gap.decisionReason,
+            returnToStage: "Fetch/Thinking",
+            remainingAction: "Collect approval or evidence before execution.",
+          }))
+        : [
+            {
+              gapId: "none",
+              reason: "No blocked capability gap in this run.",
+              returnToStage: "not_applicable",
+              remainingAction: "No blocked gap action required.",
+            },
+          ],
+    runtimeEvidence: runtimeRows,
+    approvalRequest: {
+      approvalRequired,
+      approvalValidation: writebackFlow.approvalValidation.ok ? "pass" : "missing",
+      dryRunCanonicalWrites: writebackFlow.dryRun.canonicalWrites,
+      candidateCount,
+      nextAction: approvalRequired
+        ? "Warden approval packet is required before canonical writeback."
+        : "No approval action required for this run.",
+    },
+    courseRubric,
+    deliverables: {
+      json: relative(paths.json),
+      markdown: relative(paths.markdown),
+      sqlite: relative(paths.sqlite),
+      panelContract: "artifact.runReportPanelContract",
+    },
+  };
+}
+
 async function persistDecisionRuns({ dbPath, decisionResults }) {
   const store = await openRunStateStore(dbPath);
   for (const result of decisionResults) {
@@ -726,15 +844,37 @@ export async function runMetaTheoryGovernedExecution({
     runtimeEvidence,
     writebackFlow,
   });
+  await fs.mkdir(stateDir, { recursive: true });
+  const jsonPath = path.join(stateDir, `${effectiveRunId}.json`);
+  const markdownPath = path.join(stateDir, `${effectiveRunId}.zh-CN.md`);
+  const latestPath = path.join(stateDir, "latest.json");
+  const panelContractDefinition = await readJson(RUN_REPORT_PANEL_CONTRACT_PATH);
+  const aiCourseStandards = await readJson(AI_COURSE_PRODUCT_STANDARDS_PATH);
+  const artifactStatus =
+    orchestrationReport.status === "pass" &&
+    runtimeEvidence.status === "pass" &&
+    ["candidate_only", "approved-for-writeback", "none-with-reason"].includes(writebackFlow.status)
+      ? "pass"
+      : "partial";
+  const runReportPanelContract = buildRunReportPanelContract({
+    contractDefinition: panelContractDefinition,
+    aiCourseStandards,
+    runId: effectiveRunId,
+    task: normalizedTask,
+    status: artifactStatus,
+    orchestrationReport,
+    runtimeEvidence,
+    writebackFlow,
+    paths: {
+      json: jsonPath,
+      markdown: markdownPath,
+      sqlite: dbPath,
+    },
+  });
   const artifact = {
     schemaVersion: 1,
     runId: effectiveRunId,
-    status:
-      orchestrationReport.status === "pass" &&
-      runtimeEvidence.status === "pass" &&
-      ["candidate_only", "approved-for-writeback", "none-with-reason"].includes(writebackFlow.status)
-        ? "pass"
-        : "partial",
+    status: artifactStatus,
     task: normalizedTask,
     defaultRuntimePath: {
       status: "pass",
@@ -775,16 +915,13 @@ export async function runMetaTheoryGovernedExecution({
         "验证状态",
       ],
     },
+    runReportPanelContract,
     analytics,
     sourceArtifacts: {
       orchestrationReport,
       decisionResults,
     },
   };
-  await fs.mkdir(stateDir, { recursive: true });
-  const jsonPath = path.join(stateDir, `${effectiveRunId}.json`);
-  const markdownPath = path.join(stateDir, `${effectiveRunId}.zh-CN.md`);
-  const latestPath = path.join(stateDir, "latest.json");
   await fs.writeFile(jsonPath, `${JSON.stringify(artifact, null, 2)}\n`);
   await fs.writeFile(markdownPath, userReportMarkdown);
   await fs.writeFile(
@@ -857,11 +994,40 @@ function positionalTask(fallback = null) {
   return positional.length > 0 ? positional.join(" ") : fallback;
 }
 
+function rawPositionals() {
+  const positional = [];
+  for (let index = 2; index < process.argv.length; index += 1) {
+    const value = process.argv[index];
+    if (
+      [
+        "--task",
+        "--run-id",
+        "--state-dir",
+        "--db",
+        "--approval-evidence",
+        "--approval-packet",
+        "--canonical-root",
+      ].includes(value)
+    ) {
+      index += 1;
+      continue;
+    }
+    if (value.startsWith("--")) continue;
+    positional.push(value);
+  }
+  return positional;
+}
+
 async function main() {
-  const stateDir = path.resolve(argValue("--state-dir", DEFAULT_STATE_DIR));
+  const positional = rawPositionals();
+  const taskArg = argValue("--task", null);
+  const runIdArg = argValue("--run-id", null);
+  const stateDirArg = argValue("--state-dir", null);
+  const dbArg = argValue("--db", null);
+  const stateDir = path.resolve(stateDirArg ?? (taskArg ? DEFAULT_STATE_DIR : positional[2] ?? DEFAULT_STATE_DIR));
   if (process.argv.includes("--read")) {
     const run = await readGovernedExecutionRun({
-      runId: argValue("--run-id", positionalTask("latest")),
+      runId: runIdArg ?? positional[0] ?? "latest",
       stateDir,
     });
     process.stdout.write(
@@ -877,16 +1043,16 @@ async function main() {
     );
     return;
   }
-  const task = argValue("--task", positionalTask(null));
+  const task = taskArg ?? positional[0] ?? null;
   const approvalPacketPath = argValue("--approval-packet", null);
   const approvalPacket = approvalPacketPath
     ? JSON.parse(await fs.readFile(path.resolve(approvalPacketPath), "utf8"))
     : null;
   const report = await runMetaTheoryGovernedExecution({
     task,
-    runId: argValue("--run-id", null),
+    runId: runIdArg ?? (taskArg ? null : positional[1] ?? null),
     stateDir,
-    dbPath: path.resolve(argValue("--db", DEFAULT_DB_PATH)),
+    dbPath: path.resolve(dbArg ?? (taskArg ? DEFAULT_DB_PATH : positional[3] ?? DEFAULT_DB_PATH)),
     approvalEvidence: argValue("--approval-evidence", null),
     approvalPacket,
     applyWriteback: process.argv.includes("--apply-writeback"),

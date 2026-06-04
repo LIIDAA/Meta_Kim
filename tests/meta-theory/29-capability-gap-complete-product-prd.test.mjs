@@ -18,7 +18,7 @@ describe("29 — Capability Gap complete product PRD", () => {
     assert.match(prd, /Complete product MVP 已经在本地证明/);
     assert.match(prd, /还不能宣称“发布级 live\/native 全 runtime 完成”/);
     assert.match(prd, /Cursor 还没有 native live-turn harness/);
-    assert.match(prd, /Claude \/ OpenClaw 还只完成 `meta-warden` live shard/);
+    assert.match(prd, /Claude 和 OpenClaw 全九个 meta agents shard live evidence 已闭合/);
     assert.match(prd, /Codex \| live pass/);
     assert.match(prd, /Cursor 还没有 native live-turn harness/);
   });
@@ -94,7 +94,7 @@ describe("29 — Capability Gap complete product PRD", () => {
       "设计、执行、验收、反馈、交付内容",
       "Codex live pass",
       "Cursor live harness",
-      "全 meta agents shard evidence",
+      "全 meta agents shard live evidence",
     ]) {
       assert.match(prd, new RegExp(marker), `missing target marker ${marker}`);
     }
@@ -161,6 +161,8 @@ describe("29 — Capability Gap complete product PRD", () => {
       "npm run meta:gap:score-candidates",
       "P-022",
       "产品面板数据合同",
+      "config/contracts/run-report-panel-contract.json",
+      "runReportPanelContract",
       "P-023",
       "AI 课案例包",
       "P-024",
@@ -176,19 +178,74 @@ describe("29 — Capability Gap complete product PRD", () => {
     }
   });
 
-  test("records v0.16 orchestration quality completion and GitHub delta", () => {
+  test("records orchestration quality completion and GitHub delta", () => {
     for (const marker of [
-      "版本：v0.16",
       "编排质量轨",
       "tests/meta-theory/33-capability-gap-orchestration-quality.test.mjs",
       "当前 GitHub 差距",
       "P-015 到 P-021 编排质量轨",
       "仍未完成且不能对 GitHub 宣称完成",
-      "P-006 / P-007",
-      "P-012 / P-013 / P-014 / P-022 / P-023",
+      "P-012 / P-013 / P-014 / P-023",
       "P-024 Cursor native live pass 解阻",
     ]) {
       assert.match(prd, new RegExp(marker), `missing v0.16 marker ${marker}`);
+    }
+  });
+
+  test("keeps panel data contract completion without overclaiming runtime completion", () => {
+    for (const marker of [
+      "P-022 产品面板数据合同",
+      "runReportPanelContract",
+      "decision summary",
+      "owner handoff",
+      "blocked reason",
+      "runtime evidence",
+      "approval request",
+      "course rubric",
+      "deliverables",
+      "P-012 / P-013 / P-014 / P-023",
+      "不能把某一类交付物冒充另一类",
+    ]) {
+      assert.match(prd, new RegExp(marker), `missing v0.17 panel marker ${marker}`);
+    }
+  });
+
+  test("records user deliverables completion without clearing Cursor native blocker", () => {
+    for (const marker of [
+      "npm run meta:theory:deliverables",
+      "run-panel.html",
+      "readability-review.zh-CN.md",
+      "ai-course-rubric.zh-CN.md",
+      "ai-course-rubric.json",
+      "ai-course-case-pack.zh-CN.md",
+      "tests/meta-theory/34-run-deliverables.test.mjs",
+      "P-012 / P-013 / P-014 / P-023 用户交付轨",
+      "P-024 Cursor native live pass 解阻",
+      "用户交付轨已有面板数据合同、静态 Web/UI、可读性 review、AI 课评分表和课程案例包",
+      "后续只能扩展真实课程样本，不能把某一类交付物冒充另一类",
+    ]) {
+      assert.match(prd, new RegExp(marker), `missing deliverable marker ${marker}`);
+    }
+  });
+
+  test("records v0.19 all meta agents shard evidence with only Cursor native still blocked", () => {
+    for (const marker of [
+      "版本：v0.19",
+      "P-006 / P-007 全 meta agents shard live evidence",
+      "仍未完成且不能对 GitHub 宣称完成：P-024 Cursor native live pass 解阻",
+      "Claude 和 OpenClaw 全九个 meta agents shard live evidence 已闭合",
+      "P-006",
+      "9/9 agentResults ok",
+      "runtimeEvidencePacket.failureClasses.claude = \"pass\"",
+      "P-007",
+      "minimax-portal/MiniMax-M3",
+      "hooks 4/4 ready",
+      "批量模式出现过 timeout",
+      "验收口径采用单 shard 证据而非虚报整批 pass",
+      "all meta agents shard live pass",
+      "无 OpenClaw shard 剩余动作；保留批量 timeout 作为稳定性改进信号",
+    ]) {
+      assert.match(prd, new RegExp(marker), `missing v0.19 runtime shard marker ${marker}`);
     }
   });
 

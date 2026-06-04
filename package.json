@@ -77,6 +77,7 @@
     "meta:gap:score-candidates": "node scripts/score-capability-candidates.mjs",
     "meta:theory:run": "node scripts/run-meta-theory-governed-execution.mjs",
     "meta:theory:report": "node scripts/run-meta-theory-governed-execution.mjs --read",
+    "meta:theory:deliverables": "node scripts/generate-meta-theory-run-deliverables.mjs",
     "meta:agent-design:eval": "node scripts/evaluate-agent-design-quality.mjs",
     "meta:agent-process:mvp": "node scripts/run-governance-agent-process-mvp.mjs",
     "meta:core:mvp:acceptance": "node scripts/run-core-mvp-acceptance.mjs",
