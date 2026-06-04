@@ -17,7 +17,8 @@ describe("29 — Capability Gap complete product PRD", () => {
     assert.match(prd, /已测通/);
     assert.match(prd, /Complete product MVP 已经在本地证明/);
     assert.match(prd, /还不能宣称“发布级 live\/native 全 runtime 完成”/);
-    assert.match(prd, /Cursor \/ OpenClaw 仍是 smoke 证据/);
+    assert.match(prd, /Codex CLI live 当前 timeout/);
+    assert.match(prd, /Cursor 还没有 native live-turn harness/);
   });
 
   test("defines remaining complete-product scope with measurable acceptance", () => {
@@ -89,8 +90,71 @@ describe("29 — Capability Gap complete product PRD", () => {
       "approved-for-writeback",
       "按 runId 查看",
       "设计、执行、验收、反馈、交付内容",
+      "Codex live pass",
+      "Cursor live harness",
     ]) {
       assert.match(prd, new RegExp(marker), `missing target marker ${marker}`);
+    }
+  });
+
+  test("tracks a granular parallel work queue for unfinished runtime and product work", () => {
+    for (const marker of [
+      "### 可并行任务队列",
+      "主窗口由 `meta-warden` / `meta-conductor` 保持总控",
+      "可子窗口并行",
+      "P-001",
+      "Codex live prompt 最小化",
+      "P-002",
+      "Codex session recovery",
+      "P-003",
+      "Codex 主窗口 / 子窗口隔离复测",
+      "P-004",
+      "Cursor native live-turn harness 设计",
+      "P-005",
+      "Cursor native live-turn harness 实现或明确阻塞",
+      "P-006",
+      "Claude 全 meta agents shard",
+      "P-007",
+      "OpenClaw 全 meta agents shard",
+      "P-008",
+      "四端 evidence aggregator",
+      "P-009",
+      "runtime failure taxonomy",
+      "P-010",
+      "真实 Warden approval packet",
+      "P-011",
+      "当前 repo canonical writeback dry-run",
+      "P-012",
+      "Web/UI 产品面板原型",
+      "P-013",
+      "报告可读性 review",
+      "P-014",
+      "AI 课评分表导出",
+      "P-015",
+      "多 gap 混合需求 fixture",
+      "P-016",
+      "orchestration board 并行/线性计划质量门",
+      "当前主干闭合顺序",
+    ]) {
+      assert.match(prd, new RegExp(marker), `missing parallel queue marker ${marker}`);
+    }
+  });
+
+  test("records current live runtime evidence without overclaiming release-grade completion", () => {
+    for (const marker of [
+      "当前 live evidence matrix",
+      "Claude",
+      "live pass",
+      "Codex",
+      "smoke pass，live timeout",
+      "OpenClaw",
+      "MiniMax M3",
+      "Cursor",
+      "live unsupported-with-reason",
+      "cursor_live_harness_unavailable",
+      "不能用 projection smoke 冒充 native/live pass",
+    ]) {
+      assert.match(prd, new RegExp(marker), `missing live evidence marker ${marker}`);
     }
   });
 

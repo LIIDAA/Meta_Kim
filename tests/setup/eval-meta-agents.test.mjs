@@ -215,4 +215,22 @@ describe("eval-meta-agents Claude smoke", () => {
     assert.match(source, /attempt <= 2/);
     assert.match(source, /attempts: turnAttempt/);
   });
+
+  test("Cursor runtime reports projection smoke and explicit live unsupported boundary", () => {
+    const source = readFileSync(
+      path.join(repoRoot, "scripts", "eval-meta-agents.mjs"),
+      "utf8",
+    );
+
+    assert.match(source, /\["claude", "codex", "openclaw", "cursor"\]/);
+    assert.match(source, /async function runCursorSmoke/);
+    assert.match(source, /async function runCursorLive/);
+    assert.match(source, /"skills",\s*"meta-theory"/);
+    assert.match(source, /"hooks\.json"/);
+    assert.match(source, /"rules"/);
+    assert.match(source, /cursor_live_harness_unavailable/);
+    assert.match(source, /unsupportedWithReason/);
+    assert.match(source, /Do not mark Cursor native\/live pass from projection smoke/);
+    assert.match(source, /summarizeRuntimeReport\("cursor", report\.cursor\)/);
+  });
 });

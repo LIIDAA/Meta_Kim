@@ -30,7 +30,7 @@ const selectedRuntimes = new Set(
         .split(",")
         .map((item) => item.trim().toLowerCase())
         .filter(Boolean)
-    : ["claude", "codex", "openclaw"],
+    : ["claude", "codex", "openclaw", "cursor"],
 );
 const selectedAgentIds = new Set(
   agentArg
@@ -2686,6 +2686,68 @@ async function runCodexLive() {
   };
 }
 
+async function runCursorSmoke() {
+  logProgress("Cursor smoke: checking generated projection files");
+  const cursorAgentsDir = path.join(repoRoot, ".cursor", "agents");
+  const cursorSkillPath = path.join(
+    repoRoot,
+    ".cursor",
+    "skills",
+    "meta-theory",
+    "SKILL.md",
+  );
+  const cursorHooksPath = path.join(repoRoot, ".cursor", "hooks.json");
+  const cursorRulesDir = path.join(repoRoot, ".cursor", "rules");
+  const agentFiles = (await fs.readdir(cursorAgentsDir))
+    .filter((file) => file.endsWith(".md"))
+    .sort();
+  const skillText = await fs.readFile(cursorSkillPath, "utf8");
+  const hooksText = await fs.readFile(cursorHooksPath, "utf8");
+  const ruleFiles = (await fs.readdir(cursorRulesDir))
+    .filter((file) => file.endsWith(".mdc"))
+    .sort();
+  const payload = {
+    runtime: "cursor",
+    mode: "smoke",
+    entrypoint: "AGENTS.md",
+    canonical_skill_root: "canonical/skills/meta-theory",
+    generated_skill: ".cursor/skills/meta-theory/SKILL.md",
+    generated_hooks: ".cursor/hooks.json",
+    generated_rules: ruleFiles.map((file) => `.cursor/rules/${file}`),
+    custom_agents: agentFiles.map((file) => file.replace(/\.md$/, "")),
+    skill_mentions_warden: /meta-warden/i.test(skillText),
+    skill_mentions_conductor: /meta-conductor/i.test(skillText),
+    hook_surface_configured: /preToolUse|postToolUse|failClosed/i.test(hooksText),
+    native_live_turn_harness: false,
+  };
+  const ok =
+    payload.custom_agents.includes("meta-warden") &&
+    payload.skill_mentions_warden &&
+    payload.skill_mentions_conductor &&
+    payload.hook_surface_configured &&
+    payload.generated_rules.length > 0;
+  return {
+    status: ok ? "passed" : "failed",
+    ok,
+    mode: "smoke",
+    sample: payload,
+  };
+}
+
+async function runCursorLive() {
+  const smoke = await runCursorSmoke();
+  return {
+    status: "skipped",
+    ok: smoke.ok,
+    skipped: true,
+    retryable: false,
+    reason: "cursor_live_harness_unavailable",
+    unsupportedWithReason:
+      "Meta_Kim can validate Cursor projection files, hooks, rules, and subagent mirrors, but this repository does not yet provide a Cursor native live-turn harness. Do not mark Cursor native/live pass from projection smoke.",
+    smoke,
+  };
+}
+
 async function collectOpenClawBaseStatus({ useMainConfig = false } = {}) {
   logProgress("OpenClaw smoke: preparing local config and validating hooks");
   await runCommandWithIgnoredStdin("node", [prepareOpenClawScriptPath], {
@@ -3089,7 +3151,7 @@ async function runOpenClawLive() {
 async function main() {
   installSignalCleanup();
   for (const runtimeName of selectedRuntimes) {
-    if (!["claude", "codex", "openclaw"].includes(runtimeName)) {
+    if (!["claude", "codex", "openclaw", "cursor"].includes(runtimeName)) {
       throw new Error(`Unknown runtime filter: ${runtimeName}`);
     }
   }
@@ -3113,6 +3175,7 @@ async function main() {
     claude: null,
     codex: null,
     openclaw: null,
+    cursor: null,
   };
 
   try {
@@ -3188,6 +3251,21 @@ async function main() {
 
       logProgress(`OpenClaw result: ${report.openclaw.status}`);
     }
+
+    if (isRuntimeSelected("cursor")) {
+      try {
+        report.cursor =
+          evalMode === "live" ? await runCursorLive() : await runCursorSmoke();
+      } catch (error) {
+        report.cursor = {
+          status: "failed",
+          ok: false,
+          error: error.message,
+        };
+      }
+
+      logProgress(`Cursor result: ${report.cursor.status}`);
+    }
   } finally {
     await cleanupActiveChildren("final sweep");
   }
@@ -3201,6 +3279,9 @@ async function main() {
       : null,
     isRuntimeSelected("openclaw")
       ? summarizeRuntimeReport("openclaw", report.openclaw)
+      : null,
+    isRuntimeSelected("cursor")
+      ? summarizeRuntimeReport("cursor", report.cursor)
       : null,
   ].filter(Boolean);
 
