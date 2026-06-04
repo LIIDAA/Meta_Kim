@@ -241,6 +241,8 @@ describe("eval-meta-agents Claude smoke", () => {
     );
 
     assert.match(source, /const codexLiveOrchestrationSchema/);
+    assert.match(source, /function codexLivePayloadOk/);
+    assert.match(source, /function tryExtractCodexReply/);
     assert.match(source, /governed_entry/);
     assert.match(source, /warden_entry_gate/);
     assert.match(source, /conductor_orchestration/);
@@ -252,6 +254,13 @@ describe("eval-meta-agents Claude smoke", () => {
     assert.match(source, /META_KIM_COMMAND_TIMEOUT/);
     assert.match(source, /codex_live_timeout/);
     assert.match(source, /codex_exec_orchestration_prompt/);
+    assert.match(source, /function extractCodexThreadId/);
+    assert.match(source, /thread\.started/);
+    assert.match(source, /threadId: extractCodexThreadId\(error\.stdout\)/);
+    assert.match(source, /sessionRecoveryHint/);
+    assert.match(source, /recoveredFromTimeout/);
+    assert.match(source, /codex_live_timeout_recovered/);
+    assert.match(source, /status: "passed"/);
     assert.match(source, /retryCommand/);
     assert.match(source, /stdoutTail/);
     assert.match(source, /stderrTail/);

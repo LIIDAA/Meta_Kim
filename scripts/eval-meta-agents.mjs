@@ -1186,6 +1186,22 @@ function extractCodexReply(raw) {
   }
 }
 
+function tryExtractCodexReply(raw) {
+  try {
+    return extractCodexReply(raw);
+  } catch {
+    return null;
+  }
+}
+
+function extractCodexThreadId(raw) {
+  const events = parseJsonLines(raw);
+  const started = events.find(
+    (event) => event.type === "thread.started" && event.thread_id,
+  );
+  return typeof started?.thread_id === "string" ? started.thread_id : null;
+}
+
 async function resolveOpenClawCommand() {
   return resolveCliCommand({
     envKey: "META_KIM_OPENCLAW_BIN",
@@ -1681,6 +1697,22 @@ function summarizeRuntimeReport(runtimeName, report) {
     runtime: runtimeName,
     status: report.ok === true ? "passed" : "failed",
   };
+}
+
+function codexLivePayloadOk(structuralOk, runtimePayload) {
+  return (
+    structuralOk &&
+    runtimePayload?.runtime === "codex" &&
+    runtimePayload?.governed_entry === "meta-theory" &&
+    runtimePayload?.warden_entry_gate === true &&
+    runtimePayload?.conductor_orchestration === true &&
+    runtimePayload?.orchestrationTaskBoardPacket?.synthesisOwner ===
+      "meta-conductor" &&
+    Array.isArray(runtimePayload?.workerTaskPackets) &&
+    runtimePayload.workerTaskPackets.length > 0 &&
+    typeof runtimePayload?.verificationOwner === "string" &&
+    runtimePayload.verificationOwner.trim().length > 0
+  );
 }
 
 async function runCommandWithIgnoredStdin(file, args, options = {}) {
@@ -2714,6 +2746,31 @@ async function runCodexLive() {
     runtimePayload = extractCodexReply(stdout);
   } catch (error) {
     if (isCommandTimeoutFailure(error)) {
+      const recoveredPayload = tryExtractCodexReply(error.stdout);
+      const recoveredOk = codexLivePayloadOk(structuralOk, recoveredPayload);
+      if (recoveredOk) {
+        return {
+          status: "passed",
+          ok: true,
+          recoveredFromTimeout: true,
+          sample: {
+            ...payload,
+            runtime_smoke: recoveredPayload,
+            runtime_recovery: {
+              recoveredFromTimeout: true,
+              reason: "codex_live_timeout_recovered",
+              stage: "codex_exec_orchestration_prompt",
+              timeoutMs: error.timeoutMs ?? 120_000,
+              threadId: extractCodexThreadId(error.stdout),
+              retryCommand:
+                "node scripts/eval-meta-agents.mjs --runtime=codex --live",
+              promptContract:
+                "Warden -> Conductor -> orchestrationTaskBoardPacket -> workerTaskPackets",
+              stderrTail: tailText(error.stderr),
+            },
+          },
+        };
+      }
       return {
         status: "skipped",
         ok: structuralOk,
@@ -2727,8 +2784,11 @@ async function runCodexLive() {
             reason: "codex_live_timeout",
             stage: "codex_exec_orchestration_prompt",
             timeoutMs: error.timeoutMs ?? 120_000,
+            threadId: extractCodexThreadId(error.stdout),
             retryCommand:
               "node scripts/eval-meta-agents.mjs --runtime=codex --live",
+            sessionRecoveryHint:
+              "Use the Codex session record for threadId when stdout contains a thread.started event.",
             promptContract:
               "Warden -> Conductor -> orchestrationTaskBoardPacket -> workerTaskPackets",
             stdoutTail: tailText(error.stdout),
@@ -2759,18 +2819,7 @@ async function runCodexLive() {
     await fs.rm(schemaDir, { recursive: true, force: true });
   }
 
-  const ok =
-    structuralOk &&
-    runtimePayload?.runtime === "codex" &&
-    runtimePayload?.governed_entry === "meta-theory" &&
-    runtimePayload?.warden_entry_gate === true &&
-    runtimePayload?.conductor_orchestration === true &&
-    runtimePayload?.orchestrationTaskBoardPacket?.synthesisOwner ===
-      "meta-conductor" &&
-    Array.isArray(runtimePayload?.workerTaskPackets) &&
-    runtimePayload.workerTaskPackets.length > 0 &&
-    typeof runtimePayload?.verificationOwner === "string" &&
-    runtimePayload.verificationOwner.trim().length > 0;
+  const ok = codexLivePayloadOk(structuralOk, runtimePayload);
 
   return {
     status: ok ? "passed" : "failed",

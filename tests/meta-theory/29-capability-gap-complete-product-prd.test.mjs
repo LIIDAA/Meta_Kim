@@ -111,9 +111,13 @@ describe("29 — Capability Gap complete product PRD", () => {
       "P-002",
       "Codex session recovery",
       "codex_live_timeout",
+      "sessionRecoveryHint",
       "P-003",
       "Codex 主窗口 / 子窗口隔离复测",
       "019e9163-31ec-7510-86f9-9fc645c95811",
+      "019e916e-4782-7081-ae57-740b4c3bf1b2",
+      "第二轮 PASS",
+      "无新增文件改动",
       "P-004",
       "Cursor native live-turn harness 设计",
       "P-005",
@@ -141,6 +145,7 @@ describe("29 — Capability Gap complete product PRD", () => {
       "P-016",
       "orchestration board 并行/线性计划质量门",
       "当前主干闭合顺序",
+      "强制 timeout fixture",
     ]) {
       assert.match(prd, new RegExp(marker), `missing parallel queue marker ${marker}`);
     }
