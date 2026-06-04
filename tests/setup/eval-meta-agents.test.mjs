@@ -1,5 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -268,6 +269,46 @@ describe("eval-meta-agents Claude smoke", () => {
     assert.match(
       source,
       /Warden -> Conductor -> orchestrationTaskBoardPacket -> workerTaskPackets/,
+    );
+  });
+
+  test("Codex live timeout fixture recovers orchestration payload as pass", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/eval-meta-agents.mjs", "--runtime=codex", "--live"],
+      {
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          META_KIM_CODEX_LIVE_TIMEOUT_FIXTURE: "1",
+          NO_COLOR: "1",
+        },
+        encoding: "utf8",
+        timeout: 30_000,
+      },
+    );
+
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const report = JSON.parse(result.stdout);
+    assert.deepEqual(report.summary.passed, ["codex"]);
+    assert.equal(report.codex.status, "passed");
+    assert.equal(report.codex.recoveredFromTimeout, true);
+    assert.equal(
+      report.codex.sample.runtime_smoke.orchestrationTaskBoardPacket
+        .synthesisOwner,
+      "meta-conductor",
+    );
+    assert.equal(
+      report.codex.sample.runtime_smoke.workerTaskPackets[0].owner,
+      "meta-artisan",
+    );
+    assert.equal(
+      report.codex.sample.runtime_recovery.reason,
+      "codex_live_timeout_recovered",
+    );
+    assert.equal(
+      report.codex.sample.runtime_recovery.threadId,
+      "codex-live-timeout-fixture-thread",
     );
   });
 });

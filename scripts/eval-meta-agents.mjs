@@ -1620,6 +1620,59 @@ function tailText(value, maxChars = 2_000) {
   return text.slice(-maxChars);
 }
 
+function shouldForceCodexLiveTimeoutFixture() {
+  return process.env.META_KIM_CODEX_LIVE_TIMEOUT_FIXTURE === "1";
+}
+
+function buildCodexLiveTimeoutFixtureStdout() {
+  return [
+    JSON.stringify({
+      type: "thread.started",
+      thread_id: "codex-live-timeout-fixture-thread",
+    }),
+    JSON.stringify({ type: "turn.started" }),
+    JSON.stringify({
+      type: "item.completed",
+      item: {
+        type: "agent_message",
+        text: JSON.stringify({
+          runtime: "codex",
+          governed_entry: "meta-theory",
+          warden_entry_gate: true,
+          conductor_orchestration: true,
+          orchestrationTaskBoardPacket: {
+            synthesisOwner: "meta-conductor",
+            route:
+              "Warden -> Conductor -> orchestrationTaskBoardPacket -> workerTaskPackets",
+          },
+          workerTaskPackets: [
+            {
+              owner: "meta-artisan",
+              roleDisplayName: "docs",
+              deliverable:
+                "Timeout fixture proves recoverable Codex live orchestration evidence.",
+              verificationOwner: "meta-prism",
+            },
+          ],
+          verificationOwner: "meta-prism",
+        }),
+      },
+    }),
+  ].join("\n");
+}
+
+function buildCodexLiveTimeoutFixtureError() {
+  const error = new Error(
+    "Command timed out after 1ms: codex fixture live orchestration",
+  );
+  error.code = "META_KIM_COMMAND_TIMEOUT";
+  error.timeoutMs = 1;
+  error.command = "codex fixture live orchestration";
+  error.stdout = buildCodexLiveTimeoutFixtureStdout();
+  error.stderr = "fixture stderr tail";
+  return error;
+}
+
 function isOptionalRuntimeUnavailable(message) {
   const normalized = String(message || "").toLowerCase();
   return (
@@ -2643,19 +2696,26 @@ async function runCodexSmoke() {
 }
 
 async function runCodexLive() {
-  const codexCmd = await getResolvedCodexCommand();
+  const forceTimeoutFixture = shouldForceCodexLiveTimeoutFixture();
+  const codexCmd = forceTimeoutFixture
+    ? { file: "codex-fixture", toArgs: (args) => args.map(String) }
+    : await getResolvedCodexCommand();
   let versionStdout;
   try {
     logProgress("Codex live: probing CLI and running repository smoke prompt");
-    ({ stdout: versionStdout } = await runCommandWithIgnoredStdin(
-      codexCmd.file,
-      codexCmd.toArgs(["--version"]),
-      {
-        cwd: repoRoot,
-        timeout: 30_000,
-        env: { ...process.env, NO_COLOR: "1" },
-      },
-    ));
+    if (forceTimeoutFixture) {
+      versionStdout = "codex-cli timeout-fixture";
+    } else {
+      ({ stdout: versionStdout } = await runCommandWithIgnoredStdin(
+        codexCmd.file,
+        codexCmd.toArgs(["--version"]),
+        {
+          cwd: repoRoot,
+          timeout: 30_000,
+          env: { ...process.env, NO_COLOR: "1" },
+        },
+      ));
+    }
   } catch (error) {
     if (isOptionalRuntimeUnavailable(error.message)) {
       return {
@@ -2733,6 +2793,9 @@ async function runCodexLive() {
       repoRoot,
       prompt,
     ]);
+    if (forceTimeoutFixture) {
+      throw buildCodexLiveTimeoutFixtureError();
+    }
     const { stdout } = await runCommandWithIgnoredStdin(
       codexCmd.file,
       codexExecArgs,
