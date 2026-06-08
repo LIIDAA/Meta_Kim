@@ -6,6 +6,29 @@ All notable changes to Meta_Kim are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 When you tag a release, add a new **`## [version] - YYYY-MM-DD`** section at the top (above older entries) and list changes there.
 
+## [2.8.7] - 2026-06-09
+
+### Fixed
+
+- **Cross-runtime Fetch discovery evidence** — Expanded the meta-theory Fetch checklist and route search log so Claude Code, Codex, Cursor, and OpenClaw all require explicit project/global capability inventory evidence before Thinking.
+- **Runtime provider scanning parity** — Global discovery now scans Claude Code settings/MCP evidence, Cursor rules/prompts/hooks/MCP config, Codex hooks/config/skills, and OpenClaw config/workspace/skill evidence instead of leaving non-Codex providers thinly represented.
+- **Runtime skill projection path drift** — Runtime sync now preserves the cross-runtime Fetch checklist literally so Claude, Cursor, and OpenClaw mirrors no longer rewrite other runtimes' paths into their own projection paths.
+
+### Changed
+
+- **Capability route evidence is more auditable** — Route selection now exposes `.claude/settings.json`, `.cursor/hooks.json`, `openclaw/openclaw.template.json`, package scripts, and OpenClaw workspace agents as real provider evidence.
+- **Meta-theory entrypoint line budget relaxed** — The structural guard now allows `SKILL.md` to stay under 500 lines, matching the accepted maintainer budget.
+- Version bump: 2.8.6 -> 2.8.7.
+
+### Verification
+
+- `npm run meta:sync`
+- `npm run meta:route:validate`
+- `npm run meta:capabilities:smoke`
+- `npm run meta:check:runtimes`
+- `npm run meta:test:meta-theory`
+- `git diff --check`
+
 ## [2.8.6] - 2026-06-05
 
 ### Added

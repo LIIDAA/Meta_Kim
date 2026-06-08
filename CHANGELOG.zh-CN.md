@@ -6,6 +6,29 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 发布新版本时，请在顶部（旧版本之前）添加新的 **`## [版本号] - YYYY-MM-DD`** 部分。
 
+## [2.8.7] - 2026-06-09
+
+### 修复
+
+- **跨运行时 Fetch 发现证据** — 扩展 meta-theory Fetch 最小检查清单和 route searchLog，Claude Code、Codex、Cursor、OpenClaw 现在都必须在 Thinking 前显式记录项目/全局能力库存证据。
+- **Runtime provider 扫描对齐** — 全局发现器现在覆盖 Claude Code settings / MCP 证据、Cursor rules / prompts / hooks / MCP 配置、Codex hooks / config / skills，以及 OpenClaw config / workspace / skill 证据，不再只让 Codex 路径相对完整。
+- **Runtime skill 投影路径漂移** — runtime sync 现在会原样保留跨运行时 Fetch checklist，Claude、Cursor、OpenClaw 镜像不再把其它 runtime 的路径替换成自己的投影路径。
+
+### 变更
+
+- **能力路由证据更可审计** — route selection 现在把 `.claude/settings.json`、`.cursor/hooks.json`、`openclaw/openclaw.template.json`、`package.json` scripts 和 OpenClaw workspace agents 都作为真实 provider evidence 输出。
+- **放宽 meta-theory 入口行数预算** — 结构守卫现在允许 `SKILL.md` 保持在 500 行以内，匹配当前维护者接受的预算。
+- 版本升级：2.8.6 -> 2.8.7。
+
+### 验证
+
+- `npm run meta:sync`
+- `npm run meta:route:validate`
+- `npm run meta:capabilities:smoke`
+- `npm run meta:check:runtimes`
+- `npm run meta:test:meta-theory`
+- `git diff --check`
+
 ## [2.8.6] - 2026-06-05
 
 ### 新增
