@@ -1322,7 +1322,7 @@ async function validateRuntimeCompatibilityCatalog() {
       (openclaw.evidence ?? []).some(
         (entry) => entry.type === "official_docs" && entry.ref.includes("docs.openclaw.ai/automation/hooks"),
       ),
-    "OpenClaw runtime projection must preserve official workspace/hook evidence and require strict OpenClaw self-test evidence before merge.",
+    "OpenClaw runtime projection must preserve official workspace/hook evidence and require strict OpenClaw self-test evidence that passes review before merge.",
   );
 }
 

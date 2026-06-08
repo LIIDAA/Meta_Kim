@@ -135,7 +135,7 @@
         {
           "type": "local_file",
           "ref": "AGENTS.md",
-          "claim": "OpenClaw is a compatible formal projection; stricter tool-denial behavior should be proven through OpenClaw-side strict tests before merge."
+          "claim": "OpenClaw is a compatible formal projection; stricter tool-denial behavior must be backed by OpenClaw-side strict tests, and can merge only after the evidence passes review."
         },
         {
           "type": "official_docs",
@@ -149,7 +149,7 @@
         }
       ],
       "decision": "Keep as a compatible formal Meta_Kim projection with OpenClaw-native workspace, skill, config, and hook surfaces.",
-      "nextAction": "Community PRs that improve OpenClaw behavior are welcome; include strict OpenClaw self-test evidence before merge, especially for typed plugin tool-denial behavior."
+      "nextAction": "Community PRs that improve OpenClaw behavior are welcome; contributors must include strict OpenClaw self-test evidence, especially for typed plugin tool-denial behavior, and changes can merge only after the evidence passes review."
     },
     {
       "id": "cursor",
@@ -203,7 +203,7 @@
         }
       ],
       "decision": "Keep as a formal Meta_Kim runtime projection with official subagent/rule/hook/MCP surfaces.",
-      "nextAction": "Community PRs that improve Cursor behavior are welcome; include strict Cursor self-test evidence before merge, especially for native choice-surface claims."
+      "nextAction": "Community PRs that improve Cursor behavior are welcome; contributors must include strict Cursor self-test evidence, especially for native choice-surface claims, and changes can merge only after the evidence passes review."
     },
     {
       "id": "opencode",

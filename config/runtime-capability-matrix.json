@@ -6588,7 +6588,7 @@
     ],
     "cursor": [
       "Do not mark hooks or native choice as native without official or local proof.",
-      "Treat Cursor as a compatible formal projection; new Cursor-native claims need strict Cursor test evidence before merge.",
+      "Treat Cursor as a compatible formal projection; new Cursor-native claims need strict Cursor test evidence, and can merge only after the evidence passes review.",
       "Cursor subagents under .cursor/agents and hooks under .cursor/hooks.json are official surfaces.",
       "Cursor arbitrary native choice popup remains unverified; use chat decision card fallback for human choices."
     ]
