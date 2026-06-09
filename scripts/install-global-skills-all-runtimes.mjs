@@ -1564,6 +1564,18 @@ async function installSkillCreator(targetBaseSkills) {
   );
 }
 
+async function deployRuntimeHookSupport(spec, runtimeHome, runtimeId, skillsRoot) {
+  await sanitizeCompatibilityRoots(runtimeId, skillsRoot, spec);
+  await ensureHookLayoutAliases(runtimeHome, spec);
+  await deployHookSubdirs(spec, runtimeHome, runtimeId);
+  await deployHookConfigFiles(spec, runtimeHome, runtimeId);
+  await deployHookExtraFiles(spec, runtimeHome, runtimeId);
+  await patchPlanningWithFilesPhaseCounters(spec, runtimeHome, runtimeId);
+  await patchCodexPlanningHooksForPlatform(spec, runtimeHome, runtimeId);
+  await patchCodexHookPromptForPlatform(spec, runtimeHome, runtimeId);
+  await mergeHookSettings(spec, runtimeHome, runtimeId);
+}
+
 async function installAllSkillsForRuntime(label, runtimeHome, runtimeId) {
   const skillsRoot = path.join(runtimeHome, "skills");
   assertUnderHome(runtimeHome);
@@ -1600,16 +1612,7 @@ async function installAllSkillsForRuntime(label, runtimeHome, runtimeId) {
     } else {
       await installGitSkill(spec.id, targetDir, spec.repo);
     }
-    await sanitizeCompatibilityRoots(runtimeId, skillsRoot, spec);
-    await ensureHookLayoutAliases(runtimeHome, spec);
-    // Hook co-deployment for subdirExtraction installs (e.g. planning-with-files)
-    await deployHookSubdirs(spec, runtimeHome, runtimeId);
-    await deployHookConfigFiles(spec, runtimeHome, runtimeId);
-    await deployHookExtraFiles(spec, runtimeHome, runtimeId);
-    await patchPlanningWithFilesPhaseCounters(spec, runtimeHome, runtimeId);
-    await patchCodexPlanningHooksForPlatform(spec, runtimeHome, runtimeId);
-    await patchCodexHookPromptForPlatform(spec, runtimeHome, runtimeId);
-    await mergeHookSettings(spec, runtimeHome, runtimeId);
+    await deployRuntimeHookSupport(spec, runtimeHome, runtimeId, skillsRoot);
     await cleanupDisabledSkillResidue(runtimeHome, spec.id);
   }
   const hasManifestSkillCreator = SKILL_REPOS.some(
@@ -3220,8 +3223,7 @@ async function installSkillsToMultipleRuntimes(
           }
         }
 
-        await sanitizeCompatibilityRoots(runtimeId, skillsRoot, spec);
-        await ensureHookLayoutAliases(runtimeHome, spec);
+        await deployRuntimeHookSupport(spec, runtimeHome, runtimeId, skillsRoot);
         await cleanupDisabledSkillResidue(runtimeHome, spec.id);
       }
 

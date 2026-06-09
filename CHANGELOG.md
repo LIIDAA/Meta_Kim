@@ -6,6 +6,24 @@ This file is the reader-facing release history for Meta_Kim.
 
 The changelog explains what changed and why it matters. It intentionally avoids long internal task ledgers, low-signal backlog ids, and implementation trivia. When exact evidence is needed, use the repository history, tests, generated reports, and PRD artifacts.
 
+## [2.8.11] - 2026-06-09
+
+### Changed
+
+- **Global and Project Hook Strategy** - Meta_Kim now separates project-level governance hooks from global reusable hooks. Strong governance hooks such as dispatch enforcement, Graphify context, and meta-theory spine stay project-scoped by default, while global installs focus on safe reusable entry points such as memory save, HookPrompt, and the OpenClaw memory bridge.
+
+### Fixed
+
+- **Cursor HookPrompt Global Install** - Cursor global `beforeSubmitPrompt` now receives the HookPrompt adapter just like Codex global `UserPromptSubmit`, and strict provider validation checks both runtimes.
+- **Hook Capability Inventory** - The provider registry now models Codex and Cursor HookPrompt adapters separately, so project projection and global install evidence are checked against the right runtime and hook event.
+
+### Verification
+
+- `node scripts/install-global-skills-all-runtimes.mjs --skills hookprompt --targets cursor`
+- `node scripts/validate-provider-capabilities.mjs --strict-global-hooks --json`
+- `node --test tests/setup/install-cross-platform.test.mjs`
+- `node --test tests/governance/provider-capabilities.test.mjs`
+
 ## [2.8.10] - 2026-06-09
 
 ### Added

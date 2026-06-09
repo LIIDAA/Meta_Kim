@@ -6,6 +6,24 @@
 
 更新说明只解释“改了什么、为什么重要”。过细的内部任务编号、低价值 backlog id 和实现流水账不放在这里；需要精确证据时，请看 Git 历史、测试、生成报告和 PRD 产物。
 
+## [2.8.11] - 2026-06-09
+
+### 变更
+
+- **全局和项目级 Hook 策略** - Meta_Kim 现在明确区分项目级治理 hook 和全局可复用 hook。派工强校验、Graphify 上下文、meta-theory spine 这类强治理能力默认留在项目级；全局安装只放记忆保存、HookPrompt、OpenClaw memory bridge 这类安全可复用入口。
+
+### 修复
+
+- **Cursor 全局 HookPrompt** - Cursor 全局 `beforeSubmitPrompt` 现在会注册 HookPrompt adapter，和 Codex 全局 `UserPromptSubmit` 的策略对齐；严格 provider 验证也会同时检查 Codex 和 Cursor。
+- **Hook 能力清单** - provider registry 现在把 Codex 和 Cursor 的 HookPrompt adapter 分开建模，项目投影和全局安装会按各自 runtime 与 hook 事件验证。
+
+### 验证
+
+- `node scripts/install-global-skills-all-runtimes.mjs --skills hookprompt --targets cursor`
+- `node scripts/validate-provider-capabilities.mjs --strict-global-hooks --json`
+- `node --test tests/setup/install-cross-platform.test.mjs`
+- `node --test tests/governance/provider-capabilities.test.mjs`
+
 ## [2.8.10] - 2026-06-09
 
 ### 新增
