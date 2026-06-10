@@ -2891,13 +2891,20 @@ function buildPostCopyBootstrapScript(activeTargets) {
   ];
 
   return `#!/usr/bin/env node
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
-const rootDir = dirname(fileURLToPath(import.meta.url));
+const scriptPath = fileURLToPath(import.meta.url);
+const rootDir = dirname(scriptPath);
 const graphifyPlatforms = ${JSON.stringify(graphifyPlatforms, null, 2)};
+const autoMode = process.argv.includes("--auto");
+const autoWorkerMode = process.argv.includes("--auto-worker");
+const stateDir = join(rootDir, ".meta-kim", "state", "default");
+const autoMarkerPath = join(stateDir, "post-copy-init.json");
+const runningTtlMs = 10 * 60 * 1000;
+const failedRetryMs = 60 * 60 * 1000;
 const guideTargets = {
   claude: "CLAUDE.md",
   codex: "AGENTS.md",
@@ -2908,6 +2915,114 @@ const guideTargets = {
   trae: "AGENTS.md",
   "trae-cn": "AGENTS.md",
 };
+
+function scriptMtimeMs() {
+  try {
+    return statSync(scriptPath).mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
+function readAutoMarker() {
+  try {
+    return JSON.parse(readFileSync(autoMarkerPath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeAutoMarker(status, extra = {}) {
+  try {
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(
+      autoMarkerPath,
+      JSON.stringify(
+        {
+          status,
+          updatedAt: new Date().toISOString(),
+          scriptMtimeMs: scriptMtimeMs(),
+          ...extra,
+        },
+        null,
+        2,
+      ) + "\\n",
+      "utf8",
+    );
+  } catch {
+    // Auto-init state is best-effort; never let it block meta-theory startup.
+  }
+}
+
+function markerAgeMs(marker) {
+  const raw = marker?.updatedAt || marker?.startedAt;
+  const time = raw ? Date.parse(raw) : Number.NaN;
+  return Number.isFinite(time) ? Date.now() - time : Number.POSITIVE_INFINITY;
+}
+
+function shouldSkipAutoLaunch() {
+  const marker = readAutoMarker();
+  const currentScriptMtimeMs = scriptMtimeMs();
+  if (
+    marker?.status === "passed" &&
+    marker.scriptMtimeMs === currentScriptMtimeMs
+  ) {
+    return true;
+  }
+  if (marker?.status === "running" && markerAgeMs(marker) < runningTtlMs) {
+    return true;
+  }
+  if (marker?.status === "failed" && markerAgeMs(marker) < failedRetryMs) {
+    return true;
+  }
+  return false;
+}
+
+function launchAutoWorker() {
+  if (process.env.META_KIM_POST_COPY_AUTO === "off") return;
+  if (shouldSkipAutoLaunch()) return;
+
+  const startedAt = new Date().toISOString();
+  writeAutoMarker("running", {
+    mode: "auto",
+    startedAt,
+  });
+
+  try {
+    const child = spawn(process.execPath, [scriptPath, "--auto-worker"], {
+      cwd: rootDir,
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true,
+      env: {
+        ...process.env,
+        META_KIM_POST_COPY_AUTO: "worker",
+      },
+    });
+    child.unref();
+  } catch (error) {
+    writeAutoMarker("failed", {
+      mode: "auto",
+      message: error?.message || String(error),
+    });
+  }
+}
+
+if (autoMode && !autoWorkerMode) {
+  launchAutoWorker();
+  process.exit(0);
+}
+
+function fail(message, code = 1) {
+  if (autoWorkerMode) {
+    writeAutoMarker("failed", {
+      mode: "auto",
+      message,
+    });
+  }
+  console.error(message);
+  process.exit(code);
+}
 
 function pythonCandidates() {
   if (process.platform === "win32") {
@@ -2953,8 +3068,7 @@ function runPython(python, args, { optional = false, stdio = "inherit" } = {}) {
     console.warn("[Meta_Kim] Optional command failed:", args.join(" "));
     return false;
   }
-  console.error("[Meta_Kim] Command failed:", args.join(" "));
-  process.exit(result.status || 1);
+  fail("[Meta_Kim] Command failed: " + args.join(" "), result.status || 1);
 }
 
 function guideAlreadyHasGraphifySection(platform) {
@@ -2967,9 +3081,9 @@ function guideAlreadyHasGraphifySection(platform) {
 
 const python = findPython();
 if (!python) {
-  console.error("[Meta_Kim] Python 3.10+ with pip is required for graphify.");
-  console.error("[Meta_Kim] Install Python, then run this script again.");
-  process.exit(1);
+  fail(
+    "[Meta_Kim] Python 3.10+ with pip is required for graphify. Install Python, then run this script again.",
+  );
 }
 
 const pipShow = runCandidate(python, ["-m", "pip", "show", "graphifyy"], "pipe");
@@ -2997,6 +3111,10 @@ for (const platform of graphifyPlatforms) {
 }
 
 runPython(python, ["-m", "graphify", "update", "."]);
+writeAutoMarker("passed", {
+  mode: autoWorkerMode ? "auto" : "manual",
+  graphPath: join(rootDir, "graphify-out", "graph.json"),
+});
 console.log("[Meta_Kim] graphify is initialized for:", rootDir);
 `;
 }

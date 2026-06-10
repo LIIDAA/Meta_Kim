@@ -6,6 +6,27 @@
 
 更新说明只解释“改了什么、为什么重要”。过细的内部任务编号、低价值 backlog id 和实现流水账不放在这里；需要精确证据时，请看 Git 历史、测试、生成报告和 PRD 产物。
 
+## [2.8.16] - 2026-06-10
+
+### 修复
+
+- **复制后自动初始化 Graphify** - 复制到任意项目根目录的 Meta_Kim 项目级文件夹，不再要求用户记住并手动运行 `node meta-kim-post-copy.mjs`。首次触发 `meta-theory` 时，Meta_Kim 会从最终项目根目录自动启动 post-copy bootstrap。
+- **首次触发不阻塞** - 生成的 `meta-kim-post-copy.mjs` 现在支持 `--auto` 和 `--auto-worker`。hook 只启动一个分离的后台 worker，把一次性状态写入 `.meta-kim/state/default/post-copy-init.json`；即使 Graphify 依赖安装或建图耗时较长，也不会卡住 meta-theory 启动路径。
+- **运行时 hook 覆盖补齐** - Claude Code 和 Codex 的 Skill 激活会调用同一个 shared spine hook；Cursor 的 prompt hook 也能在显式 `meta-theory` 输入时走同一路径自动 bootstrap。需要显式关闭时，可以设置 `META_KIM_POST_COPY_AUTO=off`。
+- **回归测试覆盖** - setup 测试现在锁定自动 bootstrap 契约、Cursor prompt hook 顺序，以及复制后 Graphify 初始化行为。
+
+### 验证
+
+- `npm run meta:test:setup`
+- `npm run meta:graphify:rebuild`
+- `npm run meta:release:smoke`
+- `npm run meta:graphify:check`
+- `git diff --check`
+- `node --check setup.mjs`
+- `node --check canonical/runtime-assets/shared/hooks/activate-meta-theory-spine.mjs`
+- `node --check scripts/runtime-hook-mapping.mjs`
+- `node --check scripts/sync-runtimes.mjs`
+
 ## [2.8.15] - 2026-06-10
 
 ### 修复

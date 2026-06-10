@@ -211,15 +211,36 @@ describe("graphify idempotent wiring (contract)", () => {
     const body = src.slice(start, end);
 
     assert.match(body, /fileURLToPath\(import\.meta\.url\)/);
-    assert.match(body, /const rootDir = dirname\(fileURLToPath\(import\.meta\.url\)\)/);
+    assert.match(body, /const scriptPath = fileURLToPath\(import\.meta\.url\)/);
+    assert.match(body, /const rootDir = dirname\(scriptPath\)/);
     assert.match(body, /\["-m", "pip", "show", "graphifyy"\]/);
     assert.match(body, /\["-m", "pip", "install", "graphifyy"\]/);
     assert.match(body, /\["-m", "graphify", "hook", "install"\]/);
     assert.match(body, /\["-m", "graphify", platform, "install"\]/);
     assert.match(body, /\["-m", "graphify", "update", "\."\]/);
+    assert.match(body, /process\.argv\.includes\("--auto"\)/);
+    assert.match(body, /process\.argv\.includes\("--auto-worker"\)/);
+    assert.match(body, /post-copy-init\.json/);
+    assert.match(body, /spawn\(process\.execPath, \[scriptPath, "--auto-worker"\]/);
+    assert.match(body, /detached: true/);
+    assert.match(body, /failedRetryMs/);
     assert.doesNotMatch(body, /PROJECT_DIR/);
     assert.doesNotMatch(body, /D:[\\/]/);
     assert.doesNotMatch(body, /Meta_Kim[\\/]/);
+  });
+
+  test("meta-theory activation hook starts post-copy auto-init without blocking startup", () => {
+    const src = readFileSync(
+      path.join(root, "canonical/runtime-assets/shared/hooks/activate-meta-theory-spine.mjs"),
+      "utf8",
+    );
+
+    assert.match(src, /meta-kim-post-copy\.mjs/);
+    assert.match(src, /spawnSync\(process\.execPath, \[scriptPath, "--auto"\]/);
+    assert.match(src, /timeout: 4000/);
+    assert.match(src, /stdio: "ignore"/);
+    assert.match(src, /META_KIM_POST_COPY_AUTO === "off"/);
+    assert.match(src, /catch \{\s*\/\/ Post-copy auto-init is opportunistic/s);
   });
 
   test("setup.mjs skips guide-mutating graphify platform install when guide section exists", () => {

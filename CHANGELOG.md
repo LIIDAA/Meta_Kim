@@ -6,6 +6,27 @@ This file is the reader-facing release history for Meta_Kim.
 
 The changelog explains what changed and why it matters. It intentionally avoids long internal task ledgers, low-signal backlog ids, and implementation trivia. When exact evidence is needed, use the repository history, tests, generated reports, and PRD artifacts.
 
+## [2.8.16] - 2026-06-10
+
+### Fixed
+
+- **Automatic Post-Copy Graphify Initialization** - Copied project-level Meta_Kim folders no longer require users to remember `node meta-kim-post-copy.mjs`. On the first `meta-theory` activation, Meta_Kim now starts the post-copy bootstrap automatically from the final project root.
+- **Non-Blocking First Trigger** - The generated `meta-kim-post-copy.mjs` now supports `--auto` and `--auto-worker`. The hook launches a detached background worker, records one-time state in `.meta-kim/state/default/post-copy-init.json`, and keeps the meta-theory startup path responsive even when Graphify dependency installation or graph generation takes longer.
+- **Runtime Hook Coverage** - Claude Code and Codex Skill activation now call the same shared spine hook, and Cursor prompt hooks can bootstrap explicit `meta-theory` prompts through the same path. The hook also honors `META_KIM_POST_COPY_AUTO=off` for explicit opt-out.
+- **Regression Coverage** - Setup tests now lock the automatic bootstrap contract, Cursor prompt hook ordering, and the copy-ready Graphify post-copy behavior.
+
+### Verification
+
+- `npm run meta:test:setup`
+- `npm run meta:graphify:rebuild`
+- `npm run meta:release:smoke`
+- `npm run meta:graphify:check`
+- `git diff --check`
+- `node --check setup.mjs`
+- `node --check canonical/runtime-assets/shared/hooks/activate-meta-theory-spine.mjs`
+- `node --check scripts/runtime-hook-mapping.mjs`
+- `node --check scripts/sync-runtimes.mjs`
+
 ## [2.8.15] - 2026-06-10
 
 ### Fixed
