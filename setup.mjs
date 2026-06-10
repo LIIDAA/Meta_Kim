@@ -478,6 +478,11 @@ Possible causes:
     graphifySkillRegistered: (p) => `graphify ${p} skill registered`,
     graphifySkillFailed: (p) =>
       `graphify ${p} skill registration failed (non-blocking)`,
+    graphifySkillSkippedGuideExists: (p) =>
+      `graphify ${p} install skipped (guide already has Graphify section)`,
+    graphifyCodeGraphGenerated: "graphify code graph generated",
+    graphifyCodeGraphGenerationFailed:
+      "graphify code graph generation failed (non-blocking)",
     networkxCheck: (v) => `networkx ${v}`,
     networkxUpgrading:
       "Upgrading networkx to >=3.4 for graphify compatibility...",
@@ -691,15 +696,15 @@ Possible causes:
     npxQuickPlatformCodex: "Codex CLI",
     npxQuickPlatformCursor: "Cursor",
     npxQuickPlatformAll: "All platforms",
-    npxQuickDirPrompt: "Where should I create the project?",
+    npxQuickDirPrompt: "Where should I prepare the project directory?",
     npxQuickDirDefault: "~/Desktop/Meta_Kim",
-    npxQuickCreating: "Creating project at",
-    npxQuickCopyFiles: "Copying platform files",
-    npxQuickDirExists: "Directory already exists — will update files inside",
-    npxQuickDone: "Project ready!",
+    npxQuickCreating: "Preparing project directory:",
+    npxQuickCopyFiles: "Copying project-level runtime files",
+    npxQuickDirExists: "Directory already exists; files inside will be updated",
+    npxQuickDone: "Project-level files ready!",
     npxQuickOpenIn: "Open your platform in this directory:",
     npxQuickAskDeploy:
-      "Where to create the project-level directory? You can copy this directory to existing projects.",
+      "Export project-level runtime files to another directory? You can copy that directory into existing projects.",
     npxQuickDeployYes: "Select directory",
     npxQuickDeployNo: "Skip",
     aboutAuthor: "About the Author",
@@ -969,6 +974,11 @@ ${r ? `原始错误：${r}` : ""}
     graphifySkillRegistering: (p) => `正在注册 graphify ${p} 技能...`,
     graphifySkillRegistered: (p) => `graphify ${p} 技能已注册`,
     graphifySkillFailed: (p) => `graphify ${p} 技能注册失败（不影响其他功能）`,
+    graphifySkillSkippedGuideExists: (p) =>
+      `跳过 graphify ${p} install（指南中已有 Graphify 章节）`,
+    graphifyCodeGraphGenerated: "graphify 代码图谱已生成",
+    graphifyCodeGraphGenerationFailed:
+      "graphify 代码图谱生成失败（不影响其他功能）",
     networkxCheck: (v) => `networkx ${v}`,
     networkxUpgrading: "正在升级 networkx 至 >=3.4 以兼容 graphify...",
     networkxUpgraded: (v) => `networkx 已升级至 ${v}`,
@@ -1173,14 +1183,14 @@ ${r ? `原始错误：${r}` : ""}
     npxQuickPlatformCodex: "Codex CLI",
     npxQuickPlatformCursor: "Cursor",
     npxQuickPlatformAll: "全部平台",
-    npxQuickDirPrompt: "项目创建在哪里？",
+    npxQuickDirPrompt: "项目级目录放在哪里？",
     npxQuickDirDefault: "~/Desktop/Meta_Kim",
-    npxQuickCreating: "正在创建项目：",
-    npxQuickCopyFiles: "正在拷贝平台文件",
-    npxQuickDirExists: "目录已存在 — 将更新其中的文件",
-    npxQuickDone: "项目就绪！",
+    npxQuickCreating: "正在准备项目级目录：",
+    npxQuickCopyFiles: "正在复制项目级运行时文件",
+    npxQuickDirExists: "目录已存在，将更新其中的文件",
+    npxQuickDone: "项目级文件已就绪！",
     npxQuickOpenIn: "在该目录打开你的平台：",
-    npxQuickAskDeploy: "想在哪建立项目级目录？您可以直接复制此目录到现有项目中创建项目级内容。",
+    npxQuickAskDeploy: "是否将项目级运行时文件导出到另一个目录？可把该目录复制到现有项目中。",
     npxQuickDeployYes: "选择目录",
     npxQuickDeployNo: "跳过",
     aboutAuthor: "关于作者",
@@ -1466,6 +1476,11 @@ ${r ? `生エラー：${r}` : ""}
     graphifySkillRegistered: (p) => `graphify ${p} スキル登録済み`,
     graphifySkillFailed: (p) =>
       `graphify ${p} スキル登録失敗（非ブロッキング）`,
+    graphifySkillSkippedGuideExists: (p) =>
+      `graphify ${p} install をスキップ（ガイドに Graphify セクションが既にあります）`,
+    graphifyCodeGraphGenerated: "graphify コードグラフ生成済み",
+    graphifyCodeGraphGenerationFailed:
+      "graphify コードグラフ生成失敗（非ブロッキング）",
     networkxCheck: (v) => `networkx ${v}`,
     networkxUpgrading: "graphify互換のためnetworkxを>=3.4にアップグレード中...",
     networkxUpgraded: (v) => `networkxを${v}にアップグレードしました`,
@@ -1690,15 +1705,15 @@ ${r ? `生エラー：${r}` : ""}
     npxQuickPlatformCodex: "Codex CLI",
     npxQuickPlatformCursor: "Cursor",
     npxQuickPlatformAll: "すべてのプラットフォーム",
-    npxQuickDirPrompt: "プロジェクトをどこに作成しますか？",
+    npxQuickDirPrompt: "プロジェクト用ディレクトリをどこに準備しますか？",
     npxQuickDirDefault: "~/Desktop/Meta_Kim",
-    npxQuickCreating: "プロジェクトを作成中：",
-    npxQuickCopyFiles: "プラットフォームファイルをコピー中",
-    npxQuickDirExists: "ディレクトリが既に存在します — ファイルを更新します",
-    npxQuickDone: "プロジェクトの準備完了！",
+    npxQuickCreating: "プロジェクト用ディレクトリを準備中：",
+    npxQuickCopyFiles: "プロジェクト用ランタイムファイルをコピー中",
+    npxQuickDirExists: "ディレクトリは既に存在します。中のファイルを更新します",
+    npxQuickDone: "プロジェクト用ファイルの準備完了！",
     npxQuickOpenIn: "このディレクトリでプラットフォームを開く：",
     npxQuickAskDeploy:
-      "プロジェクト級ディレクトリをどこに作成しますか？このディレクトリを既存プロジェクトにコピーできます。",
+      "プロジェクト用ランタイムファイルを別ディレクトリに書き出しますか？そのディレクトリを既存プロジェクトへコピーできます。",
     npxQuickDeployYes: "ディレクトリを選択",
     npxQuickDeployNo: "スキップ",
     aboutAuthor: "作者について",
@@ -1976,6 +1991,11 @@ ${r ? `원본 오류：${r}` : ""}
     graphifySkillRegistering: (p) => `graphify ${p} 스킬 등록 중...`,
     graphifySkillRegistered: (p) => `graphify ${p} 스킬 등록됨`,
     graphifySkillFailed: (p) => `graphify ${p} 스킬 등록 실패 (비차단)`,
+    graphifySkillSkippedGuideExists: (p) =>
+      `graphify ${p} install 건너뜀(가이드에 Graphify 섹션이 이미 있음)`,
+    graphifyCodeGraphGenerated: "graphify 코드 그래프 생성됨",
+    graphifyCodeGraphGenerationFailed:
+      "graphify 코드 그래프 생성 실패 (비차단)",
     networkxCheck: (v) => `networkx ${v}`,
     networkxUpgrading:
       "graphify 호환성을 위해 networkx를 >=3.4로 업그레이드 중...",
@@ -2187,15 +2207,15 @@ ${r ? `원본 오류：${r}` : ""}
     npxQuickPlatformCodex: "Codex CLI",
     npxQuickPlatformCursor: "Cursor",
     npxQuickPlatformAll: "모든 플랫폼",
-    npxQuickDirPrompt: "프로젝트를 어디에 만들까요?",
+    npxQuickDirPrompt: "프로젝트용 디렉터리를 어디에 준비할까요?",
     npxQuickDirDefault: "~/Desktop/Meta_Kim",
-    npxQuickCreating: "프로젝트 생성 중:",
-    npxQuickCopyFiles: "플랫폼 파일 복사 중",
-    npxQuickDirExists: "디렉터리가 이미 존재합니다 — 파일을 업데이트합니다",
-    npxQuickDone: "프로젝트 준비 완료!",
+    npxQuickCreating: "프로젝트용 디렉터리 준비 중:",
+    npxQuickCopyFiles: "프로젝트용 런타임 파일 복사 중",
+    npxQuickDirExists: "디렉터리가 이미 존재합니다. 내부 파일을 업데이트합니다",
+    npxQuickDone: "프로젝트용 파일 준비 완료!",
     npxQuickOpenIn: "이 디렉터리에서 플랫폼 열기:",
     npxQuickAskDeploy:
-      "프로젝트 레벨 디렉터리를 어디에 만들까요? 이 디렉터리를 기존 프로젝트에 복사할 수 있습니다.",
+      "프로젝트용 런타임 파일을 다른 디렉터리로 내보낼까요? 해당 디렉터리를 기존 프로젝트에 복사할 수 있습니다.",
     npxQuickDeployYes: "디렉터리 선택",
     npxQuickDeployNo: "건너뛰기",
     aboutAuthor: "작성자 소개",
@@ -3996,9 +4016,7 @@ async function installPythonTools(activeTargets, inUpdateMode = false) {
     const platform = GRAPHIFY_PLATFORM_MAP[target];
     if (!platform) continue;
     if (guideAlreadyHasGraphifySection(platform)) {
-      skip(
-        `${C.dim}graphify ${platform} install skipped (guide already has Graphify section)${C.reset}`,
-      );
+      skip(t.graphifySkillSkippedGuideExists(platform));
       continue;
     }
     info(t.graphifySkillRegistering(platform));
@@ -4022,9 +4040,9 @@ async function installPythonTools(activeTargets, inUpdateMode = false) {
     { cwd: PROJECT_DIR, stdio: "pipe" },
   );
   if (rebuildResult.status === 0) {
-    ok("graphify code graph generated");
+    ok(t.graphifyCodeGraphGenerated);
   } else {
-    warn("graphify code graph generation failed (non-blocking)");
+    warn(t.graphifyCodeGraphGenerationFailed);
     const rebuildOutput = readProcessText(rebuildResult);
     if (rebuildOutput) {
       console.log(`${C.dim}${rebuildOutput}${C.reset}`);

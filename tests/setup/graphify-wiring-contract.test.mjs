@@ -178,7 +178,7 @@ describe("graphify idempotent wiring (contract)", () => {
     assert.match(src, /function guideAlreadyHasGraphifySection\(platform\)/);
     assert.match(src, /\^##\\s\+graphify\\b\/im/);
     assert.match(wiring, /guideAlreadyHasGraphifySection\("claude"\)/);
-    assert.match(wiring, /graphify claude install skipped/);
+    assert.match(wiring, /graphifyInstallSkippedGuideExists\("claude"\)/);
     assert.match(wiring, /\["-m", "graphify", "hook", "install"\]/);
   });
 

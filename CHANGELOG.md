@@ -6,6 +6,31 @@ This file is the reader-facing release history for Meta_Kim.
 
 The changelog explains what changed and why it matters. It intentionally avoids long internal task ledgers, low-signal backlog ids, and implementation trivia. When exact evidence is needed, use the repository history, tests, generated reports, and PRD artifacts.
 
+## [2.8.14] - 2026-06-10
+
+### Fixed
+
+- **Localized Install And Update Notices** - Install/update output for ECC, Graphify, Codex config preservation, native plugin handoff, marketplace checks, and loopback proxy handling now goes through Meta_Kim's shared i18n layer instead of hardcoded English strings. Chinese, Japanese, and Korean users now see localized status lines for expected skips and manual host-plugin steps.
+- **ECC Upstream Version Tracking** - ECC native installs now use `ecc-universal@latest` instead of the older `2.0.0-rc.1` release candidate in the runtime manifest, docs, compatibility evidence, and setup tests.
+- **Less Misleading Plugin Handoff Output** - Expected host limitations are now reported as skipped/manual steps instead of warning-like failures. Cursor and Codex native plugin messages now explain the manual host-plugin path without implying that the skill fallback failed.
+- **Graphify Skip Output Consistency** - Already-wired Graphify guide sections now report localized skip notices, and the old `[SKIP] graphify ...` line was aligned with Meta_Kim's normal skipped-state output.
+- **HookPrompt Markdown-Safe Output** - The upstream HookPrompt dependency now wraps raw user input and the optimized full prompt in fenced code blocks, so attachment headings such as `# Files mentioned by the user:` no longer render as oversized Markdown headings in the middle of Codex output.
+
+### Verification
+
+- `node --check .claude/hooks/user-prompt-submit.js; node --check .codex/hooks/user-prompt-submit.js; node --check test-hook.js` in `D:/KimProject/HookPrompt`
+- `node test-hook.js` in `D:/KimProject/HookPrompt`
+- `node scripts/install-global-skills-all-runtimes.mjs --dry-run --update --skills ecc,superpowers --targets claude,codex,cursor --lang zh-CN`
+- `node --test tests/setup/install-plugin-bundles.test.mjs tests/setup/graphify-wiring-contract.test.mjs tests/setup/install-cross-platform.test.mjs`
+- `npm run meta:test:setup`
+- `npm run meta:capabilities:smoke`
+- `npm run meta:check`
+- `npm run meta:release:smoke`
+- `npm run meta:verify:all`
+- `npm run meta:graphify:rebuild`
+- `npm run meta:graphify:check`
+- `git diff --check`
+
 ## [2.8.13] - 2026-06-10
 
 ### Fixed
