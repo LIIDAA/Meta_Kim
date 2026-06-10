@@ -702,6 +702,8 @@ Possible causes:
     npxQuickCopyFiles: "Copying project-level runtime files",
     npxQuickDirExists: "Directory already exists; files inside will be updated",
     npxQuickDone: "Project-level files ready!",
+    npxQuickPostCopyScript: (f) =>
+      `After copying these files into a project, run: node ${f}`,
     npxQuickOpenIn: "Open your platform in this directory:",
     npxQuickAskDeploy:
       "Export project-level runtime files to another directory? You can copy that directory into existing projects.",
@@ -1189,6 +1191,8 @@ ${r ? `原始错误：${r}` : ""}
     npxQuickCopyFiles: "正在复制项目级运行时文件",
     npxQuickDirExists: "目录已存在，将更新其中的文件",
     npxQuickDone: "项目级文件已就绪！",
+    npxQuickPostCopyScript: (f) =>
+      `复制这些文件到项目根目录后运行：node ${f}`,
     npxQuickOpenIn: "在该目录打开你的平台：",
     npxQuickAskDeploy: "是否将项目级运行时文件导出到另一个目录？可把该目录复制到现有项目中。",
     npxQuickDeployYes: "选择目录",
@@ -1711,6 +1715,8 @@ ${r ? `生エラー：${r}` : ""}
     npxQuickCopyFiles: "プロジェクト用ランタイムファイルをコピー中",
     npxQuickDirExists: "ディレクトリは既に存在します。中のファイルを更新します",
     npxQuickDone: "プロジェクト用ファイルの準備完了！",
+    npxQuickPostCopyScript: (f) =>
+      `これらのファイルをプロジェクトにコピーした後に実行：node ${f}`,
     npxQuickOpenIn: "このディレクトリでプラットフォームを開く：",
     npxQuickAskDeploy:
       "プロジェクト用ランタイムファイルを別ディレクトリに書き出しますか？そのディレクトリを既存プロジェクトへコピーできます。",
@@ -2213,6 +2219,8 @@ ${r ? `원본 오류：${r}` : ""}
     npxQuickCopyFiles: "프로젝트용 런타임 파일 복사 중",
     npxQuickDirExists: "디렉터리가 이미 존재합니다. 내부 파일을 업데이트합니다",
     npxQuickDone: "프로젝트용 파일 준비 완료!",
+    npxQuickPostCopyScript: (f) =>
+      `이 파일들을 프로젝트에 복사한 뒤 실행: node ${f}`,
     npxQuickOpenIn: "이 디렉터리에서 플랫폼 열기:",
     npxQuickAskDeploy:
       "프로젝트용 런타임 파일을 다른 디렉터리로 내보낼까요? 해당 디렉터리를 기존 프로젝트에 복사할 수 있습니다.",
@@ -2789,6 +2797,8 @@ const QUICK_PLATFORMS = [
   { id: "all", labelKey: "npxQuickPlatformAll" },
 ];
 
+const POST_COPY_BOOTSTRAP_FILENAME = "meta-kim-post-copy.mjs";
+
 async function askQuickPlatform() {
   const labels = QUICK_PLATFORMS.map((p) => t[p.labelKey]);
   const idx = await askSelect(t.npxQuickPlatformPrompt, labels);
@@ -2871,6 +2881,142 @@ function deployPlatformFiles(platformId, targetDir) {
   return fileCount;
 }
 
+function buildPostCopyBootstrapScript(activeTargets) {
+  const graphifyPlatforms = [
+    ...new Set(
+      expandGraphifyTargets(activeTargets)
+        .map((target) => GRAPHIFY_PLATFORM_MAP[target])
+        .filter(Boolean),
+    ),
+  ];
+
+  return `#!/usr/bin/env node
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
+
+const rootDir = dirname(fileURLToPath(import.meta.url));
+const graphifyPlatforms = ${JSON.stringify(graphifyPlatforms, null, 2)};
+const guideTargets = {
+  claude: "CLAUDE.md",
+  codex: "AGENTS.md",
+  claw: "AGENTS.md",
+  opencode: "AGENTS.md",
+  aider: "AGENTS.md",
+  droid: "AGENTS.md",
+  trae: "AGENTS.md",
+  "trae-cn": "AGENTS.md",
+};
+
+function pythonCandidates() {
+  if (process.platform === "win32") {
+    return [
+      { command: "py", prefixArgs: ["-3"] },
+      { command: "python", prefixArgs: [] },
+      { command: "python3", prefixArgs: [] },
+    ];
+  }
+  return [
+    { command: "python3", prefixArgs: [] },
+    { command: "python", prefixArgs: [] },
+  ];
+}
+
+function runCandidate(candidate, args, stdio = "inherit") {
+  return spawnSync(candidate.command, [...candidate.prefixArgs, ...args], {
+    cwd: rootDir,
+    encoding: "utf8",
+    stdio,
+  });
+}
+
+function findPython() {
+  for (const candidate of pythonCandidates()) {
+    const result = runCandidate(
+      candidate,
+      [
+        "-c",
+        "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)",
+      ],
+      "pipe",
+    );
+    if (result.status === 0) return candidate;
+  }
+  return null;
+}
+
+function runPython(python, args, { optional = false, stdio = "inherit" } = {}) {
+  const result = runCandidate(python, args, stdio);
+  if (result.status === 0) return true;
+  if (optional) {
+    console.warn("[Meta_Kim] Optional command failed:", args.join(" "));
+    return false;
+  }
+  console.error("[Meta_Kim] Command failed:", args.join(" "));
+  process.exit(result.status || 1);
+}
+
+function guideAlreadyHasGraphifySection(platform) {
+  const target = guideTargets[platform];
+  if (!target) return false;
+  const filePath = join(rootDir, target);
+  if (!existsSync(filePath)) return false;
+  return /^##\\s+graphify\\b/im.test(readFileSync(filePath, "utf8"));
+}
+
+const python = findPython();
+if (!python) {
+  console.error("[Meta_Kim] Python 3.10+ with pip is required for graphify.");
+  console.error("[Meta_Kim] Install Python, then run this script again.");
+  process.exit(1);
+}
+
+const pipShow = runCandidate(python, ["-m", "pip", "show", "graphifyy"], "pipe");
+if (pipShow.status !== 0) {
+  runPython(python, ["-m", "pip", "install", "graphifyy"]);
+}
+runPython(python, ["-m", "pip", "install", "--upgrade", "networkx>=3.4"], {
+  optional: true,
+});
+
+if (existsSync(join(rootDir, ".git"))) {
+  runPython(python, ["-m", "graphify", "hook", "install"]);
+} else {
+  console.log("[Meta_Kim] Skipping graphify git hook; no .git directory found.");
+}
+
+for (const platform of graphifyPlatforms) {
+  if (guideAlreadyHasGraphifySection(platform)) {
+    console.log(\`[Meta_Kim] graphify \${platform} guide section already exists; skipping install.\`);
+    continue;
+  }
+  runPython(python, ["-m", "graphify", platform, "install"], {
+    optional: true,
+  });
+}
+
+runPython(python, ["-m", "graphify", "update", "."]);
+console.log("[Meta_Kim] graphify is initialized for:", rootDir);
+`;
+}
+
+function writePostCopyBootstrap(targetDir, activeTargets) {
+  const bootstrapPath = join(targetDir, POST_COPY_BOOTSTRAP_FILENAME);
+  writeFileSync(
+    bootstrapPath,
+    buildPostCopyBootstrapScript(activeTargets),
+    "utf8",
+  );
+  return bootstrapPath;
+}
+
+function printPostCopyBootstrapHint() {
+  console.log(
+    `${C.dim}  ${t.npxQuickPostCopyScript(POST_COPY_BOOTSTRAP_FILENAME)}${C.reset}`,
+  );
+}
+
 async function askDeployDirectory() {
   console.log("");
 
@@ -2908,9 +3054,11 @@ async function copyToDeployDir(activeTargets, targetDir) {
     });
   }
   quickDeployDir = targetDir;
+  writePostCopyBootstrap(targetDir, activeTargets);
 
   console.log(`${C.green}${C.bold}✓ ${t.npxQuickDone}${C.reset}`);
   console.log(`${C.dim}  ${targetDir}${C.reset}`);
+  printPostCopyBootstrapHint();
   console.log("");
 }
 
@@ -2966,6 +3114,7 @@ async function runQuickDeploy() {
     quickDeployDir = targetDir;
     return count > 0;
   });
+  writePostCopyBootstrap(targetDir, [platformId]);
 
   // Install global skills
   await withProgress(t.progressPrepareDir, async () => {
@@ -3000,6 +3149,7 @@ async function runQuickDeploy() {
   console.log("");
   console.log(`${C.green}${C.bold}✓ ${t.npxQuickDone}${C.reset}`);
   console.log(`${C.dim}  ${targetDir}${C.reset}`);
+  printPostCopyBootstrapHint();
   console.log("");
 
   showNextSteps(runtimes);
@@ -3829,13 +3979,19 @@ const GRAPHIFY_GUIDE_TARGETS = {
   "trae-cn": "AGENTS.md",
 };
 
-function guideAlreadyHasGraphifySection(platform) {
+function guideAlreadyHasGraphifySection(platform, baseDir = PROJECT_DIR) {
   const target = GRAPHIFY_GUIDE_TARGETS[platform];
   if (!target) return false;
-  const filePath = join(PROJECT_DIR, target);
+  const filePath = join(baseDir, target);
   if (!existsSync(filePath)) return false;
   const content = readFileSync(filePath, "utf8");
   return /^##\s+graphify\b/im.test(content);
+}
+
+function expandGraphifyTargets(activeTargets) {
+  const targets = Array.isArray(activeTargets) ? activeTargets : [activeTargets];
+  if (targets.includes("all")) return Object.keys(GRAPHIFY_PLATFORM_MAP);
+  return targets;
 }
 
 /**
@@ -3916,12 +4072,17 @@ async function downloadAndInstallPython() {
   }
 }
 
-async function installPythonTools(activeTargets, inUpdateMode = false) {
+async function installPythonTools(
+  activeTargets,
+  inUpdateMode = false,
+  targetDir = PROJECT_DIR,
+) {
   heading(t.stepPythonTools);
+  const graphifyDir = resolve(targetDir);
   let python = checkPython310();
   if (!python) {
     python = await downloadAndInstallPython();
-    if (!python) return;
+    if (!python) return false;
   }
 
   // Check if graphify already installed via pip show (more reliable than --version)
@@ -3944,7 +4105,7 @@ async function installPythonTools(activeTargets, inUpdateMode = false) {
         if (stderr) {
           console.log(`${C.dim}${t.pipErrorDetail(stderr)}${C.reset}`);
         }
-        return;
+        return false;
       }
       const newVersion =
         extractPipShowVersion(readProcessText(upgradeResult)) ?? version;
@@ -3967,7 +4128,7 @@ async function installPythonTools(activeTargets, inUpdateMode = false) {
       if (stderr) {
         console.log(`${C.dim}${t.pipErrorDetail(stderr)}${C.reset}`);
       }
-      return;
+      return false;
     }
     ok(t.graphifyInstalled);
   }
@@ -3980,7 +4141,7 @@ async function installPythonTools(activeTargets, inUpdateMode = false) {
   // If the repo wasn't cloned via git (e.g. extracted from a zip), `.git` won't
   // exist and `graphify hook install` has nowhere to write — that's not a real
   // failure, just a no-op environment. Skip cleanly instead of alarming the user.
-  if (!existsSync(join(PROJECT_DIR, ".git"))) {
+  if (!existsSync(join(graphifyDir, ".git"))) {
     info(
       "Skipping graphify git hook (not a git repository — run `git init` or clone via git to enable auto-rebuild)",
     );
@@ -3989,7 +4150,7 @@ async function installPythonTools(activeTargets, inUpdateMode = false) {
       python,
       ["-m", "graphify", "hook", "install"],
       undefined,
-      { stdio: "pipe" },
+      { cwd: graphifyDir, stdio: "pipe" },
     );
     if (hookResult.status === 0) {
       ok(t.graphifyHookInstalled);
@@ -4012,10 +4173,10 @@ async function installPythonTools(activeTargets, inUpdateMode = false) {
   }
 
   // Register graphify skill for each active platform
-  for (const target of activeTargets) {
+  for (const target of expandGraphifyTargets(activeTargets)) {
     const platform = GRAPHIFY_PLATFORM_MAP[target];
     if (!platform) continue;
-    if (guideAlreadyHasGraphifySection(platform)) {
+    if (guideAlreadyHasGraphifySection(platform, graphifyDir)) {
       skip(t.graphifySkillSkippedGuideExists(platform));
       continue;
     }
@@ -4024,7 +4185,7 @@ async function installPythonTools(activeTargets, inUpdateMode = false) {
       python,
       ["-m", "graphify", platform, "install"],
       undefined,
-      { stdio: "pipe" },
+      { cwd: graphifyDir, stdio: "pipe" },
     );
     if (skillResult.status === 0) {
       ok(t.graphifySkillRegistered(platform));
@@ -4037,16 +4198,18 @@ async function installPythonTools(activeTargets, inUpdateMode = false) {
     python,
     ["-m", "graphify", "update", "."],
     undefined,
-    { cwd: PROJECT_DIR, stdio: "pipe" },
+    { cwd: graphifyDir, stdio: "pipe" },
   );
   if (rebuildResult.status === 0) {
     ok(t.graphifyCodeGraphGenerated);
+    return true;
   } else {
     warn(t.graphifyCodeGraphGenerationFailed);
     const rebuildOutput = readProcessText(rebuildResult);
     if (rebuildOutput) {
       console.log(`${C.dim}${rebuildOutput}${C.reset}`);
     }
+    return false;
   }
 }
 

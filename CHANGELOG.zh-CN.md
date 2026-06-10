@@ -6,6 +6,24 @@
 
 更新说明只解释“改了什么、为什么重要”。过细的内部任务编号、低价值 backlog id 和实现流水账不放在这里；需要精确证据时，请看 Git 历史、测试、生成报告和 PRD 产物。
 
+## [2.8.15] - 2026-06-10
+
+### 修复
+
+- **可复制目录的 Graphify 初始化** - quick setup 或 install/update 导出的项目级文件夹现在会包含 `meta-kim-post-copy.mjs`。当你先把生成目录放在桌面等临时位置，再把其中全部内容复制到任意项目根目录后，在最终项目里运行 `node meta-kim-post-copy.mjs` 即可为该项目初始化 Graphify。
+- **临时目录边界更清楚** - Meta_Kim 不再把桌面这类生成/暂存目录误当成最终 Graphify root。这样不会为错误目录生成或复制过期的 `graphify-out/`，Graphify 仍然按最终项目逐个初始化。
+- **复制后契约测试覆盖** - setup 测试现在会锁定 copy-ready 契约：运行时文件复制完成后才写入 bootstrap；bootstrap 用自身所在目录作为项目根；install/update 导出不会悄悄在暂存目录里构建 Graphify。
+
+### 验证
+
+- `node --check setup.mjs`
+- `node --test tests/setup/graphify-wiring-contract.test.mjs`
+- `node --test tests/setup/install-cross-platform.test.mjs tests/setup/setup-update-default-flow.test.mjs tests/setup/i18n.test.mjs`
+- `npm run meta:test:setup`
+- `npm run meta:graphify:rebuild`
+- `npm run meta:graphify:check`
+- `git diff --check`
+
 ## [2.8.14] - 2026-06-10
 
 ### 修复
