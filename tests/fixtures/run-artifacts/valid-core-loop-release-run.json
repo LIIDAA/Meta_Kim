@@ -80,8 +80,8 @@
     "knowledgeSources": [
       {
         "projectRef": "project-core-loop-release",
-        "sourceType": "doc",
-        "sourceRef": "docs/pdr/current-core-loop-release.md"
+        "sourceType": "contract",
+        "sourceRef": "config/contracts/core-loop-contract.json"
       }
     ]
   },
@@ -1159,7 +1159,7 @@
         "findingId": "evidence-001",
         "summary": "Fetch evidence collected for complex_dev",
         "sourceRefs": [
-          "docs/pdr/current-core-loop-release.md"
+          "config/contracts/core-loop-contract.json"
         ]
       }
     ],
