@@ -134,11 +134,12 @@
     "README.ja-JP.md",
     "README.ko-KR.md",
     "LICENSE",
+    "NOTICE",
     "AGENTS.md",
     "CLAUDE.md"
   ],
   "author": "KimYx0207",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bin": {
     "meta-kim": "./bin/meta-kim.mjs"
   },

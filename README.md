@@ -14,7 +14,7 @@
 <p>
   <img alt="Tools" src="https://img.shields.io/badge/tools-Claude%20Code%20%7C%20Codex%20%7C%20OpenClaw%20%7C%20Cursor-111827"/>
   <img alt="Stars" src="https://img.shields.io/github/stars/KimYx0207/Meta_Kim?style=flat&logo=github"/>
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-green"/>
+  <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-green"/>
 </p>
 
 <p>
@@ -943,7 +943,7 @@ Meta_Kim uses MCP (Model Context Protocol) to expand the capability boundary of 
 
 ## Third-party Dependencies
 
-Meta_Kim is MIT licensed. The following optional skill repositories are installed separately via `node setup.mjs` — each repo's license applies independently.
+Meta_Kim itself is licensed under Apache License 2.0. The following optional skill repositories are installed separately via `node setup.mjs` — each repo's license applies independently.
 
 ### npm Dependencies
 
@@ -978,4 +978,16 @@ Meta_Kim is MIT licensed. The following optional skill repositories are installe
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Apache License 2.0](LICENSE).
+
+### Commercial Use and Attribution
+
+Commercial use is allowed. If you redistribute Meta_Kim or substantial portions of it, keep the [LICENSE](LICENSE) and [NOTICE](NOTICE) files with your distribution.
+
+Recommended attribution:
+
+```text
+Meta_Kim by KimYx0207 — https://github.com/KimYx0207/Meta_Kim
+```
+
+Attribution must not imply endorsement by KimYx0207 or the Meta_Kim project. Third-party dependencies and optional skill repositories keep their own licenses.

@@ -96,4 +96,29 @@ describe("release documentation semantics", () => {
       [...policy.executionModeEnum].sort(),
     );
   });
+
+  test("project license documents Apache-2.0 commercial use and NOTICE attribution", () => {
+    const packageJson = JSON.parse(
+      readFileSync(path.join(root, "package.json"), "utf8"),
+    );
+    const notice = readFileSync(path.join(root, "NOTICE"), "utf8");
+
+    assert.equal(packageJson.license, "Apache-2.0");
+    assert.ok(packageJson.files.includes("NOTICE"));
+    assert.match(notice, /Meta_Kim by KimYx0207/);
+    assert.match(notice, /Commercial use is permitted under the Apache License, Version 2\.0/);
+
+    for (const file of readmeFiles) {
+      const raw = readFileSync(path.join(root, file), "utf8");
+
+      assert.match(raw, /license-Apache--2\.0/);
+      assert.match(raw, /Apache License 2\.0/);
+      assert.match(raw, /NOTICE/);
+      assert.match(raw, /Meta_Kim by KimYx0207/);
+      assert.doesNotMatch(raw, /Meta_Kim (?:is|itself is) MIT licensed/);
+      assert.doesNotMatch(raw, /Meta_Kim 本身采用 MIT/);
+      assert.doesNotMatch(raw, /Meta_Kim 自体は MIT/);
+      assert.doesNotMatch(raw, /Meta_Kim 자체는 MIT/);
+    }
+  });
 });
