@@ -1,6 +1,7 @@
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { homedir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { readJsonFromStdin } from "./utils.mjs";
@@ -184,6 +185,14 @@ function resolvePackageRoot(candidate) {
     dir = parent;
   }
   return null;
+}
+
+function samePath(left, right) {
+  const normalizedLeft = left.replaceAll("\\", "/");
+  const normalizedRight = right.replaceAll("\\", "/");
+  return process.platform === "win32"
+    ? normalizedLeft.toLowerCase() === normalizedRight.toLowerCase()
+    : normalizedLeft === normalizedRight;
 }
 
 const packageRootArgIndex = process.argv.indexOf("--package-root");
@@ -462,6 +471,7 @@ function resolveReusableRunIdentity(previous, taskFingerprint) {
 
 function startPostCopyAutoInit(root) {
   if (process.env.META_KIM_POST_COPY_AUTO === "off") return;
+  if (samePath(root, homedir())) return;
 
   const globalScriptPath = packageRoot
     ? join(packageRoot, "scripts", "project-post-copy-init.mjs")

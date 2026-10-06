@@ -535,6 +535,98 @@ describe("project-post-copy-init project-root gate", () => {
     }
   });
 
+  test("does not auto-launch post-copy init for the user home", () => {
+    const homeDir = mkdtempSync(path.join(os.tmpdir(), "meta-kim-hook-home-"));
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "meta-kim-hook-home-cwd-"));
+    const packageRoot = mkdtempSync(path.join(os.tmpdir(), "meta-kim-hook-package-"));
+    const sentinel = path.join(packageRoot, "post-copy-launched.txt");
+    try {
+      const scriptsDir = path.join(packageRoot, "scripts");
+      mkdirSync(scriptsDir, { recursive: true });
+      writeFileSync(
+        path.join(scriptsDir, "project-post-copy-init.mjs"),
+        [
+          'import { writeFileSync } from "node:fs";',
+          'writeFileSync(process.env.META_KIM_TEST_SENTINEL, "launched\\n", "utf8");',
+        ].join("\n"),
+        "utf8",
+      );
+      const hookPath = stageActivateHook(cwd);
+      const env = {
+        ...process.env,
+        CLAUDE_PROJECT_DIR: homeDir,
+        HOME: homeDir,
+        USERPROFILE: homeDir,
+        META_KIM_PACKAGE_ROOT: packageRoot,
+        META_KIM_TEST_SENTINEL: sentinel,
+      };
+      const result = spawnSync(process.execPath, [hookPath], {
+        cwd,
+        input: TRIGGER_PAYLOAD,
+        encoding: "utf8",
+        timeout: 15000,
+        windowsHide: true,
+        env,
+      });
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      assert.equal(
+        existsSync(sentinel),
+        false,
+        "activate hook must not auto-launch post-copy init over the user home",
+      );
+    } finally {
+      rmSync(homeDir, { recursive: true, force: true });
+      rmSync(cwd, { recursive: true, force: true });
+      rmSync(packageRoot, { recursive: true, force: true });
+    }
+  });
+
+  test("no-ops for automatic user-home project roots", () => {
+    const homeDir = mkdtempSync(path.join(os.tmpdir(), "meta-kim-pc-home-"));
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "meta-kim-pc-home-cwd-"));
+    try {
+      const env = { ...process.env };
+      env.CLAUDE_PROJECT_DIR = homeDir;
+      env.HOME = homeDir;
+      env.USERPROFILE = homeDir;
+      const result = spawnSync(process.execPath, [POST_COPY_SCRIPT, "--auto-worker"], {
+        cwd,
+        encoding: "utf8",
+        timeout: 15000,
+        windowsHide: true,
+        env,
+      });
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      const hookShapedResult = spawnSync(
+        process.execPath,
+        [POST_COPY_SCRIPT, "--auto", "--project-root", homeDir],
+        {
+          cwd,
+          encoding: "utf8",
+          timeout: 15000,
+          windowsHide: true,
+          env,
+        },
+      );
+      assert.equal(
+        hookShapedResult.status,
+        0,
+        hookShapedResult.stderr || hookShapedResult.stdout,
+      );
+      assert.equal(
+        existsSync(
+          path.join(homeDir, ".meta-kim", "state", "default", "post-copy-init.json"),
+        ),
+        false,
+        "post-copy init must not treat the user home as an implicit project root",
+      );
+      assert.equal(existsSync(path.join(homeDir, "graphify-out")), false);
+    } finally {
+      rmSync(homeDir, { recursive: true, force: true });
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   test("adopts a valid CLAUDE_PROJECT_DIR (no .git), matching the activator", () => {
     const projectDir = mkdtempSync(path.join(os.tmpdir(), "meta-kim-pc-project-"));
     const cwd = mkdtempSync(path.join(os.tmpdir(), "meta-kim-pc-cwd-"));

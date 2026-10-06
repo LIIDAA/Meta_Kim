@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -13,6 +14,8 @@ const declaredProjectRoot =
   projectRootArgIndex >= 0 && process.argv[projectRootArgIndex + 1]
     ? process.argv[projectRootArgIndex + 1]
     : null;
+const autoMode = process.argv.includes("--auto");
+const autoWorkerMode = process.argv.includes("--auto-worker");
 const rootDir = resolveProjectRoot({
   explicitDeclarations: [declaredProjectRoot, process.env.CLAUDE_PROJECT_DIR],
 });
@@ -21,9 +24,25 @@ if (!rootDir) {
   // cwd. This path is opportunistic/auto; a silent no-op is the correct result.
   process.exit(0);
 }
+
+function samePath(left, right) {
+  const normalizedLeft = left.replaceAll("\\", "/");
+  const normalizedRight = right.replaceAll("\\", "/");
+  return process.platform === "win32"
+    ? normalizedLeft.toLowerCase() === normalizedRight.toLowerCase()
+    : normalizedLeft === normalizedRight;
+}
+
+if (
+  samePath(rootDir, homedir()) &&
+  (autoMode || autoWorkerMode || !declaredProjectRoot)
+) {
+  // Runtime launchers can occasionally expose the user profile as a project
+  // declaration. Never run graphify over the whole home directory implicitly;
+  // a manual explicit --project-root remains available for an intentional home repo.
+  process.exit(0);
+}
 const scriptPath = fileURLToPath(import.meta.url);
-const autoMode = process.argv.includes("--auto");
-const autoWorkerMode = process.argv.includes("--auto-worker");
 const stateDir = join(rootDir, ".meta-kim", "state", "default");
 const autoMarkerPath = join(stateDir, "post-copy-init.json");
 const runningTtlMs = 10 * 60 * 1000;
